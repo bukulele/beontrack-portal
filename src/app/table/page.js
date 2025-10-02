@@ -3,9 +3,9 @@
 import Menu from "../components/menu/Menu";
 import { useState, useEffect } from "react";
 import ThreeDotsLoader from "../components/loader/ThreeDotsLoader";
-import { OFFICE_TABLE_FIELDS_SAFETY } from "../tableData/officeEmployeesTable_unstable";
-import { TRUCKS_TABLE_FIELDS } from "../tableData/trucksTable_unstable";
-import { DRIVER_REPORT_TABLE_FIELDS } from "../tableData/driverReportsTable_unstable";
+import { OFFICE_TABLE_FIELDS_SAFETY } from "@/data/tables/employees";
+import { TRUCKS_TABLE_FIELDS } from "@/data/tables/trucks";
+import { DRIVER_REPORT_TABLE_FIELDS } from "@/data/tables/driver-reports";
 import { MAIN_DASHBOARD_TEMPLATE } from "../assets/dashboardData";
 import { useLoader } from "../context/LoaderContext";
 import { useSession } from "next-auth/react";
@@ -16,9 +16,9 @@ import { SettingsProvider } from "../context/SettingsContext";
 import DashboardContainer from "../components/dashboardContainer/DashboardContainer";
 import Cookies from "js-cookie";
 import { RotatingLines } from "react-loader-spinner";
-import { EQUIPMENT_TABLE_FIELDS } from "../tableData/equipmentTable_unstable";
+import { EQUIPMENT_TABLE_FIELDS } from "@/data/tables/equipment";
 import { InfoCardProvider } from "../context/InfoCardContext";
-import { INCIDENTS_TABLE } from "../tableData/incidentsTable_unstable";
+import { INCIDENTS_TABLE } from "@/data/tables/incidents";
 import { CreateObjectProvider } from "../context/CreateObjectContext";
 import {
   GO_TO_TABLE_LINKS_FUEL_REPORT,
@@ -27,9 +27,9 @@ import {
 import {
   FUEL_REPORT_TABLE,
   FUEL_REPORT_TABLE_QUARTERLY,
-} from "../tableData/fuelReportTable_unstable";
-import { VIOLATIONS_TABLE } from "../tableData/violationsTable_unstable";
-import { WCB_TABLE } from "../tableData/wcbTable_unstable";
+} from "@/data/tables/fuel-reports";
+import { VIOLATIONS_TABLE } from "@/data/tables/violations";
+import { WCB_TABLE } from "@/data/tables/wcb";
 import TableView from "../components/tableContainer/TableView_unstable";
 import {
   DRIVERS_TABLE_FIELDS_REPORT,
@@ -38,7 +38,7 @@ import {
   DRIVERS_TABLE_DOCUMENTS_EXPIRING,
   DRIVERS_TABLE_TO_BE_REVIEWED_BY_SAFETY,
   DRIVERS_SEALS_REPORT,
-} from "../tableData/driversTable_unstable";
+} from "@/data/tables/drivers";
 import AvailabilitySheet from "../components/dispatchSection/AvailabilitySheet";
 import { DRIVERS_AVAILABILITY_SHEET } from "../components/dispatchSection/dispatch_assets/tableFields";
 import { AvailabilityProvider } from "../context/AvailabilityContext";

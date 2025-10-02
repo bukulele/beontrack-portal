@@ -1,30 +1,31 @@
 import {
+  EQUIPMENT_STATUS_CHOICES,
+  EQUIPMENT_TYPE_CHOICES,
   TERMINAL_CHOICES,
-  TRUCK_STATUS_CHOICES,
-  VEHICLE_TYPE_CHOICES,
-} from "../assets/tableData";
+} from "@/app/assets/tableData";
 
-export const TRUCKS_TABLE_FIELDS = [
+export const EQUIPMENT_TABLE_FIELDS = [
   {
     field: "unit_number",
     headerName: "Unit Number",
     accessKey: "id",
     width: 150,
-    modalType: "truck",
+    modalType: "equipment",
   },
   {
     field: "plate_number",
     headerName: "Plate Number",
     accessKey: "id",
     width: 150,
-    modalType: "truck",
-    valueGetter: (_, row) => row.truck_license_plates?.plate_number || "N/A",
+    modalType: "equipment",
+    valueGetter: (_, row) =>
+      row.equipment_license_plates?.plate_number || "N/A",
   },
   {
     field: "status",
     headerName: "Status",
     width: 150,
-    valueGetter: (value) => TRUCK_STATUS_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => EQUIPMENT_STATUS_CHOICES[value] || value || "N/A",
   },
   {
     field: "vin",
@@ -32,16 +33,16 @@ export const TRUCKS_TABLE_FIELDS = [
     width: 180,
   },
   {
-    field: "vehicle_type",
-    headerName: "Vehicle Type",
+    field: "equipment_type",
+    headerName: "Equipment Type",
     width: 150,
-    valueGetter: (value) => VEHICLE_TYPE_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => EQUIPMENT_TYPE_CHOICES[value] || value || "N/A",
   },
   {
     field: "safety_expiry_date",
     headerName: "Safety Expiry Date",
     width: 150,
-    valueGetter: (_, row) => row.truck_safety_docs?.expiry_date || "N/A",
+    valueGetter: (_, row) => row.equipment_safety_docs?.expiry_date || "N/A",
   },
   {
     field: "terminal",
@@ -55,9 +56,10 @@ export const TRUCKS_TABLE_FIELDS = [
     width: 200,
   },
   {
-    field: "truck_registration_docs",
+    field: "equipment_registration_docs",
     headerName: "Registration Expiry Date",
     width: 150,
-    valueGetter: (_, row) => row.truck_registration_docs?.expiry_date || "N/A",
+    valueGetter: (_, row) =>
+      row.equipment_registration_docs?.expiry_date || "N/A",
   },
 ];

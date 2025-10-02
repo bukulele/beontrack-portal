@@ -1,4 +1,4 @@
-import { INCIDENT_STATUS_CHOICES } from "../assets/tableData";
+import { INCIDENT_STATUS_CHOICES } from "@/app/assets/tableData";
 import moment from "moment-timezone";
 
 export const INCIDENTS_TABLE = [

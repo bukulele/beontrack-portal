@@ -1,4 +1,4 @@
-import { REPORTS_TYPES } from "../assets/tableData";
+import { REPORTS_TYPES } from "@/app/assets/tableData";
 
 export const DRIVER_REPORT_TABLE_FIELDS = [
   {

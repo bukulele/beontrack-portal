@@ -1,31 +1,30 @@
 import {
-  EQUIPMENT_STATUS_CHOICES,
-  EQUIPMENT_TYPE_CHOICES,
   TERMINAL_CHOICES,
-} from "../assets/tableData";
+  TRUCK_STATUS_CHOICES,
+  VEHICLE_TYPE_CHOICES,
+} from "@/app/assets/tableData";
 
-export const EQUIPMENT_TABLE_FIELDS = [
+export const TRUCKS_TABLE_FIELDS = [
   {
     field: "unit_number",
     headerName: "Unit Number",
     accessKey: "id",
     width: 150,
-    modalType: "equipment",
+    modalType: "truck",
   },
   {
     field: "plate_number",
     headerName: "Plate Number",
     accessKey: "id",
     width: 150,
-    modalType: "equipment",
-    valueGetter: (_, row) =>
-      row.equipment_license_plates?.plate_number || "N/A",
+    modalType: "truck",
+    valueGetter: (_, row) => row.truck_license_plates?.plate_number || "N/A",
   },
   {
     field: "status",
     headerName: "Status",
     width: 150,
-    valueGetter: (value) => EQUIPMENT_STATUS_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => TRUCK_STATUS_CHOICES[value] || value || "N/A",
   },
   {
     field: "vin",
@@ -33,16 +32,16 @@ export const EQUIPMENT_TABLE_FIELDS = [
     width: 180,
   },
   {
-    field: "equipment_type",
-    headerName: "Equipment Type",
+    field: "vehicle_type",
+    headerName: "Vehicle Type",
     width: 150,
-    valueGetter: (value) => EQUIPMENT_TYPE_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => VEHICLE_TYPE_CHOICES[value] || value || "N/A",
   },
   {
     field: "safety_expiry_date",
     headerName: "Safety Expiry Date",
     width: 150,
-    valueGetter: (_, row) => row.equipment_safety_docs?.expiry_date || "N/A",
+    valueGetter: (_, row) => row.truck_safety_docs?.expiry_date || "N/A",
   },
   {
     field: "terminal",
@@ -56,10 +55,9 @@ export const EQUIPMENT_TABLE_FIELDS = [
     width: 200,
   },
   {
-    field: "equipment_registration_docs",
+    field: "truck_registration_docs",
     headerName: "Registration Expiry Date",
     width: 150,
-    valueGetter: (_, row) =>
-      row.equipment_registration_docs?.expiry_date || "N/A",
+    valueGetter: (_, row) => row.truck_registration_docs?.expiry_date || "N/A",
   },
 ];

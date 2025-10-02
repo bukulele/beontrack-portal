@@ -1,6 +1,12 @@
 import React from "react";
+import { Button as ShadcnButton } from "@/components/ui/button";
 import { Tooltip } from "react-tooltip";
 
+/**
+ * Button Wrapper Component
+ * Wraps shadcn/ui Button while maintaining backward compatibility with old API
+ * Uses pure shadcn styling - no custom classes
+ */
 function Button({
   content,
   style,
@@ -9,108 +15,62 @@ function Button({
   tooltipId,
   highlighted,
   disabled,
+  className,
 }) {
   const handleClick = (e) => {
-    fn(content, e);
-  };
-
-  const setButtonStyle = () => {
-    // let styleToSet = "border-gray-300 py-3 px-2";
-    let styleToSet = "border-none py-3 px-2";
-    switch (style) {
-      case "classicButton":
-        styleToSet += " shadow-sm bg-stone-200 rounded font-normal";
-        break;
-      case "classicButton-s":
-        styleToSet = "p-1 shadow-sm bg-stone-200 rounded font-normal";
-        break;
-      case "smallButton":
-        styleToSet += " border-b";
-        break;
-      case "warnButton":
-        styleToSet = "p-2";
-        break;
-      case "wideButton":
-        styleToSet += " rounded w-full flex justify-center";
-        break;
-      case "menuPoint":
-        styleToSet =
-          "border-gray-300 border-b w-full !h-11 flex pl-3 items-center";
-        break;
-      case "iconButton":
-        styleToSet = "p-1 rounded";
-        break;
-      case "iconButton-l":
-        styleToSet = "p-1 rounded text-xl";
-        break;
-      case "tabButton":
-        styleToSet += " rounded text-nowrap";
-        break;
-      case "imageButton":
-        styleToSet = "";
-        break;
-    }
-
-    styleToSet += " select-none";
-
-    return styleToSet;
-  };
-
-  const setButtonStyleHover = () => {
-    let styleToSet =
-      "hover:bg-[#b92531] hover:text-white hover:shadow-sm active:bg-orange-600 cursor-pointer";
-
-    if (disabled) {
-      styleToSet = "cursor-not-allowed";
-    }
-
-    if (style === "warnButton") {
-      styleToSet = "";
-    }
-
-    if (style === "menuPoint") {
-      styleToSet += " hover:font-medium";
-    }
-
-    if (style === "tabButton") {
-      styleToSet =
-        "hover:bg-[#ff919b] hover:text-white hover:shadow-sm active:bg-orange-600 cursor-pointer";
-    }
-
-    if (style === "imageButton") {
-      styleToSet = "cursor-pointer";
-    }
-
-    return styleToSet;
-  };
-
-  const setButtonStyleHighlighted = () => {
-    let styleToSet =
-      " !bg-[#b92531] hover:!bg-[#b92531] text-white font-medium ";
-
-    if (highlighted) {
-      return styleToSet;
-    } else {
-      return "";
+    if (fn) {
+      fn(content, e);
     }
   };
+
+  // Map old style prop to shadcn variant and size ONLY
+  // No custom styling - pure shadcn
+  const getVariantAndSize = () => {
+    const mapping = {
+      classicButton: { variant: "secondary", size: "default" },
+      "classicButton-s": { variant: "secondary", size: "sm" },
+      iconButton: { variant: "ghost", size: "icon" },
+      "iconButton-l": { variant: "ghost", size: "icon" },
+      tabButton: { variant: "outline", size: "default" },
+      menuPoint: { variant: "ghost", size: "default" },
+      wideButton: { variant: "default", size: "default" },
+      imageButton: { variant: "ghost", size: "default" },
+      smallButton: { variant: "ghost", size: "sm" },
+      warnButton: { variant: "destructive", size: "sm" },
+    };
+
+    return mapping[style] || { variant: "default", size: "default" };
+  };
+
+  const config = getVariantAndSize();
+
+  // Override variant if highlighted - use primary/default
+  const finalVariant = highlighted ? "default" : config.variant;
 
   return (
-    <div
-      className={`leading-none w-fit h-fit ${setButtonStyle()} ${setButtonStyleHover()} ${setButtonStyleHighlighted()}`}
-      onClick={!disabled ? (fn ? handleClick : null) : null}
-      data-tooltip-id={tooltipId}
-      data-tooltip-hidden={!tooltipContent}
-    >
-      {content}
-      <Tooltip
-        id={tooltipId}
-        openEvents={{ mouseenter: true, focus: true, click: true }}
-        style={{ maxWidth: "90%", zIndex: 20 }}
+    <>
+      <ShadcnButton
+        variant={finalVariant}
+        size={config.size}
+        disabled={disabled}
+        onClick={handleClick}
+        className={className}
+        data-tooltip-id={tooltipId}
+        data-tooltip-hidden={!tooltipContent}
       >
-        {tooltipContent}
-      </Tooltip>
-    </div>
+        {content}
+      </ShadcnButton>
+
+      {tooltipContent && tooltipId && (
+        <Tooltip
+          id={tooltipId}
+          openEvents={{ mouseenter: true, focus: true, click: true }}
+          style={{ maxWidth: "90%", zIndex: 20 }}
+        >
+          {tooltipContent}
+        </Tooltip>
+      )}
+    </>
   );
 }
 

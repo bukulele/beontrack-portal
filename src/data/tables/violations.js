@@ -1,5 +1,5 @@
-import { VIOLATION_STATUS_CHOICES } from "../assets/tableData";
-import { renderBooleanCell } from "../functions/renderCell";
+import { VIOLATION_STATUS_CHOICES } from "@/app/assets/tableData";
+import { renderBooleanCell } from "@/app/functions/renderCell";
 
 export const VIOLATIONS_TABLE = [
   {

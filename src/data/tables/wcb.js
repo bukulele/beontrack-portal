@@ -1,4 +1,4 @@
-import { TERMINAL_CHOICES, WCB_STATUS_CHOICES } from "../assets/tableData";
+import { TERMINAL_CHOICES, WCB_STATUS_CHOICES } from "@/app/assets/tableData";
 
 export const WCB_TABLE = [
   {

@@ -6,14 +6,14 @@ import {
   TERMINAL_CHOICES,
   DRIVERTYPE_CHOICES,
   ROUTES_CHOICES,
-} from "../assets/tableData";
-import checkDate from "../functions/checkDate_unstable";
+} from "@/app/assets/tableData";
+import checkDate from "@/app/functions/checkDate_unstable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
-import formatDate from "../functions/formatDate";
+import formatDate from "@/app/functions/formatDate";
 import { Tooltip } from "react-tooltip";
 import React from "react";
-import formatDateTime from "../functions/formatDateTime";
+import formatDateTime from "@/app/functions/formatDateTime";
 
 export const DRIVERS_TABLE_FIELDS_REPORT = [
   {

@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import DateInput from "../dateInput/DateInput";
 import { DataGridPro } from "@mui/x-data-grid-pro";
-import { DRIVER_LOG_COLUMNS } from "@/app/tableData/driversTable_unstable";
+import { DRIVER_LOG_COLUMNS } from "@/data/tables/drivers";
 
 function DriverLogComponent() {
   const [customDriverData, setCustomDriverData] = useState({

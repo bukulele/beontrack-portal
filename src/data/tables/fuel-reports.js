@@ -1,4 +1,4 @@
-import { CANADIAN_PROVINCES, QUARTERS } from "../assets/tableData";
+import { CANADIAN_PROVINCES, QUARTERS } from "@/app/assets/tableData";
 
 export const FUEL_REPORT_TABLE = [
   {

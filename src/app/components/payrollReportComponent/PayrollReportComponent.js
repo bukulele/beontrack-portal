@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLoader } from "@/app/context/LoaderContext";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 import CustomToolbarPayrollReport from "../tableContainer/CustomToolbarPayrollReport";
-import { PAYROLL_REPORT_TABLE_FIELDS } from "@/app/tableData/officeEmployeesTable_unstable";
+import { PAYROLL_REPORT_TABLE_FIELDS } from "@/data/tables/employees";
 import { useInfoCard } from "@/app/context/InfoCardContext";
 import calculateWorkingHours from "@/app/functions/calculateWorkingHours";
 import InfoCardModalContainer from "../modalContainer/InfoCardModalContainer";

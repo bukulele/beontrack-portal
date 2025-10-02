@@ -3,7 +3,7 @@ import {
   STATUS_CHOICES,
   TERMINAL_CHOICES,
   IMMIGRATION_STATUS,
-} from "../assets/tableData";
+} from "@/app/assets/tableData";
 
 export const OFFICE_TABLE_FIELDS_SAFETY = [
   {
