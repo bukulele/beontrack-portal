@@ -4,7 +4,6 @@ import React, { useState, useContext } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
-import GeneralInfoTabSimple from "@/app/components/tabs/general-info/GeneralInfoTabSimple";
 import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import { TruckContext } from "@/app/context/TruckContext";
 
@@ -56,14 +55,6 @@ function UniversalCard({ config }) {
             entityType={config.entity.type}
             entityId={entityData.id}
             apiRoute="/api/update-file"
-          />
-        );
-
-      case "general-info-simple":
-        return (
-          <GeneralInfoTabSimple
-            entityData={entityData}
-            entityType={config.entity.type}
           />
         );
 
