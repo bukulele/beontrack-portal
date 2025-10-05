@@ -1,4 +1,5 @@
 import { TRUCK_CHECKLIST_CONFIG } from "@/config/checklists/truckChecklist.config";
+import { TRUCK_GENERAL_INFO_CONFIG } from "@/config/cards/truckGeneralInfo.config";
 
 /**
  * Truck Card Configuration for Universal Card System
@@ -28,10 +29,8 @@ export const TRUCK_CARD_CONFIG = {
     {
       id: "general-info",
       label: "Truck Info",
-      type: "general-info-simple", // Using simplified version for now
-      config: {
-        // Will be populated by GeneralInfoTabSimple component
-      },
+      type: "general-info", // Full-featured general info tab
+      config: TRUCK_GENERAL_INFO_CONFIG,
     },
     {
       id: "checklist",

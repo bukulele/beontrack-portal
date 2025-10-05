@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
 import GeneralInfoTabSimple from "@/app/components/tabs/general-info/GeneralInfoTabSimple";
+import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import { TruckContext } from "@/app/context/TruckContext";
 
 /**
@@ -63,6 +64,17 @@ function UniversalCard({ config }) {
           <GeneralInfoTabSimple
             entityData={entityData}
             entityType={config.entity.type}
+          />
+        );
+
+      case "general-info":
+        return (
+          <GeneralInfoTab
+            config={tab.config}
+            entityData={entityData}
+            loadData={loadData}
+            entityType={config.entity.type}
+            entityId={entityData.id}
           />
         );
 

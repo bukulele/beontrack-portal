@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TruckProvider } from "@/app/context/TruckContext";
 import { InfoCardProvider } from "@/app/context/InfoCardContext";
 import { CreateObjectProvider } from "@/app/context/CreateObjectContext";
+import { SettingsProvider } from "@/app/context/SettingsContext";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
 import { TRUCKS_TABLE_FIELDS } from "@/data/tables/trucks";
 import { TRUCK_CARD_CONFIG } from "@/config/cards/truckCard.config";
@@ -115,13 +116,15 @@ function TrucksNewPage() {
       {selectedTruckId && (
         <Dialog open={cardOpen} onOpenChange={handleCloseCard}>
           <DialogContent className="max-w-[1100px] p-0 gap-0">
-            <InfoCardProvider>
-              <CreateObjectProvider>
-                <TruckProvider truckId={selectedTruckId}>
-                  <UniversalCard config={TRUCK_CARD_CONFIG} />
-                </TruckProvider>
-              </CreateObjectProvider>
-            </InfoCardProvider>
+            <SettingsProvider>
+              <InfoCardProvider>
+                <CreateObjectProvider>
+                  <TruckProvider truckId={selectedTruckId}>
+                    <UniversalCard config={TRUCK_CARD_CONFIG} />
+                  </TruckProvider>
+                </CreateObjectProvider>
+              </InfoCardProvider>
+            </SettingsProvider>
           </DialogContent>
         </Dialog>
       )}
