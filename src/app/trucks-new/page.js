@@ -115,7 +115,7 @@ function TrucksNewPage() {
       {/* Universal Card Modal */}
       {selectedTruckId && (
         <Dialog open={cardOpen} onOpenChange={handleCloseCard}>
-          <DialogContent className="max-w-[1100px] p-0 gap-0">
+          <DialogContent className="max-w-[1100px] p-0 gap-0 border-0 shadow-none bg-transparent [&>button]:hidden">
             <SettingsProvider>
               <InfoCardProvider>
                 <CreateObjectProvider>
