@@ -157,10 +157,10 @@ function InfoField({
   };
 
   return (
-    <Field className="border-b py-3 last:border-b-0">
-      <div className="flex items-center justify-between gap-4">
+    <Field className="py-2">
+      <div className="flex items-center justify-between gap-3">
         {/* Label */}
-        <FieldLabel className="min-w-[150px] text-sm font-medium text-muted-foreground">
+        <FieldLabel className="text-sm font-medium text-muted-foreground">
           {fieldConfig.label}
         </FieldLabel>
 

@@ -41,8 +41,8 @@ function GeneralInfoTab({
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-6">
-        <div className="flex gap-6">
+      <div className="p-4">
+        <div className="flex gap-4">
           {/* Left Side - Image */}
           {config.image && (
             <div className="flex flex-col gap-4 w-64 shrink-0">
@@ -69,7 +69,7 @@ function GeneralInfoTab({
           )}
 
           {/* Right Side - Fields and Sections */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-4">
             {/* Header with Status Badge */}
             {config.statusConfig && (
               <div className="flex items-center gap-4">
@@ -91,13 +91,13 @@ function GeneralInfoTab({
             {config.sections?.map((section, sectionIndex) => (
               <Card key={sectionIndex}>
                 {section.title && (
-                  <CardHeader className="pb-3">
+                  <CardHeader className="p-4 pb-3">
                     <CardTitle className="text-sm font-semibold text-muted-foreground uppercase">
                       {section.title}
                     </CardTitle>
                   </CardHeader>
                 )}
-                <CardContent className="space-y-0 p-4 pt-0">
+                <CardContent className="p-4 pt-0">
                   {section.fields?.map((fieldConfig, fieldIndex) => (
                     <InfoField
                       key={fieldIndex}

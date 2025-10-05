@@ -49,7 +49,7 @@ function FileSectionAccordion({
             )}
           </div>
         </AccordionTrigger>
-        <AccordionContent className="px-2 pb-2">
+        <AccordionContent className="px-3 pb-3">
           <ItemGroup>
             {section.items.map((item) => (
               <ChecklistItem
