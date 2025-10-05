@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useContext } from "react";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
+import GeneralInfoTabSimple from "@/app/components/tabs/general-info/GeneralInfoTabSimple";
+import { TruckContext } from "@/app/context/TruckContext";
 
 /**
  * UniversalCard - Configuration-driven card component
@@ -12,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
  * with a single universal component driven by configuration.
  *
  * @param {Object} config - Card configuration object
- * @param {Object} config.entity - Entity metadata (type, contextProvider, idField)
+ * @param {Object} config.entity - Entity metadata (type, contextProvider, dataKey, loadDataKey)
  * @param {Array} config.tabs - Array of tab configurations
  * @param {string} config.defaultTab - Default tab ID to open
  * @param {string} config.initialTab - Initial tab ID (overrides defaultTab if provided)
@@ -23,17 +25,63 @@ function UniversalCard({ config }) {
   const initialTabId = config.initialTab || config.defaultTab || config.tabs[0]?.id;
   const [activeTab, setActiveTab] = useState(initialTabId);
 
-  // Get width from config or use default
+  // Get width and height from config
   const width = config.width || "w-[1024px]";
+  const height = config.height || "h-[95vh]";
 
-  // Fixed height: 95vh
-  const height = "h-[95vh]";
+  // Access context data based on entity type
+  // TODO: Make this dynamic based on config.entity.contextProvider
+  const context = useContext(TruckContext);
+  const entityData = context?.[config.entity.dataKey];
+  const loadData = context?.[config.entity.loadDataKey];
+
+  // Render tab content based on type
+  const renderTabContent = (tab) => {
+    if (!entityData) {
+      return (
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          Loading...
+        </div>
+      );
+    }
+
+    switch (tab.type) {
+      case "checklist":
+        return (
+          <ChecklistTab
+            config={tab.config}
+            entityData={entityData}
+            loadData={loadData}
+            entityType={config.entity.type}
+            entityId={entityData.id}
+            apiRoute="/api/update-file"
+          />
+        );
+
+      case "general-info-simple":
+        return (
+          <GeneralInfoTabSimple
+            entityData={entityData}
+            entityType={config.entity.type}
+          />
+        );
+
+      default:
+        return (
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Tab type "{tab.type}" not implemented yet
+            </p>
+          </div>
+        );
+    }
+  };
 
   return (
-    <Card className={`${width} ${height} flex flex-col`}>
+    <Card className={`${width} ${height} flex flex-col overflow-hidden`}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
         {/* Tab Navigation - Fixed at top */}
-        <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent border-b">
+        <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent border-b shrink-0">
           {config.tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
@@ -45,33 +93,14 @@ function UniversalCard({ config }) {
           ))}
         </TabsList>
 
-        {/* Tab Content - Scrollable area */}
+        {/* Tab Content */}
         {config.tabs.map((tab) => (
           <TabsContent
             key={tab.id}
             value={tab.id}
-            className="flex-1 m-0 data-[state=inactive]:hidden"
+            className="flex-1 m-0 overflow-hidden data-[state=inactive]:hidden"
           >
-            <ScrollArea className="h-full">
-              <CardContent className="p-5">
-                {/* Placeholder - will be replaced with actual tab components */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-700">{tab.label}</h3>
-                    <p className="text-sm text-slate-500">
-                      Tab Type: <code className="bg-slate-100 px-2 py-1 rounded">{tab.type}</code>
-                    </p>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-slate-50">
-                    <p className="text-xs font-semibold text-slate-600 mb-2">Configuration:</p>
-                    <pre className="text-xs overflow-auto">
-                      {JSON.stringify(tab.config, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              </CardContent>
-            </ScrollArea>
+            {renderTabContent(tab)}
           </TabsContent>
         ))}
       </Tabs>
