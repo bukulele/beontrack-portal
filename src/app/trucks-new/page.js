@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TruckProvider } from "@/app/context/TruckContext";
 import { InfoCardProvider } from "@/app/context/InfoCardContext";
@@ -116,6 +117,9 @@ function TrucksNewPage() {
       {selectedTruckId && (
         <Dialog open={cardOpen} onOpenChange={handleCloseCard}>
           <DialogContent className="max-w-[1100px] p-0 gap-0 border-0 shadow-none bg-transparent [&>button]:hidden">
+            <VisuallyHidden.Root>
+              <DialogTitle>Truck Details</DialogTitle>
+            </VisuallyHidden.Root>
             <SettingsProvider>
               <InfoCardProvider>
                 <CreateObjectProvider>

@@ -16,9 +16,6 @@ import {
  */
 
 export const TRUCK_GENERAL_INFO_CONFIG = {
-  // Title field
-  titleField: "unit_number",
-
   // Image configuration
   image: {
     src: (entityData) => `/truck_photos/${entityData.vehicle_type}.jpg`,
@@ -46,7 +43,6 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
   // Field sections
   sections: [
     {
-      title: "Basic Information",
       fields: [
         {
           key: "unit_number",
@@ -55,10 +51,17 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           editable: false, // Primary identifier, not editable
         },
         {
-          key: "vin",
-          label: "VIN",
+          key: "truck_license_plates",
+          label: "License Plates",
           type: "text",
-          editable: true,
+          editable: false,
+          formatter: (value) => {
+            if (!value || !Array.isArray(value) || value.length === 0) return "N/A";
+            const latest = value.reduce((prev, current) =>
+              (prev.id > current.id) ? prev : current
+            );
+            return latest.plate_number || "N/A";
+          },
         },
         {
           key: "make",
@@ -73,16 +76,17 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           editable: true,
         },
         {
+          key: "vin",
+          label: "VIN",
+          type: "text",
+          editable: true,
+        },
+        {
           key: "year",
           label: "Year",
           type: "number",
           editable: true,
         },
-      ],
-    },
-    {
-      title: "Location & Assignment",
-      fields: [
         {
           key: "terminal",
           label: "Terminal",
@@ -91,11 +95,16 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           selectOptions: TERMINAL_CHOICES,
         },
         {
-          key: "owned_by",
-          label: "Owned By",
-          type: "select",
-          editable: true,
-          selectOptions: OWNEDBY_CHOICES_TRUCKS,
+          key: "driver",
+          label: "Driver",
+          type: "text",
+          editable: false,
+          formatter: (value, entityData) => {
+            // Only show driver field if owned_by === "OO"
+            if (entityData.owned_by !== "OO") return null;
+            if (!value) return "N/A";
+            return value;
+          },
         },
         {
           key: "value_in_cad",
@@ -104,11 +113,6 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           editable: true,
           formatter: (value) => value ? `$${parseFloat(value).toLocaleString()}` : "N/A",
         },
-      ],
-    },
-    {
-      title: "Notes",
-      fields: [
         {
           key: "remarks",
           label: "Remarks",

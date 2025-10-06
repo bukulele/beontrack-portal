@@ -70,23 +70,6 @@ function GeneralInfoTab({
 
           {/* Right Side - Fields and Sections */}
           <div className="flex-1 space-y-4">
-            {/* Header with Status Badge */}
-            {config.statusConfig && (
-              <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold">
-                  {config.titleField ? entityData[config.titleField] : ""}
-                </h2>
-                <StatusBadge
-                  currentStatus={entityData.status}
-                  statusChoices={config.statusConfig.statusChoices}
-                  entityType={entityType}
-                  entityId={entityId}
-                  onStatusChange={loadData}
-                  editable={config.statusConfig.editable}
-                />
-              </div>
-            )}
-
             {/* Field Sections */}
             {config.sections?.map((section, sectionIndex) => (
               <Card key={sectionIndex}>
@@ -98,17 +81,33 @@ function GeneralInfoTab({
                   </CardHeader>
                 )}
                 <CardContent className="p-4 pt-0">
-                  {section.fields?.map((fieldConfig, fieldIndex) => (
-                    <InfoField
-                      key={fieldIndex}
-                      fieldConfig={fieldConfig}
-                      value={entityData[fieldConfig.key]}
-                      entityData={entityData}
-                      entityType={entityType}
-                      entityId={entityId}
-                      onSave={loadData}
-                    />
-                  ))}
+                  {section.fields?.map((fieldConfig, fieldIndex) => {
+                    // Render StatusBadge on the first field if statusConfig exists
+                    const isFirstField = sectionIndex === 0 && fieldIndex === 0;
+                    const statusBadge = isFirstField && config.statusConfig ? (
+                      <StatusBadge
+                        currentStatus={entityData.status}
+                        statusChoices={config.statusConfig.statusChoices}
+                        entityType={entityType}
+                        entityId={entityId}
+                        onStatusChange={loadData}
+                        editable={config.statusConfig.editable}
+                      />
+                    ) : null;
+
+                    return (
+                      <InfoField
+                        key={fieldIndex}
+                        fieldConfig={fieldConfig}
+                        value={entityData[fieldConfig.key]}
+                        entityData={entityData}
+                        entityType={entityType}
+                        entityId={entityId}
+                        onSave={loadData}
+                        sideContent={statusBadge}
+                      />
+                    );
+                  })}
                 </CardContent>
               </Card>
             ))}

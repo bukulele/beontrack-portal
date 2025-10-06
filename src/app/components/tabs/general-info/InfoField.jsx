@@ -28,6 +28,7 @@ import { useLoader } from "@/app/context/LoaderContext";
  * @param {string} entityType - Entity type (truck, driver, etc.)
  * @param {number} entityId - Entity ID
  * @param {Function} onSave - Callback after successful save
+ * @param {React.ReactNode} sideContent - Optional content to render on the right side
  */
 function InfoField({
   fieldConfig,
@@ -36,6 +37,7 @@ function InfoField({
   entityType,
   entityId,
   onSave,
+  sideContent,
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value || "");
@@ -157,8 +159,8 @@ function InfoField({
   };
 
   return (
-    <Field className="py-1">
-      <div className="flex items-center justify-between gap-3">
+    <Field className="py-0.5">
+      <div className="flex items-center justify-between gap-3 min-h-[32px]">
         {/* Label */}
         <FieldLabel className="text-sm font-medium text-muted-foreground">
           {fieldConfig.label}
@@ -173,28 +175,30 @@ function InfoField({
           )}
         </div>
 
-        {/* Action Buttons */}
+        {/* Side Content or Action Buttons */}
         <div className="flex items-center gap-1 min-w-[80px] justify-end">
-          {isEditing ? (
+          {sideContent ? (
+            sideContent
+          ) : isEditing ? (
             <>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleSave}
                 disabled={!hasChanges}
-                className="h-8 w-8"
+                className="h-6 w-6"
                 title="Save"
               >
-                <FontAwesomeIcon icon={faCheck} className="text-green-600" />
+                <FontAwesomeIcon icon={faCheck} className="text-green-600 text-xs" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleCancel}
-                className="h-8 w-8"
+                className="h-6 w-6"
                 title="Cancel"
               >
-                <FontAwesomeIcon icon={faTimes} className="text-red-600" />
+                <FontAwesomeIcon icon={faTimes} className="text-red-600 text-xs" />
               </Button>
             </>
           ) : (
@@ -203,10 +207,10 @@ function InfoField({
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsEditing(true)}
-                className="h-8 w-8"
+                className="h-6 w-6"
                 title="Edit"
               >
-                <FontAwesomeIcon icon={faPenToSquare} className="text-blue-600" />
+                <FontAwesomeIcon icon={faPenToSquare} className="text-blue-600 text-xs" />
               </Button>
             )
           )}

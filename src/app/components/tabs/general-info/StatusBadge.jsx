@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect, useContext } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useSession } from "next-auth/react";
 import { useLoader } from "@/app/context/LoaderContext";
 import { SettingsContext } from "@/app/context/SettingsContext";
@@ -28,7 +33,6 @@ function StatusBadge({
   onStatusChange,
   editable = true,
 }) {
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [allowedStatuses, setAllowedStatuses] = useState({});
   const [statusColor, setStatusColor] = useState("");
@@ -76,7 +80,6 @@ function StatusBadge({
   // Handle status change
   const handleStatusChange = async (newStatus) => {
     if (newStatus === currentStatus) {
-      setIsEditing(false);
       return;
     }
 
@@ -93,7 +96,6 @@ function StatusBadge({
       });
 
       if (response.ok) {
-        setIsEditing(false);
         setSelectedStatus(newStatus);
         if (onStatusChange) onStatusChange(newStatus);
       } else {
@@ -106,45 +108,27 @@ function StatusBadge({
     }
   };
 
-  // Get badge variant based on status
-  const getBadgeClass = () => {
-    return `text-white hover:opacity-80 cursor-pointer`;
-  };
-
-  if (isEditing && editable) {
-    return (
-      <Select
-        value={selectedStatus}
-        onValueChange={(value) => {
-          handleStatusChange(value);
-        }}
-        onOpenChange={(open) => {
-          if (!open) setIsEditing(false);
-        }}
-        open={true}
-      >
-        <SelectTrigger className="w-[180px]" style={{ backgroundColor: statusColor }}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(allowedStatuses).map(([key, label]) => (
-            <SelectItem key={key} value={key}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
-
   return (
-    <Badge
-      className={getBadgeClass()}
-      style={{ backgroundColor: statusColor }}
-      onClick={() => editable && setIsEditing(true)}
-    >
-      {statusChoices[currentStatus] || currentStatus}
-    </Badge>
+    <DropdownMenu>
+      <DropdownMenuTrigger disabled={!editable}>
+        <Badge
+          className="text-white hover:opacity-80 cursor-pointer"
+          style={{ backgroundColor: statusColor }}
+        >
+          {statusChoices[currentStatus] || currentStatus}
+        </Badge>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {Object.entries(allowedStatuses).map(([key, label]) => (
+          <DropdownMenuItem
+            key={key}
+            onClick={() => handleStatusChange(key)}
+          >
+            {label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
