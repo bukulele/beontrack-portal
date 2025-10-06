@@ -157,7 +157,7 @@ function InfoField({
   };
 
   return (
-    <Field className="py-2">
+    <Field className="py-1">
       <div className="flex items-center justify-between gap-3">
         {/* Label */}
         <FieldLabel className="text-sm font-medium text-muted-foreground">
