@@ -369,3 +369,25 @@ export function listOptionLists() {
 export function listValidationRules() {
   return Object.keys(VALIDATION_RULES);
 }
+
+/**
+ * Converts array-based option list to object format for legacy compatibility
+ * Array format: [{ value: 'KEY', label: 'Label' }]
+ * Object format: { KEY: 'Label' }
+ */
+export function arrayToObjectFormat(arrayList) {
+  return arrayList.reduce((obj, item) => {
+    obj[item.value] = item.label;
+    return obj;
+  }, {});
+}
+
+/**
+ * Legacy format exports for backward compatibility with tableData.js
+ * These are used throughout the existing codebase
+ */
+export const TERMINAL_CHOICES = arrayToObjectFormat(OPTION_LISTS.TERMINAL_CHOICES);
+export const VEHICLE_TYPE_CHOICES = arrayToObjectFormat(OPTION_LISTS.VEHICLE_TYPE_CHOICES);
+export const OWNEDBY_CHOICES_TRUCKS = arrayToObjectFormat(OPTION_LISTS.OWNEDBY_CHOICES_TRUCKS);
+export const TRUCK_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.TRUCK_STATUS_CHOICES);
+export const OWNEDBY_CHOICES_EQUIPMENT = arrayToObjectFormat(OPTION_LISTS.OWNEDBY_CHOICES_EQUIPMENT);

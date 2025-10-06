@@ -1,12 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 import InfoField from "./InfoField";
 import StatusBadge from "./StatusBadge";
 import FileSectionAccordion from "./FileSectionAccordion";
 import Image from "next/image";
+import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
 
 /**
  * GeneralInfoTab - Full-featured general information tab
@@ -31,6 +34,8 @@ function GeneralInfoTab({
   entityType,
   entityId,
 }) {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   if (!entityData) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -40,9 +45,10 @@ function GeneralInfoTab({
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-4">
-        <div className="flex gap-4">
+    <>
+      <ScrollArea className="h-full">
+        <div className="p-4">
+          <div className="flex gap-4">
           {/* Left Side - Image */}
           {config.image && (
             <div className="flex flex-col gap-4 w-64 shrink-0">
@@ -82,17 +88,31 @@ function GeneralInfoTab({
                 )}
                 <CardContent className="p-4 pt-0">
                   {section.fields?.map((fieldConfig, fieldIndex) => {
-                    // Render StatusBadge on the first field if statusConfig exists
+                    // Render StatusBadge and Edit button on the first field
                     const isFirstField = sectionIndex === 0 && fieldIndex === 0;
-                    const statusBadge = isFirstField && config.statusConfig ? (
-                      <StatusBadge
-                        currentStatus={entityData.status}
-                        statusChoices={config.statusConfig.statusChoices}
-                        entityType={entityType}
-                        entityId={entityId}
-                        onStatusChange={loadData}
-                        editable={config.statusConfig.editable}
-                      />
+                    const sideContent = isFirstField ? (
+                      <div className="flex items-center gap-2">
+                        {config.statusConfig && (
+                          <StatusBadge
+                            currentStatus={entityData.status}
+                            statusChoices={config.statusConfig.statusChoices}
+                            entityType={entityType}
+                            entityId={entityId}
+                            onStatusChange={loadData}
+                            editable={config.statusConfig.editable}
+                          />
+                        )}
+                        {config.editFormConfig && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditDialogOpen(true)}
+                            className="h-8 w-8"
+                          >
+                            <Pencil className="h-4 w-4 text-blue-600" />
+                          </Button>
+                        )}
+                      </div>
                     ) : null;
 
                     return (
@@ -104,7 +124,7 @@ function GeneralInfoTab({
                         entityType={entityType}
                         entityId={entityId}
                         onSave={loadData}
-                        sideContent={statusBadge}
+                        sideContent={sideContent}
                       />
                     );
                   })}
@@ -127,6 +147,19 @@ function GeneralInfoTab({
         </div>
       </div>
     </ScrollArea>
+
+      {/* Edit Dialog */}
+      {config.editFormConfig && (
+        <EntityEditDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          entityType={entityType}
+          entityData={entityData}
+          formConfig={config.editFormConfig}
+          onSuccess={loadData}
+        />
+      )}
+    </>
   );
 }
 

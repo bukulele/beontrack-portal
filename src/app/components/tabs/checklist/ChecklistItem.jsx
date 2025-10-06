@@ -31,6 +31,7 @@ import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import FileUploader from "@/app/components/file-uploader/FileUploader";
 import ViewFilesModal from "./ViewFilesModal";
 import useUserRoles from "@/app/functions/useUserRoles";
+import InlineDataField from "./InlineDataField";
 
 /**
  * ChecklistItem - Single checklist row component
@@ -53,6 +54,20 @@ function ChecklistItem({
   entityId,
   apiRoute,
 }) {
+  // If this is a data field item (not file upload), use InlineDataField
+  if (item.itemType === "data") {
+    return (
+      <InlineDataField
+        item={item}
+        entityData={entityData}
+        loadData={loadData}
+        entityType={entityType}
+        entityId={entityId}
+      />
+    );
+  }
+
+  // File-based checklist item (existing logic)
   const [fileUploaderOpen, setFileUploaderOpen] = useState(false);
   const [viewFilesOpen, setViewFilesOpen] = useState(false);
 

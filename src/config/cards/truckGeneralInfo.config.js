@@ -1,9 +1,10 @@
 import {
-  TRUCK_STATUS_CHOICES,
-  VEHICLE_TYPE_CHOICES,
   TERMINAL_CHOICES,
+  VEHICLE_TYPE_CHOICES,
   OWNEDBY_CHOICES_TRUCKS,
-} from "@/app/assets/tableData";
+  TRUCK_STATUS_CHOICES,
+} from "@/config/clientData";
+import { TRUCK_EDIT_FORM_CONFIG } from "@/config/forms/truckEditForm.config";
 
 /**
  * Truck General Info Tab Configuration
@@ -13,9 +14,12 @@ import {
  * - Editable status badge
  * - File sections (reusing checklist items)
  * - Image display
+ * - Full entity edit form
  */
 
 export const TRUCK_GENERAL_INFO_CONFIG = {
+  // Edit form configuration
+  editFormConfig: TRUCK_EDIT_FORM_CONFIG,
   // Image configuration
   image: {
     src: (entityData) => `/truck_photos/${entityData.vehicle_type}.jpg`,
@@ -40,7 +44,7 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
     editable: true, // Can change status if not "NW"
   },
 
-  // Field sections
+  // Field sections (all READ-ONLY - edit via modal only)
   sections: [
     {
       fields: [
@@ -48,7 +52,7 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           key: "unit_number",
           label: "Unit Number",
           type: "text",
-          editable: false, // Primary identifier, not editable
+          editable: false,
         },
         {
           key: "truck_license_plates",
@@ -67,31 +71,31 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           key: "make",
           label: "Make",
           type: "text",
-          editable: true,
+          editable: false,
         },
         {
           key: "model",
           label: "Model",
           type: "text",
-          editable: true,
+          editable: false,
         },
         {
           key: "vin",
           label: "VIN",
           type: "text",
-          editable: true,
+          editable: false,
         },
         {
           key: "year",
           label: "Year",
           type: "number",
-          editable: true,
+          editable: false,
         },
         {
           key: "terminal",
           label: "Terminal",
           type: "select",
-          editable: true,
+          editable: false,
           selectOptions: TERMINAL_CHOICES,
         },
         {
@@ -110,14 +114,14 @@ export const TRUCK_GENERAL_INFO_CONFIG = {
           key: "value_in_cad",
           label: "Value (CAD)",
           type: "number",
-          editable: true,
+          editable: false,
           formatter: (value) => value ? `$${parseFloat(value).toLocaleString()}` : "N/A",
         },
         {
           key: "remarks",
           label: "Remarks",
           type: "textarea",
-          editable: true,
+          editable: false,
         },
       ],
     },
