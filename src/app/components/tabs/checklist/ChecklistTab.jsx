@@ -2,8 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ChecklistItem from "./ChecklistItem";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import ChecklistProgress from "./ChecklistProgress";
+import CompactDataRow from "./CompactDataRow";
+import CompactFileRow from "./CompactFileRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 
 /**
@@ -71,6 +78,10 @@ function ChecklistTab({
     );
   }
 
+  // Separate data and file items
+  const dataItems = config.items.filter((item) => item.itemType === "data");
+  const fileItems = config.items.filter((item) => item.itemType === "file");
+
   return (
     <div className="flex flex-col h-full">
       {/* Progress indicator */}
@@ -86,18 +97,49 @@ function ChecklistTab({
 
       {/* Checklist items */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
-          {config.items.map((item) => (
-            <ChecklistItem
-              key={item.key}
-              item={item}
-              entityData={entityData}
-              loadData={loadData}
-              entityType={entityType}
-              entityId={entityId}
-              apiRoute={apiRoute}
-            />
-          ))}
+        <div className="p-4 space-y-4">
+          {/* Data Fields Card */}
+          {dataItems.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>General Information</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {dataItems.map((item) => (
+                  <CompactDataRow
+                    key={item.key}
+                    item={item}
+                    entityData={entityData}
+                    loadData={loadData}
+                    entityType={entityType}
+                    entityId={entityId}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Documents Card */}
+          {fileItems.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Documents</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {fileItems.map((item) => (
+                  <CompactFileRow
+                    key={item.key}
+                    item={item}
+                    entityData={entityData}
+                    loadData={loadData}
+                    entityType={entityType}
+                    entityId={entityId}
+                    apiRoute={apiRoute}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </ScrollArea>
 

@@ -137,6 +137,7 @@ function GeneralInfoTab({
               <FileSectionAccordion
                 key={sectionIndex}
                 section={section}
+                readOnly={true}
                 entityData={entityData}
                 loadData={loadData}
                 entityType={entityType}

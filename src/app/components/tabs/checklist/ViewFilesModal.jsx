@@ -47,6 +47,7 @@ import checkNumericInput from "@/app/functions/checkNumericInput";
  * @param {Function} onClose - Close modal callback
  * @param {Object} item - Item configuration
  * @param {Array} itemData - Array of file records
+ * @param {boolean} readOnly - Read-only mode (no edit/delete actions)
  * @param {boolean} canEdit - User can edit files
  * @param {boolean} canDelete - User can delete files
  * @param {Function} loadData - Reload entity data
@@ -57,6 +58,7 @@ function ViewFilesModal({
   onClose,
   item,
   itemData,
+  readOnly = false,
   canEdit,
   canDelete,
   loadData,
@@ -152,7 +154,7 @@ function ViewFilesModal({
                   <TableRow>
                     <TableHead>File/Document</TableHead>
                     <TableHead>Dates</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {!readOnly && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -174,39 +176,41 @@ function ViewFilesModal({
                         )}
                       </TableCell>
                       <TableCell>{defineDateBlock(file)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          {canEdit && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                // TODO: Open edit modal
-                                console.log("Edit file:", file);
-                              }}
-                              className="h-8 w-8"
-                            >
-                              <FontAwesomeIcon
-                                icon={faPenToSquare}
-                                className="text-orange-600"
-                              />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteClick(file)}
-                              className="h-8 w-8"
-                            >
-                              <FontAwesomeIcon
-                                icon={faTrashCan}
-                                className="text-red-600"
-                              />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                      {!readOnly && (
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  // TODO: Open edit modal
+                                  console.log("Edit file:", file);
+                                }}
+                                className="h-8 w-8"
+                              >
+                                <FontAwesomeIcon
+                                  icon={faPenToSquare}
+                                  className="text-orange-600"
+                                />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteClick(file)}
+                                className="h-8 w-8"
+                              >
+                                <FontAwesomeIcon
+                                  icon={faTrashCan}
+                                  className="text-red-600"
+                                />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

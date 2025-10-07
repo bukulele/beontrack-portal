@@ -7,19 +7,21 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ItemGroup } from "@/components/ui/item";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CompactFileViewRow from "@/app/components/tabs/checklist/CompactFileViewRow";
 import ChecklistItem from "@/app/components/tabs/checklist/ChecklistItem";
 
 /**
  * FileSectionAccordion - Collapsible file sections for general info tab
  *
  * Displays file-related checklist items in an accordion.
- * Reuses ChecklistItem component for file operations.
+ * Supports both read-only mode (CompactFileViewRow) and full edit mode (ChecklistItem).
  *
  * @param {Object} section - Section configuration
  * @param {string} section.title - Section title
  * @param {Array} section.items - Checklist item configs
  * @param {boolean} section.defaultOpen - Open by default
+ * @param {boolean} readOnly - Read-only mode (no upload/edit/review)
  * @param {Object} entityData - Entity data from context
  * @param {Function} loadData - Reload entity data
  * @param {string} entityType - Entity type
@@ -28,6 +30,7 @@ import ChecklistItem from "@/app/components/tabs/checklist/ChecklistItem";
  */
 function FileSectionAccordion({
   section,
+  readOnly = false,
   entityData,
   loadData,
   entityType,
@@ -38,6 +41,32 @@ function FileSectionAccordion({
     return null;
   }
 
+  // Read-only mode: use Card with CompactFileViewRow
+  if (readOnly) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{section.title}</CardTitle>
+          {section.subtitle && (
+            <p className="text-xs text-muted-foreground mt-1">{section.subtitle}</p>
+          )}
+        </CardHeader>
+        <CardContent className="p-0">
+          {section.items.map((item) => (
+            <CompactFileViewRow
+              key={item.key}
+              item={item}
+              entityData={entityData}
+              loadData={loadData}
+              entityType={entityType}
+            />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Full edit mode: use Accordion with ChecklistItem
   return (
     <Accordion type="single" collapsible defaultValue={section.defaultOpen ? "section" : undefined}>
       <AccordionItem value="section" className="border rounded-lg">
@@ -50,19 +79,17 @@ function FileSectionAccordion({
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-3 pb-3">
-          <ItemGroup>
-            {section.items.map((item) => (
-              <ChecklistItem
-                key={item.key}
-                item={item}
-                entityData={entityData}
-                loadData={loadData}
-                entityType={entityType}
-                entityId={entityId}
-                apiRoute={apiRoute}
-              />
-            ))}
-          </ItemGroup>
+          {section.items.map((item) => (
+            <ChecklistItem
+              key={item.key}
+              item={item}
+              entityData={entityData}
+              loadData={loadData}
+              entityType={entityType}
+              entityId={entityId}
+              apiRoute={apiRoute}
+            />
+          ))}
         </AccordionContent>
       </AccordionItem>
     </Accordion>
