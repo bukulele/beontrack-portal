@@ -17,7 +17,7 @@ This is a Next.js 14 application serving as an office management system for 4Tra
 - **Framework**: Next.js 14 with App Router
 - **Styling**: Tailwind CSS with dark mode support
 - **Authentication**: NextAuth.js with Azure AD integration
-- **UI Components**: Material-UI (MUI), Radix UI components
+- **UI Components**: shadcn/ui (Radix UI primitives), Material-UI (MUI) for legacy components
 - **Data Tables**: MUI DataGrid and custom table components
 - **Maps**: Leaflet with React Leaflet
 - **File Handling**: Multer for uploads, image compression with Compressor.js
@@ -40,8 +40,15 @@ This is a Next.js 14 application serving as an office management system for 4Tra
 #### Key Features
 - **Dashboard**: Multi-role dashboard with different views including shop dashboard for 4K displays
 - **Card System**: Detailed info cards for each entity (driver cards, truck cards, etc.) with tabbed interfaces
-- **Checklist System**: Pre-hiring and post-hiring checklists for drivers and employees
+  - **General Info Tab**: Read-only overview with inline field display and clickable file viewing sections
+  - **Checklist Tab**: Configuration-driven checklist with compact rows for data fields and file uploads
+    - Uses `CompactDataRow` for always-editable data fields with inline save/cancel
+    - Uses `CompactFileRow` for file items with review checkboxes and action buttons (upload/view)
+    - Uses `CompactFileViewRow` for read-only file viewing (used in General tab)
+    - Grouped into Cards: "General Information" (data) and "Documents" (files)
 - **File Management**: Document upload/download with compression and preview
+  - Role-based permissions for view/edit/delete operations
+  - Version history tracking with review status and reviewer names
 - **Reporting**: PDF generation, payroll reports, seals reports
 - **Time Tracking**: Employee timecards and attendance management
 - **Real-time Updates**: Live shop dashboard for bay management
@@ -50,8 +57,22 @@ This is a Next.js 14 application serving as an office management system for 4Tra
 - `src/app/`: Next.js app router pages and layouts
 - `src/app/api/`: API routes (80+ endpoints)
 - `src/app/components/`: Reusable UI components (70+ components)
+  - `src/app/components/tabs/checklist/`: Checklist components
+    - `ChecklistTab.jsx`: Main checklist container with progress tracking
+    - `CompactDataRow.jsx`: Inline-editable data fields for checklists
+    - `CompactFileRow.jsx`: File upload/review rows with button groups
+    - `CompactFileViewRow.jsx`: Read-only clickable file rows (for General tab)
+    - `ViewFilesModal.jsx`: Modal for viewing file history (supports read-only mode)
+  - `src/app/components/tabs/general-info/`: General info tab components
+    - `GeneralInfoTab.jsx`: Main general info container
+    - `FileSectionAccordion.jsx`: File sections (supports read-only mode)
 - `src/app/context/`: React contexts for state management
 - `src/app/functions/`: Utility functions
+- `src/config/`: Configuration files
+  - `src/config/cards/`: Entity card configurations
+  - `src/config/checklists/`: Checklist configurations (e.g., `truckChecklist.config.js`)
+  - `src/config/forms/`: Form configurations
+- `src/components/ui/`: shadcn/ui components
 - `src/middleware.js`: Authentication and authorization middleware
 - `src/apiMappingMiddleware.js`: Role-based API access control
 
@@ -73,3 +94,16 @@ This is a Next.js 14 application serving as an office management system for 4Tra
 - Responsive design with special 4K display support for shop dashboards
 - Extensive logging and activity history tracking
 - Multi-language date/time support with timezone handling
+
+#### UI Component Guidelines
+- **shadcn/ui components**: Primary UI library for new components
+  - Avoid custom styling on shadcn components - use variants and composition instead
+  - Use `variant="outline"` for buttons in button groups to provide visible borders
+  - Button groups (from shadcn) handle borders and corners automatically
+- **Configuration-driven approach**: Prefer configuration files over hard-coded components
+  - Checklist items defined in config files (e.g., `src/config/checklists/`)
+  - Card layouts defined in config files (e.g., `src/config/cards/`)
+- **Compact layouts**: Prioritize space-efficient designs
+  - Use minimal padding (e.g., `py-1.5 px-3` for compact rows)
+  - Always-visible inputs preferred over edit-mode toggles for data fields
+  - Button groups for action buttons instead of separate buttons

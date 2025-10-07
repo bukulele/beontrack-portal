@@ -41,32 +41,7 @@ function FileSectionAccordion({
     return null;
   }
 
-  // Read-only mode: use Card with CompactFileViewRow
-  if (readOnly) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{section.title}</CardTitle>
-          {section.subtitle && (
-            <p className="text-xs text-muted-foreground mt-1">{section.subtitle}</p>
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          {section.items.map((item) => (
-            <CompactFileViewRow
-              key={item.key}
-              item={item}
-              entityData={entityData}
-              loadData={loadData}
-              entityType={entityType}
-            />
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Full edit mode: use Accordion with ChecklistItem
+  // Always use Accordion (for both read-only and edit modes)
   return (
     <Accordion type="single" collapsible defaultValue={section.defaultOpen ? "section" : undefined}>
       <AccordionItem value="section" className="border rounded-lg">
@@ -79,17 +54,31 @@ function FileSectionAccordion({
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-3 pb-3">
-          {section.items.map((item) => (
-            <ChecklistItem
-              key={item.key}
-              item={item}
-              entityData={entityData}
-              loadData={loadData}
-              entityType={entityType}
-              entityId={entityId}
-              apiRoute={apiRoute}
-            />
-          ))}
+          {readOnly ? (
+            // Read-only mode: use CompactFileViewRow
+            section.items.map((item) => (
+              <CompactFileViewRow
+                key={item.key}
+                item={item}
+                entityData={entityData}
+                loadData={loadData}
+                entityType={entityType}
+              />
+            ))
+          ) : (
+            // Edit mode: use ChecklistItem
+            section.items.map((item) => (
+              <ChecklistItem
+                key={item.key}
+                item={item}
+                entityData={entityData}
+                loadData={loadData}
+                entityType={entityType}
+                entityId={entityId}
+                apiRoute={apiRoute}
+              />
+            ))
+          )}
         </AccordionContent>
       </AccordionItem>
     </Accordion>
