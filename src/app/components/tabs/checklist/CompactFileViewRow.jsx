@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import ViewFilesModal from "./ViewFilesModal";
-import defineDateBlock from "@/app/functions/defineDateBlock";
+import formatDate from "@/app/functions/formatDate";
 
 /**
  * CompactFileViewRow - Read-only compact row for viewing files
@@ -40,8 +40,9 @@ export function CompactFileViewRow({
     if (!hasData) return "No documents uploaded";
 
     // Show expiry date if exists
-    if (latestItem.expiry_date) {
-      return `Expires: ${defineDateBlock(latestItem)}`;
+    if (latestItem.expiry_date || latestItem.expiration_date) {
+      const date = formatDate(latestItem.expiry_date || latestItem.expiration_date);
+      return date ? `Expires: ${date}` : "Expires: N/A";
     }
 
     // Show plate number for license plates
@@ -51,7 +52,8 @@ export function CompactFileViewRow({
 
     // Show issue date if exists
     if (latestItem.issue_date) {
-      return `Issued: ${defineDateBlock(latestItem)}`;
+      const date = formatDate(latestItem.issue_date);
+      return date ? `Issued: ${date}` : "Issued: N/A";
     }
 
     // Show comment if exists
