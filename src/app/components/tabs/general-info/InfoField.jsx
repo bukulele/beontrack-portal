@@ -109,6 +109,12 @@ function InfoField({
     return value || "N/A";
   };
 
+  // Check if field should be hidden (formatter returned null)
+  const displayValue = getDisplayValue();
+  if (displayValue === null) {
+    return null;
+  }
+
   // Render edit mode
   const renderEditMode = () => {
     switch (fieldConfig.type) {
@@ -172,7 +178,7 @@ function InfoField({
           {isEditing ? (
             renderEditMode()
           ) : (
-            <div className="text-sm">{getDisplayValue()}</div>
+            <div className="text-sm">{displayValue}</div>
           )}
         </div>
 
