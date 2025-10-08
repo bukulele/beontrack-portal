@@ -6,6 +6,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
 import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import { TruckContext } from "@/app/context/TruckContext";
+import { DriverContext } from "@/app/context/DriverContext";
+import { EquipmentContext } from "@/app/context/EquipmentContext";
+import { EmployeeContext } from "@/app/context/EmployeeContext";
+import { IncidentContext } from "@/app/context/IncidentContext";
+import { ViolationContext } from "@/app/context/ViolationContext";
+import { WCBContext } from "@/app/context/WCBContext";
+
+/**
+ * Context mapping for dynamic context access
+ * Maps provider names (from config) to Context objects
+ */
+const CONTEXT_MAP = {
+  TruckProvider: TruckContext,
+  DriverProvider: DriverContext,
+  EquipmentProvider: EquipmentContext,
+  EmployeeProvider: EmployeeContext,
+  IncidentProvider: IncidentContext,
+  ViolationProvider: ViolationContext,
+  WCBProvider: WCBContext,
+};
 
 /**
  * UniversalCard - Configuration-driven card component
@@ -29,9 +49,9 @@ function UniversalCard({ config }) {
   const width = config.width || "w-[1024px]";
   const height = config.height || "h-[95vh]";
 
-  // Access context data based on entity type
-  // TODO: Make this dynamic based on config.entity.contextProvider
-  const context = useContext(TruckContext);
+  // Access context data dynamically based on config.entity.contextProvider
+  const ContextToUse = CONTEXT_MAP[config.entity.contextProvider];
+  const context = useContext(ContextToUse);
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
 
