@@ -119,10 +119,11 @@ export function CompactDataRow({
         );
 
       case "select":
+        const selectValue = value ? String(value).trim() : undefined;
         return (
-          <Select value={String(value)} onValueChange={setValue}>
+          <Select value={selectValue} onValueChange={setValue}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder={`Select ${item.label}...`} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(item.dataField.options || {}).map(([key, label]) => (

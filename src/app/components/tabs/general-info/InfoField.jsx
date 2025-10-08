@@ -122,10 +122,11 @@ function InfoField({
         );
 
       case "select":
+        const trimmedValue = editValue ? String(editValue).trim() : undefined;
         return (
-          <Select value={editValue} onValueChange={setEditValue}>
+          <Select value={trimmedValue} onValueChange={setEditValue}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder={`Select ${fieldConfig.label}...`} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(fieldConfig.selectOptions || {}).map(([key, label]) => (

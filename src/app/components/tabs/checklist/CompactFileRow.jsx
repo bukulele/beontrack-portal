@@ -230,17 +230,13 @@ export function CompactFileRow({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => !hasData ? null : handleCheckmark(!isReviewed)}
-                    disabled={!hasData}
-                  >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-transparent hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800">
                     <Checkbox
                       checked={isReviewed}
                       disabled={!hasData}
+                      onCheckedChange={(checked) => handleCheckmark(checked)}
                     />
-                  </Button>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   {isReviewed
