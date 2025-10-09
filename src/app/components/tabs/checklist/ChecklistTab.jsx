@@ -120,14 +120,16 @@ function ChecklistTab({
       {/* Checklist items */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
-          {/* Custom Fields Card */}
-          {config.customFields && config.customFields.length > 0 && (
+          {/* General Information Card - combines customFields and data items */}
+          {((config.customFields && config.customFields.length > 0) ||
+            dataItems.length > 0) && (
             <Card>
               <CardHeader>
-                <CardTitle>Required Information</CardTitle>
+                <CardTitle>General Information</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {config.customFields.map((field) => (
+                {/* Custom Fields */}
+                {config.customFields?.map((field) => (
                   <CompactDataRow
                     key={field.key}
                     item={field}
@@ -137,17 +139,7 @@ function ChecklistTab({
                     entityId={entityId}
                   />
                 ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Data Fields Card */}
-          {dataItems.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>General Information</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                {/* Data Items */}
                 {dataItems.map((item) => (
                   <CompactDataRow
                     key={item.key}
@@ -191,50 +183,52 @@ function ChecklistTab({
         <div className="p-4">
           <Card>
             <CardContent className="pt-6">
-              {/* Validation error alert */}
-              {validationError && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertDescription>{validationError}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="flex gap-3 justify-end items-center flex-wrap">
-                {/* Status action buttons */}
-                {config.statusActions?.map((action) => {
-                  // Check if action should be available
-                  if (action.availableWhen && !action.availableWhen(entityData)) {
-                    return null;
-                  }
-
-                  // Get validation error if any
-                  const actionError = action.validation
-                    ? action.validation(entityData, allChecked)
-                    : null;
-
-                  return (
-                    <Button
-                      key={action.label}
-                      variant="outline"
-                      disabled={!!actionError}
-                      title={actionError || ""}
-                      onClick={() => handleStatusAction(action)}
-                    >
-                      {action.label}
-                    </Button>
-                  );
-                })}
-
-                {/* Completion action button */}
-                {config.completionAction && (
-                  <Button
-                    variant="default"
-                    disabled={!allChecked || !!validationError}
-                    title={validationError || ""}
-                    onClick={() => handleCompletionAction(config.completionAction)}
-                  >
-                    {config.completionAction.label}
-                  </Button>
+              <div className="flex gap-3 justify-between items-center flex-wrap">
+                {/* Validation error alert */}
+                {validationError && (
+                  <Alert variant="destructive" className="flex-1 py-2">
+                    <AlertDescription>{validationError}</AlertDescription>
+                  </Alert>
                 )}
+
+                <div className="flex gap-3 items-center flex-wrap">
+                  {/* Status action buttons */}
+                  {config.statusActions?.map((action) => {
+                    // Check if action should be available
+                    if (action.availableWhen && !action.availableWhen(entityData)) {
+                      return null;
+                    }
+
+                    // Get validation error if any
+                    const actionError = action.validation
+                      ? action.validation(entityData, allChecked)
+                      : null;
+
+                    return (
+                      <Button
+                        key={action.label}
+                        variant="outline"
+                        disabled={!!actionError}
+                        title={actionError || ""}
+                        onClick={() => handleStatusAction(action)}
+                      >
+                        {action.label}
+                      </Button>
+                    );
+                  })}
+
+                  {/* Completion action button */}
+                  {config.completionAction && (
+                    <Button
+                      variant="default"
+                      disabled={!allChecked || !!validationError}
+                      title={validationError || ""}
+                      onClick={() => handleCompletionAction(config.completionAction)}
+                    >
+                      {config.completionAction.label}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
