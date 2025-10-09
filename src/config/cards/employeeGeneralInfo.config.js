@@ -2,13 +2,16 @@ import {
   STATUS_CHOICES,
   DEPARTMENT_CHOICES,
   CANADIAN_PROVINCES,
+  IMMIGRATION_STATUS,
+  UPDATE_STATUS_CHOICES_EMPLOYEE,
+  TERMINAL_CHOICES,
 } from "@/config/clientData";
 import { EMPLOYEE_EDIT_FORM_CONFIG } from "@/config/forms/employeeEditForm.config";
 
 /**
  * Employee General Info Tab Configuration
  *
- * Configuration for the employee general info tab.
+ * Matches OLD EmployeeCardInfo.js structure (lines 449-701)
  */
 
 export const EMPLOYEE_GENERAL_INFO_CONFIG = {
@@ -20,18 +23,12 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
     src: (entityData) => `/employee_photos/${entityData.id}.jpg`,
     alt: "Employee Photo",
     width: 200,
-    height: 200,
+    height: 300,
+    // Data shown BELOW photo (from OLD card line 449)
     additionalInfo: [
       {
-        label: "Department",
-        value: (entityData) => DEPARTMENT_CHOICES[entityData.department] || "N/A",
-      },
-      {
-        label: "Employee Since",
-        value: (entityData) => {
-          if (!entityData.application_date) return "N/A";
-          return new Date(entityData.application_date).toLocaleDateString();
-        },
+        // Immigration Status
+        value: (entityData) => IMMIGRATION_STATUS[entityData.immigration_status] || "N/A",
       },
     ],
   },
@@ -40,12 +37,15 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   statusConfig: {
     statusChoices: STATUS_CHOICES,
     editable: true,
+    // Employee has TWO status dropdowns: update_status + status
+    updateStatus: UPDATE_STATUS_CHOICES_EMPLOYEE,
   },
 
-  // Field sections (all READ-ONLY - edit via modal)
+  // Field sections - ONE SECTION, NO TITLE (flat list)
+  // Field order from OLD EmployeeCardInfo.js lines 453-701
   sections: [
     {
-      title: "Personal Information",
+      // NO title property!
       fields: [
         {
           key: "employee_id",
@@ -55,96 +55,123 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
         },
         {
           key: "card_number",
-          label: "Card Number",
+          label: "Card #",
           type: "text",
           editable: false,
+          actions: ["copy"],
         },
         {
-          key: "first_name",
-          label: "First Name",
-          type: "text",
+          key: "name",
+          label: "Name",
+          type: "computed",
           editable: false,
-        },
-        {
-          key: "last_name",
-          label: "Last Name",
-          type: "text",
-          editable: false,
-        },
-        {
-          key: "date_of_birth",
-          label: "Date of Birth",
-          type: "date",
-          editable: false,
-          formatter: (value) => {
-            if (!value) return "N/A";
-            const age = Math.floor((Date.now() - new Date(value).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-            return `${new Date(value).toLocaleDateString()} (${age} years old)`;
-          },
+          formatter: (value, entityData) => `${entityData.first_name} ${entityData.last_name}`,
+          actions: ["copy"],
         },
         {
           key: "phone_number",
-          label: "Phone Number",
+          label: "Phone",
           type: "phone",
           editable: false,
+          formatter: (value) => value ? `+1 ${value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}` : "N/A",
+          actions: ["whatsapp", "call", "copy"],
+        },
+        {
+          key: "emergency_contact",
+          label: "Emergency contact",
+          type: "text",
+          editable: false,
+          actions: ["copy"],
+        },
+        {
+          key: "emergency_phone",
+          label: "Emergency phone",
+          type: "phone",
+          editable: false,
+          formatter: (value) => value ? `+1 ${value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}` : "N/A",
+          actions: ["call", "copy"],
         },
         {
           key: "email",
           label: "Email",
           type: "email",
           editable: false,
+          actions: ["email", "copy"],
         },
-        {
-          key: "department",
-          label: "Department",
-          type: "select",
-          editable: false,
-          selectOptions: DEPARTMENT_CHOICES,
-        },
-      ],
-    },
-    {
-      title: "Address",
-      fields: [
         {
           key: "address",
-          label: "Full Address",
-          type: "text",
+          label: "Address",
+          type: "computed",
           editable: false,
           formatter: (value, entityData) => {
             const parts = [
+              entityData.unit_or_suite,
               entityData.street_number,
               entityData.street,
-              entityData.unit_or_suite ? `Unit ${entityData.unit_or_suite}` : null,
               entityData.city,
-              CANADIAN_PROVINCES[entityData.province],
+              entityData.province,
               entityData.postal_code,
             ].filter(Boolean);
             return parts.join(", ") || "N/A";
           },
-        },
-      ],
-    },
-    {
-      title: "Emergency Contact",
-      fields: [
-        {
-          key: "emergency_contact",
-          label: "Emergency Contact Name",
-          type: "text",
-          editable: false,
+          actions: ["copy"],
         },
         {
-          key: "emergency_phone",
-          label: "Emergency Phone",
-          type: "phone",
+          key: "date_of_birth",
+          label: "Date of Birth",
+          type: "date",
           editable: false,
+          sideInfo: (entityData) => {
+            if (!entityData.date_of_birth) return null;
+            const age = Math.floor((Date.now() - new Date(entityData.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+            return `Age: ${age}`;
+          },
+        },
+        {
+          key: "terminal",
+          label: "Terminal",
+          type: "select",
+          editable: false,
+          selectOptions: TERMINAL_CHOICES,
+          sideInfo: (entityData) => {
+            // Title | Department display
+            const title = entityData.title || "";
+            const dept = DEPARTMENT_CHOICES[entityData.department] || "";
+            if (title && dept) return `${title} | ${dept}`;
+            if (title) return title;
+            if (dept) return dept;
+            return null;
+          },
+        },
+        {
+          key: "hiring_date",
+          label: "Hiring Date",
+          type: "date",
+          editable: false,
+          formatter: (value, entityData) => {
+            // TODO: Add time passed calculation like OLD card
+            return value;
+          },
+        },
+        {
+          key: "date_of_leaving",
+          label: "Leaving Date",
+          type: "date",
+          editable: false,
+          conditional: (entityData) => {
+            return entityData.date_of_leaving &&
+                   (entityData.status === "RE" || entityData.status === "TE");
+          },
+          formatter: (value, entityData) => {
+            // TODO: Add time passed calculation
+            return value;
+          },
         },
       ],
     },
   ],
 
-  // File sections - reuse checklist item configs for most important docs
+  // File sections - essential docs in general tab
   fileSections: [
     {
       title: "Essential Documents",

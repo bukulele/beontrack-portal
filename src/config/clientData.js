@@ -162,6 +162,18 @@ export const OPTION_LISTS = {
     { value: 'RJ', label: 'Rejected' },
   ],
 
+  UPDATE_STATUS_CHOICES: [
+    { value: 'UR', label: 'Update Required from Driver' },
+    { value: 'TR', label: 'To be Reviewed by Safety' },
+    { value: 'OK', label: 'No pending changes' },
+  ],
+
+  UPDATE_STATUS_CHOICES_EMPLOYEE: [
+    { value: 'UR', label: 'Update Required from Employee' },
+    { value: 'TR', label: 'To be Reviewed by Payroll' },
+    { value: 'OK', label: 'No pending changes' },
+  ],
+
   // Vehicle & Equipment
   TERMINAL_CHOICES: [
     { value: 'NA', label: 'N/A' },
@@ -201,6 +213,15 @@ export const OPTION_LISTS = {
     { value: 'RE', label: '53ft Reefer' },
     { value: 'CH', label: '53ft Chassis/Container' },
     { value: 'CV', label: 'Convereter' },
+  ],
+
+  EQUIPMENT_STATUS_CHOICES: [
+    { value: 'NW', label: 'New' },
+    { value: 'AC', label: 'Active' },
+    { value: 'SL', label: 'Sold' },
+    { value: 'TL', label: 'Total Loss' },
+    { value: 'OS', label: 'Out of Service' },
+    { value: 'LE', label: 'Left 4Tracks' },
   ],
 
   AXLE_CHOICES: [
@@ -393,3 +414,13 @@ export const TRUCK_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.TRUCK_STATU
 export const OWNEDBY_CHOICES_EQUIPMENT = arrayToObjectFormat(OPTION_LISTS.OWNEDBY_CHOICES_EQUIPMENT);
 export const STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.STATUS_CHOICES);
 export const CANADIAN_PROVINCES = arrayToObjectFormat(OPTION_LISTS.CANADIAN_PROVINCES);
+export const IMMIGRATION_STATUS = arrayToObjectFormat(OPTION_LISTS.IMMIGRATION_STATUS);
+export const DRIVERTYPE_CHOICES = arrayToObjectFormat(OPTION_LISTS.DRIVERTYPE_CHOICES);
+export const UPDATE_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.UPDATE_STATUS_CHOICES);
+export const UPDATE_STATUS_CHOICES_EMPLOYEE = arrayToObjectFormat(OPTION_LISTS.UPDATE_STATUS_CHOICES_EMPLOYEE);
+export const EQUIPMENT_TYPE_CHOICES = arrayToObjectFormat(OPTION_LISTS.EQUIPMENT_TYPE_CHOICES);
+export const EQUIPMENT_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.EQUIPMENT_STATUS_CHOICES);
+export const INCIDENT_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.INCIDENT_STATUS_CHOICES);
+export const VIOLATION_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.VIOLATION_STATUS_CHOICES);
+export const WCB_STATUS_CHOICES = arrayToObjectFormat(OPTION_LISTS.WCB_STATUS_CHOICES);
+export const DEPARTMENT_CHOICES = arrayToObjectFormat(OPTION_LISTS.DEPARTMENT_CHOICES);

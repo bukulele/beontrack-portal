@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import ChecklistProgress from "./ChecklistProgress";
 import CompactDataRow from "./CompactDataRow";
 import CompactFileRow from "./CompactFileRow";
@@ -39,6 +41,7 @@ function ChecklistTab({
 }) {
   const [allChecked, setAllChecked] = useState(false);
   const [progress, setProgress] = useState({ checked: 0, total: 0 });
+  const [validationError, setValidationError] = useState(null);
 
   // Calculate progress whenever entity data changes
   useEffect(() => {
@@ -48,6 +51,9 @@ function ChecklistTab({
     let totalCount = 0;
 
     config.items.forEach((item) => {
+      // Skip items that should not be displayed
+      if (item.shouldDisplay && !item.shouldDisplay(entityData)) return;
+
       // Skip optional items for "all checked" calculation
       if (item.optional) return;
 
@@ -70,6 +76,17 @@ function ChecklistTab({
     setAllChecked(checkedCount === totalCount && totalCount > 0);
   }, [entityData, config]);
 
+  // Run validation when allChecked or entityData changes
+  useEffect(() => {
+    if (!config?.completionAction?.validation) {
+      setValidationError(null);
+      return;
+    }
+
+    const error = config.completionAction.validation(entityData, allChecked);
+    setValidationError(error);
+  }, [entityData, allChecked, config]);
+
   if (!entityData || !config?.items) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -78,9 +95,14 @@ function ChecklistTab({
     );
   }
 
-  // Separate data and file items
-  const dataItems = config.items.filter((item) => item.itemType === "data");
-  const fileItems = config.items.filter((item) => item.itemType === "file");
+  // Filter items by shouldDisplay, then separate data and file items
+  const visibleItems = config.items.filter((item) => {
+    if (!item.shouldDisplay) return true;
+    return item.shouldDisplay(entityData);
+  });
+
+  const dataItems = visibleItems.filter((item) => item.itemType === "data");
+  const fileItems = visibleItems.filter((item) => item.itemType === "file");
 
   return (
     <div className="flex flex-col h-full">
@@ -98,6 +120,27 @@ function ChecklistTab({
       {/* Checklist items */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
+          {/* Custom Fields Card */}
+          {config.customFields && config.customFields.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Required Information</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {config.customFields.map((field) => (
+                  <CompactDataRow
+                    key={field.key}
+                    item={field}
+                    entityData={entityData}
+                    loadData={loadData}
+                    entityType={entityType}
+                    entityId={entityId}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Data Fields Card */}
           {dataItems.length > 0 && (
             <Card>
@@ -143,15 +186,74 @@ function ChecklistTab({
         </div>
       </ScrollArea>
 
-      {/* Completion action (e.g., "Set To Active" button) */}
-      {config.completionAction && allChecked && (
-        <div className="p-4 border-t flex justify-end">
-          {/* This will be rendered by a CompletionAction component */}
-          {/* For now, placeholder */}
+      {/* Action buttons footer */}
+      {(config.statusActions || config.completionAction) && (
+        <div className="p-4">
+          <Card>
+            <CardContent className="pt-6">
+              {/* Validation error alert */}
+              {validationError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertDescription>{validationError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex gap-3 justify-end items-center flex-wrap">
+                {/* Status action buttons */}
+                {config.statusActions?.map((action) => {
+                  // Check if action should be available
+                  if (action.availableWhen && !action.availableWhen(entityData)) {
+                    return null;
+                  }
+
+                  // Get validation error if any
+                  const actionError = action.validation
+                    ? action.validation(entityData, allChecked)
+                    : null;
+
+                  return (
+                    <Button
+                      key={action.label}
+                      variant="outline"
+                      disabled={!!actionError}
+                      title={actionError || ""}
+                      onClick={() => handleStatusAction(action)}
+                    >
+                      {action.label}
+                    </Button>
+                  );
+                })}
+
+                {/* Completion action button */}
+                {config.completionAction && (
+                  <Button
+                    variant="default"
+                    disabled={!allChecked || !!validationError}
+                    title={validationError || ""}
+                    onClick={() => handleCompletionAction(config.completionAction)}
+                  >
+                    {config.completionAction.label}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
   );
+
+  // Handler for status action buttons
+  async function handleStatusAction(action) {
+    // TODO: Implement status change logic
+    console.log("Status action:", action);
+  }
+
+  // Handler for completion action
+  async function handleCompletionAction(action) {
+    // TODO: Implement completion action logic
+    console.log("Completion action:", action);
+  }
 }
 
 export default ChecklistTab;

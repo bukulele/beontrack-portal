@@ -18,10 +18,11 @@ export const VIOLATION_GENERAL_INFO_CONFIG = {
     editable: true,
   },
 
-  // Field sections (all READ-ONLY - edit via modal)
+  // Field sections - ONE SECTION, NO TITLE (flat list)
+  // Merged all fields from 2 sections into 1
   sections: [
     {
-      title: "Violation Information",
+      // NO title property!
       fields: [
         {
           key: "violation_number",
@@ -65,11 +66,6 @@ export const VIOLATION_GENERAL_INFO_CONFIG = {
           type: "textarea",
           editable: false,
         },
-      ],
-    },
-    {
-      title: "Driver & Vehicle",
-      fields: [
         {
           key: "main_driver_id",
           label: "Main Driver",

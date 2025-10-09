@@ -18,10 +18,11 @@ export const INCIDENT_GENERAL_INFO_CONFIG = {
     editable: true,
   },
 
-  // Field sections (all READ-ONLY - edit via modal)
+  // Field sections - ONE SECTION, NO TITLE (flat list)
+  // Merged all fields from 3 sections into 1
   sections: [
     {
-      title: "Incident Information",
+      // NO title property!
       fields: [
         {
           key: "incident_number",
@@ -53,11 +54,6 @@ export const INCIDENT_GENERAL_INFO_CONFIG = {
           type: "textarea",
           editable: false,
         },
-      ],
-    },
-    {
-      title: "Drivers & Vehicles",
-      fields: [
         {
           key: "main_driver_id",
           label: "Main Driver",
@@ -124,11 +120,6 @@ export const INCIDENT_GENERAL_INFO_CONFIG = {
             idField: "truck",
           },
         },
-      ],
-    },
-    {
-      title: "Trailers & Cargo",
-      fields: [
         {
           key: "trailer_1_unit_number",
           label: "Trailer 1 Unit #",
