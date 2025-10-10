@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import ChecklistProgress from "./ChecklistProgress";
 import CompactDataRow from "./CompactDataRow";
 import CompactFileRow from "./CompactFileRow";
+import CompactModalRow from "./CompactModalRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 
 /**
@@ -140,16 +141,35 @@ function ChecklistTab({
                   />
                 ))}
                 {/* Data Items */}
-                {dataItems.map((item) => (
-                  <CompactDataRow
-                    key={item.key}
-                    item={item}
-                    entityData={entityData}
-                    loadData={loadData}
-                    entityType={entityType}
-                    entityId={entityId}
-                  />
-                ))}
+                {dataItems.map((item) => {
+                  // Check if this item has a modal component specified in config
+                  if (item.modalComponent) {
+                    // Use CompactModalRow for items with modals
+                    return (
+                      <CompactModalRow
+                        key={item.key}
+                        item={item}
+                        modalComponent={item.modalComponent}
+                        entityData={entityData}
+                        loadData={loadData}
+                        entityType={entityType}
+                        entityId={entityId}
+                      />
+                    );
+                  } else {
+                    // Use CompactDataRow for regular data items
+                    return (
+                      <CompactDataRow
+                        key={item.key}
+                        item={item}
+                        entityData={entityData}
+                        loadData={loadData}
+                        entityType={entityType}
+                        entityId={entityId}
+                      />
+                    );
+                  }
+                })}
               </CardContent>
             </Card>
           )}

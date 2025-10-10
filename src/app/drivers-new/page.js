@@ -13,7 +13,7 @@ import { TrucksDriversProvider } from "@/app/context/TrucksDriversContext";
 import { IncidentsListProvider } from "@/app/context/IncidentsListContext";
 import { ViolationsListProvider } from "@/app/context/ViolationsListContext";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
-import { DRIVERS_TABLE_FIELDS_REPORT } from "@/data/tables/drivers";
+import { DRIVERS_TABLE_FIELDS_SAFETY } from "@/data/tables/drivers";
 import { DRIVER_CARD_CONFIG } from "@/config/cards/driverCard.config";
 
 function DriversNewPage() {
@@ -29,7 +29,7 @@ function DriversNewPage() {
   const fetchDrivers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/get-drivers");
+      const response = await fetch("/api/get-drivers-safety");
       const data = await response.json();
       setDrivers(data);
     } catch (error) {
@@ -50,7 +50,7 @@ function DriversNewPage() {
     fetchDrivers();
   };
 
-  const columns = DRIVERS_TABLE_FIELDS_REPORT.map((col) => ({
+  const columns = DRIVERS_TABLE_FIELDS_SAFETY.map((col) => ({
     field: col.field,
     headerName: col.headerName,
     width: col.width || 150,
@@ -62,9 +62,12 @@ function DriversNewPage() {
       <div className="max-w-7xl mx-auto">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl">Drivers - New Universal Card System</CardTitle>
+            <CardTitle className="text-2xl">
+              Drivers - New Universal Card System
+            </CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Testing Phase 5B: DriverCard with 3 tabs (General + 2 Checklists) - MOST COMPLEX
+              Testing Phase 5B: DriverCard with 3 tabs (General + 2 Checklists)
+              - MOST COMPLEX
             </p>
           </CardHeader>
         </Card>

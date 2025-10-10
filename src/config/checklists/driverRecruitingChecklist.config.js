@@ -9,7 +9,10 @@
 import {
   TERMINAL_CHOICES,
   DRIVERTYPE_CHOICES,
+  OPTION_LISTS,
 } from "@/config/clientData";
+import ActivityHistoryModal from "@/app/components/tabs/checklist/ActivityHistoryModal";
+import DriverBackgroundModal from "@/app/components/tabs/checklist/DriverBackgroundModal";
 
 export const DRIVER_RECRUITING_CHECKLIST_CONFIG = {
   // Show progress indicator
@@ -28,6 +31,7 @@ export const DRIVER_RECRUITING_CHECKLIST_CONFIG = {
       key: "routes",
       label: "Routes",
       type: "multi-select",
+      selectOptions: OPTION_LISTS.ROUTES_CHOICES,
       required: true,
     },
     {
@@ -218,6 +222,7 @@ export const DRIVER_RECRUITING_CHECKLIST_CONFIG = {
       label: "Activity History",
       optional: false,
       itemType: "data", // Not a file, just displays activity
+      modalComponent: ActivityHistoryModal,
 
       actions: {
         checkable: false,
@@ -236,6 +241,7 @@ export const DRIVER_RECRUITING_CHECKLIST_CONFIG = {
       label: "Driver Background",
       optional: false,
       itemType: "data", // Not a file
+      modalComponent: DriverBackgroundModal,
 
       actions: {
         checkable: false,

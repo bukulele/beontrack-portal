@@ -12,11 +12,10 @@ import {
 } from "@/components/ui/tooltip";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faCircle as faCircleSolid,
   faUpload,
   faEye,
 } from "@fortawesome/free-solid-svg-icons";
-import { faCircle as faCircleRegular } from "@fortawesome/free-regular-svg-icons";
+import { Circle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLoader } from "@/app/context/LoaderContext";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
@@ -133,15 +132,13 @@ export function CompactFileRow({
   const renderMissingIndicator = () => {
     if (hasData) return null;
 
-    const IconComponent = item.optional ? faCircleRegular : faCircleSolid;
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center">
-              <FontAwesomeIcon
-                icon={IconComponent}
-                className="text-red-600 text-xs"
+              <Circle
+                className={`h-2 w-2 text-red-600 shrink-0 ${item.optional ? '' : 'fill-red-600'}`}
               />
             </div>
           </TooltipTrigger>
