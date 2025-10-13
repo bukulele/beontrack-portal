@@ -1,15 +1,15 @@
 import { DRIVER_RECRUITING_CHECKLIST_CONFIG } from "@/config/checklists/driverRecruitingChecklist.config";
 import { DRIVER_SAFETY_CHECKLIST_CONFIG } from "@/config/checklists/driverSafetyChecklist.config";
 import { DRIVER_GENERAL_INFO_CONFIG } from "@/config/cards/driverGeneralInfo.config";
+import { driverLogConfig } from "@/config/cards/driverLog.config";
 
 /**
  * Driver Card Configuration for Universal Card System
  *
- * Phase 5A: 3 tabs (general-info + 2 checklists)
+ * Phase 6: 4 tabs (general-info + 2 checklists + log)
  * DriverCard is the MOST COMPLEX card with 10 tabs total.
  *
  * Deferred tabs:
- * - Notes tab (needs log type - Phase 6)
  * - Trucks tab (needs list type - Phase 7)
  * - O/O Drivers tab (needs list type - Phase 7)
  * - Incidents tab (needs list type - Phase 7)
@@ -41,7 +41,7 @@ export const DRIVER_CARD_CONFIG = {
   // Default tab to open
   defaultTab: "general-info",
 
-  // Tabs configuration - Phase 5A: 3 tabs (general + 2 checklists)
+  // Tabs configuration - Phase 6: 4 tabs (general + 2 checklists + log)
   tabs: [
     {
       id: "general-info",
@@ -61,7 +61,12 @@ export const DRIVER_CARD_CONFIG = {
       type: "checklist",
       config: DRIVER_SAFETY_CHECKLIST_CONFIG,
     },
-    // TODO Phase 6: Add Notes tab (log type)
+    {
+      id: "notes",
+      label: "Notes",
+      type: "log",
+      config: driverLogConfig,
+    },
     // TODO Phase 7: Add Trucks, O/O Drivers, Incidents, Violations tabs (list type)
     // TODO Phase 8: Add Seals tab (custom-seals type)
     // TODO Phase 9: Add Time Card tab (timecard type)

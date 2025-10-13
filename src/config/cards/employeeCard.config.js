@@ -1,12 +1,12 @@
 import { EMPLOYEE_CHECKLIST_CONFIG } from "@/config/checklists/employeeChecklist.config";
 import { EMPLOYEE_GENERAL_INFO_CONFIG } from "@/config/cards/employeeGeneralInfo.config";
+import { employeeLogConfig } from "@/config/cards/employeeLog.config";
 
 /**
  * Employee Card Configuration for Universal Card System
  *
- * Phase 5A: Only 2 tabs (general-info + checklist)
+ * Phase 6: 3 tabs (general-info + checklist + log)
  * Deferred tabs:
- * - Notes tab (needs log type - Phase 6)
  * - Time Card tab (needs timecard type - Phase 9)
  */
 
@@ -26,7 +26,7 @@ export const EMPLOYEE_CARD_CONFIG = {
   // Default tab to open
   defaultTab: "general-info",
 
-  // Tabs configuration - Phase 5A: Only 2 tabs
+  // Tabs configuration - Phase 6: 3 tabs (general + checklist + log)
   tabs: [
     {
       id: "general-info",
@@ -40,7 +40,12 @@ export const EMPLOYEE_CARD_CONFIG = {
       type: "checklist",
       config: EMPLOYEE_CHECKLIST_CONFIG,
     },
-    // TODO Phase 6: Add Notes tab (log type)
+    {
+      id: "notes",
+      label: "Notes",
+      type: "log",
+      config: employeeLogConfig,
+    },
     // TODO Phase 9: Add Time Card tab (timecard type)
   ],
 };

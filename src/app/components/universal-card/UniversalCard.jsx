@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
 import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
+import LogTab from "@/app/components/tabs/log/LogTab";
 import { TruckContext } from "@/app/context/TruckContext";
 import { DriverContext } from "@/app/context/DriverContext";
 import { EquipmentContext } from "@/app/context/EquipmentContext";
@@ -86,6 +87,14 @@ function UniversalCard({ config }) {
             loadData={loadData}
             entityType={config.entity.type}
             entityId={entityData.id}
+          />
+        );
+
+      case "log":
+        return (
+          <LogTab
+            config={tab.config}
+            context={context}
           />
         );
 
