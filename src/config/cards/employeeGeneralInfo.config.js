@@ -1,7 +1,6 @@
 import {
   STATUS_CHOICES,
   DEPARTMENT_CHOICES,
-  CANADIAN_PROVINCES,
   IMMIGRATION_STATUS,
   UPDATE_STATUS_CHOICES_EMPLOYEE,
   TERMINAL_CHOICES,
@@ -11,7 +10,8 @@ import { EMPLOYEE_EDIT_FORM_CONFIG } from "@/config/forms/employeeEditForm.confi
 /**
  * Employee General Info Tab Configuration
  *
- * Matches OLD EmployeeCardInfo.js structure (lines 449-701)
+ * Matches OLD EMPLOYEE_COMMON_CHECKLIST from tableData.js (lines 589-674)
+ * Employee documents are DIFFERENT from driver documents!
  */
 
 export const EMPLOYEE_GENERAL_INFO_CONFIG = {
@@ -20,15 +20,16 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
 
   // Image configuration (employee photo)
   image: {
-    src: (entityData) => `/employee_photos/${entityData.id}.jpg`,
+    src: (entityData) => entityData.employee_photo?.file || "/no_photo_driver.png",
     alt: "Employee Photo",
     width: 200,
     height: 300,
-    // Data shown BELOW photo (from OLD card line 449)
+    // Data shown BELOW photo
     additionalInfo: [
       {
         // Immigration Status
         value: (entityData) => IMMIGRATION_STATUS[entityData.immigration_status] || "N/A",
+        bold: true,
       },
     ],
   },
@@ -42,7 +43,6 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   },
 
   // Field sections - ONE SECTION, NO TITLE (flat list)
-  // Field order from OLD EmployeeCardInfo.js lines 453-701
   sections: [
     {
       // NO title property!
@@ -148,10 +148,6 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
           label: "Hiring Date",
           type: "date",
           editable: false,
-          formatter: (value, entityData) => {
-            // TODO: Add time passed calculation like OLD card
-            return value;
-          },
         },
         {
           key: "date_of_leaving",
@@ -162,114 +158,114 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
             return entityData.date_of_leaving &&
                    (entityData.status === "RE" || entityData.status === "TE");
           },
-          formatter: (value, entityData) => {
-            // TODO: Add time passed calculation
-            return value;
-          },
         },
       ],
     },
   ],
 
-  // File sections - essential docs in general tab
+  // File sections - READ-ONLY display in General tab
+  // 3 sections matching OLD EmployeeCardData.js structure
+  // BUT only including documents from EMPLOYEE_COMMON_CHECKLIST (14 items total)
   fileSections: [
     {
-      title: "Essential Documents",
+      title: "Docs & Dates",
       defaultOpen: true,
+      items: [
+        {
+          key: "immigration_doc",
+          label: "Immigration Docs",
+          optional: false,
+          itemType: "file",
+        },
+      ],
+    },
+    {
+      title: "HR & Recruiting",
+      defaultOpen: false,
       items: [
         {
           key: "id_documents",
           label: "ID Documents",
           optional: false,
           itemType: "file",
-
-          fileUpload: {
-            accept: "image/*,application/pdf",
-            fields: [
-              {
-                type: "textarea",
-                name: "comment",
-                label: "Comment",
-                required: false,
-              },
-            ],
-          },
-
-          actions: {
-            checkable: true,
-            uploadable: true,
-            editable: true,
-            deletable: true,
-          },
-
-          roles: {
-            view: ["all"],
-            edit: ["recruiting", "admin", "portalHr"],
-            delete: ["admin"],
-          },
         },
+        {
+          key: "activity_history",
+          label: "Activity History",
+          optional: false,
+          itemType: "data",
+        },
+        {
+          key: "consents",
+          label: "Consent to Personal Investigation",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "employment_contracts",
+          label: "Employment Contract",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "passports",
+          label: "Passports",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "us_visas",
+          label: "US Visas",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "employee_resumes",
+          label: "Resumes",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "employee_memos",
+          label: "Employee Memos",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "employee_ctpat_papers",
+          label: "CTPAT Papers",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "other_documents",
+          label: "Other Documents",
+          optional: true,
+          itemType: "file",
+        },
+      ],
+    },
+    {
+      title: "Payroll",
+      defaultOpen: false,
+      items: [
         {
           key: "sin",
           label: "SIN",
           optional: false,
           itemType: "file",
-
-          fileUpload: {
-            accept: "image/*,application/pdf",
-            fields: [
-              {
-                type: "number",
-                name: "number",
-                label: "Document Number",
-                required: false,
-                max: 9,
-              },
-            ],
-          },
-
-          actions: {
-            checkable: true,
-            uploadable: true,
-            editable: true,
-            deletable: true,
-          },
-
-          roles: {
-            view: ["all"],
-            edit: ["payroll", "payrollManager", "admin", "portalHr"],
-            delete: ["admin"],
-          },
         },
         {
           key: "void_check",
           label: "Void Check",
           optional: false,
           itemType: "file",
-
-          fileUpload: {
-            accept: "image/*,application/pdf",
-            fields: [
-              {
-                type: "textarea",
-                name: "comment",
-                label: "Comment",
-                required: false,
-              },
-            ],
-          },
-
-          actions: {
-            checkable: true,
-            uploadable: true,
-            editable: true,
-            deletable: true,
-          },
-
-          roles: {
-            view: ["all"],
-            edit: ["payroll", "payrollManager", "admin", "portalHr"],
-            delete: ["admin"],
-          },
+        },
+        {
+          key: "tax_papers",
+          label: "Tax Papers",
+          optional: false,
+          itemType: "file",
         },
       ],
     },

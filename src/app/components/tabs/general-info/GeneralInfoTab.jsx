@@ -63,12 +63,28 @@ function GeneralInfoTab({
               {/* Additional info below image */}
               {config.image.additionalInfo && (
                 <div className="space-y-2 text-sm">
-                  {config.image.additionalInfo.map((info, index) => (
-                    <div key={index}>
-                      <span className="font-semibold">{info.label}: </span>
-                      <span>{info.value(entityData)}</span>
-                    </div>
-                  ))}
+                  {config.image.additionalInfo.map((info, index) => {
+                    // Handle checkbox type with showOnlyIfTrue
+                    if (info.type === "checkbox" && info.showOnlyIfTrue) {
+                      const value = info.value(entityData);
+                      if (!value) return null; // Don't show if false
+                      return (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="font-semibold">{info.label}</span>
+                          <span>✓</span>
+                        </div>
+                      );
+                    }
+
+                    // Regular text display
+                    const value = info.value(entityData);
+                    return (
+                      <div key={index}>
+                        {info.label && <span className="font-semibold">{info.label}: </span>}
+                        <span className={info.bold ? "font-semibold" : ""}>{value}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

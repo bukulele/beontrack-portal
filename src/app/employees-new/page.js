@@ -26,7 +26,7 @@ function EmployeesNewPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/get-employees");
+      const response = await fetch("/api/get-hired-employees");
       const data = await response.json();
       setEmployees(data);
     } catch (error) {
@@ -103,7 +103,7 @@ function EmployeesNewPage() {
             <SettingsProvider>
               <InfoCardProvider>
                 <CreateObjectProvider>
-                  <EmployeeProvider employeeId={selectedEmployeeId}>
+                  <EmployeeProvider userId={selectedEmployeeId}>
                     <UniversalCard config={EMPLOYEE_CARD_CONFIG} />
                   </EmployeeProvider>
                 </CreateObjectProvider>
