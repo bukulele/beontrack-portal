@@ -72,7 +72,9 @@ export function ActivityHistoryModal({
   };
 
   const [activities, setActivities] = useState([]);
+  const [originalActivities, setOriginalActivities] = useState([]);
   const [gaps, setGaps] = useState([]);
+  const [hasChanges, setHasChanges] = useState(false);
   const { startLoading, stopLoading } = useLoader();
 
   const period = 10; // years to check
@@ -80,13 +82,17 @@ export function ActivityHistoryModal({
   // Initialize activities from itemData
   useEffect(() => {
     if (itemData && Array.isArray(itemData)) {
-      setActivities(itemData.map(item => ({ ...item })));
+      const activitiesData = itemData.map(item => ({ ...item }));
+      setActivities(activitiesData);
+      setOriginalActivities(JSON.parse(JSON.stringify(activitiesData)));
     } else {
       setActivities([]);
+      setOriginalActivities([]);
     }
+    setHasChanges(false);
   }, [itemData, open]);
 
-  // Check for gaps whenever activities change
+  // Check for gaps and changes whenever activities change
   useEffect(() => {
     if (activities.length > 0) {
       const detectedGaps = checkActivityPeriod(activities, period);
@@ -94,7 +100,11 @@ export function ActivityHistoryModal({
     } else {
       setGaps([]);
     }
-  }, [activities]);
+
+    // Check if there are changes
+    const changed = JSON.stringify(activities) !== JSON.stringify(originalActivities);
+    setHasChanges(changed);
+  }, [activities, originalActivities]);
 
   const addActivity = () => {
     setActivities([...activities, { ...ACTIVITY_TEMPLATE }]);
@@ -372,7 +382,7 @@ export function ActivityHistoryModal({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={saveActivities}>
+            <Button onClick={saveActivities} disabled={!hasChanges}>
               Save Changes
             </Button>
           </ButtonGroup>

@@ -59,13 +59,15 @@ export function DriverBackgroundModal({
   };
 
   const [background, setBackground] = useState(BACKGROUND_TEMPLATE);
+  const [originalBackground, setOriginalBackground] = useState(BACKGROUND_TEMPLATE);
+  const [hasChanges, setHasChanges] = useState(false);
   const { startLoading, stopLoading } = useLoader();
   const { data: session } = useSession();
 
   // Initialize background data
   useEffect(() => {
     if (entityData) {
-      setBackground({
+      const backgroundData = {
         file_box_number: entityData.file_box_number || "",
         highest_level_of_education: entityData.highest_level_of_education || "",
         name_of_school: entityData.name_of_school || "",
@@ -77,13 +79,22 @@ export function DriverBackgroundModal({
         denied_license_reason: entityData.denied_license_reason || "",
         license_suspended_or_revoked: entityData.license_suspended_or_revoked || false,
         suspension_or_revocation_reason: entityData.suspension_or_revocation_reason || "",
-      });
+      };
+      setBackground(backgroundData);
+      setOriginalBackground(JSON.parse(JSON.stringify(backgroundData)));
     }
+    setHasChanges(false);
   }, [entityData, open]);
 
   const updateField = (field, value) => {
     setBackground(prev => ({ ...prev, [field]: value }));
   };
+
+  // Check for changes whenever background changes
+  useEffect(() => {
+    const changed = JSON.stringify(background) !== JSON.stringify(originalBackground);
+    setHasChanges(changed);
+  }, [background, originalBackground]);
 
   const saveBackground = async () => {
     try {
@@ -287,7 +298,7 @@ export function DriverBackgroundModal({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={saveBackground}>
+            <Button onClick={saveBackground} disabled={!hasChanges}>
               Save Changes
             </Button>
           </ButtonGroup>
