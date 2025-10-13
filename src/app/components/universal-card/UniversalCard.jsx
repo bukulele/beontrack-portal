@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
 import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import LogTab from "@/app/components/tabs/log/LogTab";
+import ListTab from "@/app/components/tabs/list/ListTab";
 import { TruckContext } from "@/app/context/TruckContext";
 import { DriverContext } from "@/app/context/DriverContext";
 import { EquipmentContext } from "@/app/context/EquipmentContext";
@@ -13,6 +14,9 @@ import { EmployeeContext } from "@/app/context/EmployeeContext";
 import { IncidentContext } from "@/app/context/IncidentContext";
 import { ViolationContext } from "@/app/context/ViolationContext";
 import { WCBContext } from "@/app/context/WCBContext";
+import { IncidentsListContext } from "@/app/context/IncidentsListContext";
+import { ViolationsListContext } from "@/app/context/ViolationsListContext";
+import { TrucksDriversContext } from "@/app/context/TrucksDriversContext";
 
 /**
  * Context mapping for dynamic context access
@@ -26,6 +30,10 @@ const CONTEXT_MAP = {
   IncidentProvider: IncidentContext,
   ViolationProvider: ViolationContext,
   WCBProvider: WCBContext,
+  // List contexts for referenced data
+  IncidentsListProvider: IncidentsListContext,
+  ViolationsListProvider: ViolationsListContext,
+  TrucksDriversProvider: TrucksDriversContext,
 };
 
 /**
@@ -55,6 +63,21 @@ function UniversalCard({ config }) {
   const context = useContext(ContextToUse);
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
+
+  // Access additional contexts if specified (for list tabs, etc.)
+  const additionalContexts = {};
+  if (config.additionalContexts) {
+    config.additionalContexts.forEach((contextConfig) => {
+      const AdditionalContext = CONTEXT_MAP[contextConfig.provider];
+      const additionalContextData = useContext(AdditionalContext);
+
+      // Support multiple data keys (comma-separated)
+      const dataKeys = contextConfig.dataKey.split(',');
+      dataKeys.forEach((key) => {
+        additionalContexts[key.trim()] = additionalContextData?.[key.trim()];
+      });
+    });
+  }
 
   // Render tab content based on type
   const renderTabContent = (tab) => {
@@ -95,6 +118,15 @@ function UniversalCard({ config }) {
           <LogTab
             config={tab.config}
             context={context}
+          />
+        );
+
+      case "list":
+        return (
+          <ListTab
+            config={tab.config}
+            context={context}
+            additionalContexts={additionalContexts}
           />
         );
 
