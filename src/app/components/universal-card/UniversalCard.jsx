@@ -7,6 +7,7 @@ import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
 import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import LogTab from "@/app/components/tabs/log/LogTab";
 import ListTab from "@/app/components/tabs/list/ListTab";
+import TimeCardTab from "@/app/components/tabs/timecard/TimeCardTab";
 import { TruckContext } from "@/app/context/TruckContext";
 import { DriverContext } from "@/app/context/DriverContext";
 import { EquipmentContext } from "@/app/context/EquipmentContext";
@@ -127,6 +128,14 @@ function UniversalCard({ config }) {
             config={tab.config}
             context={context}
             additionalContexts={additionalContexts}
+          />
+        );
+
+      case "timecard":
+        return (
+          <TimeCardTab
+            config={tab.config}
+            entityData={entityData}
           />
         );
 
