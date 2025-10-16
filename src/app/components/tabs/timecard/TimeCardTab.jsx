@@ -17,7 +17,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useLoader } from '@/app/context/LoaderContext';
-import { useCreateObject } from '@/app/context/CreateObjectContext';
 import useUserRoles from '@/app/functions/useUserRoles';
 import TimeCardHeader from './TimeCardHeader';
 import TimeCardTable from './TimeCardTable';
@@ -25,6 +24,7 @@ import RemoteCheckinToggle from './RemoteCheckinToggle';
 import MedicalLeaveCounter from './MedicalLeaveCounter';
 import AdjustmentsTable from './AdjustmentsTable';
 import MedicalLeaveDialog from './MedicalLeaveDialog';
+import AdjustmentDialog from './AdjustmentDialog';
 import MapDialog from './MapDialog';
 import {
   calculateCurrentPeriod,
@@ -40,13 +40,6 @@ export default function TimeCardTab({ config, entityData }) {
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
   const userRoles = useUserRoles();
-  const {
-    setCreateObjectModalIsOpen,
-    setObjectType,
-    setAfterCreateCallback,
-    handleCreateObjectModalClose,
-    setServerData,
-  } = useCreateObject();
 
   // State
   const [period, setPeriod] = useState(calculateCurrentPeriod());
@@ -57,6 +50,7 @@ export default function TimeCardTab({ config, entityData }) {
   const [adjustments, setAdjustments] = useState([]);
   const [editState, setEditState] = useState({ mode: 'view' });
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [showAdjustmentDialog, setShowAdjustmentDialog] = useState(false);
 
   // Check if user has edit permissions
   const canEdit =
@@ -320,25 +314,45 @@ export default function TimeCardTab({ config, entityData }) {
     }
   };
 
-  // Add adjustment
+  // Add adjustment - open dialog
   const handleAddAdjustment = () => {
-    const periodStartDay = period.half === 1 ? 1 : 16;
-    const firstPayDay = `${period.year}-${String(period.month + 1).padStart(2, '0')}-${String(periodStartDay).padStart(2, '0')}`;
+    setShowAdjustmentDialog(true);
+  };
 
-    const dataToSet = {
-      first_pay_day: firstPayDay,
-      [config.entityType]: entityData.id,
-      username: session?.user?.name,
-    };
+  // Save adjustment - API call
+  const handleSaveAdjustment = async ({ hours, comment }) => {
+    startLoading();
+    try {
+      const periodStartDay = period.half === 1 ? 1 : 16;
+      const firstPayDay = `${period.year}-${String(period.month + 1).padStart(2, '0')}-${String(periodStartDay).padStart(2, '0')}`;
 
-    setAfterCreateCallback(() => () => {
-      handleCreateObjectModalClose();
-      loadAdjustments();
-      loadAttendanceData();
-    });
-    setObjectType(config.features.adjustments.createObjectType);
-    setServerData(dataToSet);
-    setCreateObjectModalIsOpen(true);
+      const requestBody = {
+        first_pay_day: firstPayDay,
+        [config.entityType]: entityData.id,
+        username: session?.user?.name,
+        hours: hours,
+        comment: comment,
+      };
+
+      const response = await fetch(config.api.adjustments, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) throw new Error('Failed to save adjustment');
+
+      // Reload data
+      await loadAdjustments();
+      await loadAttendanceData();
+      setShowAdjustmentDialog(false);
+    } catch (error) {
+      console.error('Failed to save adjustment:', error);
+    } finally {
+      stopLoading();
+    }
   };
 
   // Load data on mount and period change
@@ -420,6 +434,14 @@ export default function TimeCardTab({ config, entityData }) {
           open={editState.mode === 'confirmMedical'}
           onConfirm={handleConfirmMedical}
           onCancel={() => setEditState({ mode: 'view' })}
+        />
+      )}
+
+      {config.features.adjustments.enabled && (
+        <AdjustmentDialog
+          open={showAdjustmentDialog}
+          onSave={handleSaveAdjustment}
+          onCancel={() => setShowAdjustmentDialog(false)}
         />
       )}
 

@@ -40,7 +40,7 @@ export default function TimeCardTable({
   const totalHours = calculatePeriodTotal(dayEntries, config);
 
   return (
-    <div className="rounded-md border overflow-auto flex-1">
+    <div className="rounded-md border overflow-auto">
       <Table className="table-fixed">
         {/* Table Header */}
         <TableHeader>
