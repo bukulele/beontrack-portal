@@ -55,55 +55,83 @@ export default function TimeCardRow({
       <TableCell className="text-center align-top">
         <div className="flex flex-col gap-1">
           {day.entries.length > 0 ? (
-            day.entries.map((entry, idx) => (
-              <TimeEntryCell
-                key={entry.id}
-                entry={entry}
-                field="checkIn"
-                day={day.date}
-                isLastEntry={idx === day.entries.length - 1}
-                isEditing={
-                  editState.mode === 'editEntry' &&
-                  editState.entryId === entry.id &&
-                  editState.field === 'in'
-                }
-                onEdit={() =>
-                  onEditStateChange({
-                    mode: 'editEntry',
-                    entryId: entry.id,
-                    field: 'in',
-                    value: entry.check_in_time,
-                  })
-                }
-                onSave={(value) => onSave(entry.id, 'check_in_time', value)}
-                onCancel={() => onEditStateChange({ mode: 'view' })}
-                onAddEntry={() =>
-                  onEditStateChange({
-                    mode: 'addEntry',
-                    day: day.date,
-                    checkIn: '',
-                    checkOut: '',
-                  })
-                }
-                canEdit={canEdit}
-                showGps={
-                  config.features.gpsTracking.enabled && entry.in_coordinates
-                }
-                onViewGps={() =>
-                  onEditStateChange({
-                    mode: 'viewMap',
-                    coordinates: entry.in_coordinates,
-                  })
-                }
-                showWarning={
-                  canViewWarnings &&
-                  hasThirdPartyWarning(entry, 'in', currentUserId)
-                }
-                hoveredCell={hoveredCell}
-                onHoverEntry={onHoverEntry}
-                onClearHover={onClearHover}
-              />
-            ))
+            <>
+              {day.entries.map((entry, idx) => (
+                <TimeEntryCell
+                  key={entry.id}
+                  entry={entry}
+                  field="checkIn"
+                  day={day.date}
+                  isLastEntry={idx === day.entries.length - 1}
+                  isEditing={
+                    editState.mode === 'editEntry' &&
+                    editState.entryId === entry.id &&
+                    editState.field === 'in'
+                  }
+                  onEdit={() =>
+                    onEditStateChange({
+                      mode: 'editEntry',
+                      entryId: entry.id,
+                      field: 'in',
+                      value: entry.check_in_time,
+                    })
+                  }
+                  onSave={(value) => onSave(entry.id, 'check_in_time', value)}
+                  onCancel={() => onEditStateChange({ mode: 'view' })}
+                  onAddEntry={() =>
+                    onEditStateChange({
+                      mode: 'editEntry',
+                      entryId: null,
+                      field: 'in',
+                      day: day.date,
+                      value: '',
+                    })
+                  }
+                  canEdit={canEdit}
+                  showGps={
+                    config.features.gpsTracking.enabled && entry.in_coordinates
+                  }
+                  onViewGps={() =>
+                    onEditStateChange({
+                      mode: 'viewMap',
+                      coordinates: entry.in_coordinates,
+                    })
+                  }
+                  showWarning={
+                    canViewWarnings &&
+                    hasThirdPartyWarning(entry, 'in', currentUserId)
+                  }
+                  hoveredCell={hoveredCell}
+                  onHoverEntry={onHoverEntry}
+                  onClearHover={onClearHover}
+                />
+              ))}
+              {/* New entry input - shown when adding to existing entries */}
+              {editState.mode === 'editEntry' &&
+                editState.entryId === null &&
+                editState.field === 'in' &&
+                editState.day === day.date && (
+                <TimeEntryCell
+                  key="new-check-in"
+                  entry={{ id: null, check_in_time: editState.value || '', check_out_time: '' }}
+                  field="checkIn"
+                  day={day.date}
+                  isLastEntry={false}
+                  isEditing={true}
+                  onEdit={() => {}}
+                  onSave={(value) => onSave(null, 'check_in_time', value)}
+                  onCancel={() => onEditStateChange({ mode: 'view' })}
+                  onAddEntry={null}
+                  canEdit={canEdit}
+                  showGps={false}
+                  onViewGps={() => {}}
+                  showWarning={false}
+                  hoveredCell={hoveredCell}
+                  onHoverEntry={onHoverEntry}
+                  onClearHover={onClearHover}
+                />
+              )}
+            </>
           ) : editState.mode === 'editEntry' &&
             editState.entryId === null &&
             editState.field === 'in' &&
@@ -155,48 +183,75 @@ export default function TimeCardRow({
       <TableCell className="text-center align-top">
         <div className="flex flex-col gap-1">
           {day.entries.length > 0 ? (
-            day.entries.map((entry) => (
-              <TimeEntryCell
-                key={entry.id}
-                entry={entry}
-                field="checkOut"
-                day={day.date}
-                isLastEntry={false} // OUT column never shows plus button
-                isEditing={
-                  editState.mode === 'editEntry' &&
-                  editState.entryId === entry.id &&
-                  editState.field === 'out'
-                }
-                onEdit={() =>
-                  onEditStateChange({
-                    mode: 'editEntry',
-                    entryId: entry.id,
-                    field: 'out',
-                    value: entry.check_out_time,
-                  })
-                }
-                onSave={(value) => onSave(entry.id, 'check_out_time', value)}
-                onCancel={() => onEditStateChange({ mode: 'view' })}
-                onAddEntry={null} // OUT column doesn't use add entry
-                canEdit={canEdit}
-                showGps={
-                  config.features.gpsTracking.enabled && entry.out_coordinates
-                }
-                onViewGps={() =>
-                  onEditStateChange({
-                    mode: 'viewMap',
-                    coordinates: entry.out_coordinates,
-                  })
-                }
-                showWarning={
-                  canViewWarnings &&
-                  hasThirdPartyWarning(entry, 'out', currentUserId)
-                }
-                hoveredCell={hoveredCell}
-                onHoverEntry={onHoverEntry}
-                onClearHover={onClearHover}
-              />
-            ))
+            <>
+              {day.entries.map((entry) => (
+                <TimeEntryCell
+                  key={entry.id}
+                  entry={entry}
+                  field="checkOut"
+                  day={day.date}
+                  isLastEntry={false} // OUT column never shows plus button
+                  isEditing={
+                    editState.mode === 'editEntry' &&
+                    editState.entryId === entry.id &&
+                    editState.field === 'out'
+                  }
+                  onEdit={() =>
+                    onEditStateChange({
+                      mode: 'editEntry',
+                      entryId: entry.id,
+                      field: 'out',
+                      value: entry.check_out_time,
+                    })
+                  }
+                  onSave={(value) => onSave(entry.id, 'check_out_time', value)}
+                  onCancel={() => onEditStateChange({ mode: 'view' })}
+                  onAddEntry={null} // OUT column doesn't use add entry
+                  canEdit={canEdit}
+                  showGps={
+                    config.features.gpsTracking.enabled && entry.out_coordinates
+                  }
+                  onViewGps={() =>
+                    onEditStateChange({
+                      mode: 'viewMap',
+                      coordinates: entry.out_coordinates,
+                    })
+                  }
+                  showWarning={
+                    canViewWarnings &&
+                    hasThirdPartyWarning(entry, 'out', currentUserId)
+                  }
+                  hoveredCell={hoveredCell}
+                  onHoverEntry={onHoverEntry}
+                  onClearHover={onClearHover}
+                />
+              ))}
+              {/* New entry input - shown when adding check-out to existing entries */}
+              {editState.mode === 'editEntry' &&
+                editState.entryId === null &&
+                editState.field === 'out' &&
+                editState.day === day.date && (
+                <TimeEntryCell
+                  key="new-check-out"
+                  entry={{ id: null, check_in_time: '', check_out_time: editState.value || '' }}
+                  field="checkOut"
+                  day={day.date}
+                  isLastEntry={false}
+                  isEditing={true}
+                  onEdit={() => {}}
+                  onSave={(value) => onSave(null, 'check_out_time', value)}
+                  onCancel={() => onEditStateChange({ mode: 'view' })}
+                  onAddEntry={null}
+                  canEdit={canEdit}
+                  showGps={false}
+                  onViewGps={() => {}}
+                  showWarning={false}
+                  hoveredCell={hoveredCell}
+                  onHoverEntry={onHoverEntry}
+                  onClearHover={onClearHover}
+                />
+              )}
+            </>
           ) : editState.mode === 'editEntry' &&
             editState.entryId === null &&
             editState.field === 'out' &&

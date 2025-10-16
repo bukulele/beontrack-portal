@@ -59,10 +59,8 @@ export default function TimeEntryCell({
     hoveredCell?.field === fieldType;
 
   const handleSave = () => {
-    console.log('[TimeEntryCell] handleSave called:', { editValue, timeField });
     // Prepare value with timezone offset before sending to API
     const valueWithTimezone = prepareForApi(editValue);
-    console.log('[TimeEntryCell] Calling onSave with:', valueWithTimezone);
     onSave(valueWithTimezone);
   };
 
@@ -75,7 +73,6 @@ export default function TimeEntryCell({
             name={timeField}
             value={editValue || ''}
             updateState={(updater) => {
-              console.log('[TimeEntryCell] DateTimeInput updateState called with updater');
               // DateTimeInput passes a function updater, not an object
               // We need to call it with current state to get the new state
               setEditValue(prevValue => {
@@ -83,7 +80,6 @@ export default function TimeEntryCell({
                 const currentState = { [timeField]: prevValue };
                 // Call the updater function to get the new state
                 const newState = typeof updater === 'function' ? updater(currentState) : updater;
-                console.log('[TimeEntryCell] New state from updater:', newState);
                 // Extract just the field we care about
                 return newState[timeField];
               });
