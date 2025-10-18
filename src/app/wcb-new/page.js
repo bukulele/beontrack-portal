@@ -6,8 +6,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WCBProvider } from "@/app/context/WCBContext";
-import { InfoCardProvider } from "@/app/context/InfoCardContext";
-import { CreateObjectProvider } from "@/app/context/CreateObjectContext";
 import { SettingsProvider } from "@/app/context/SettingsContext";
 import { HiredEmployeesProvider } from "@/app/context/HiredEmployeesContext";
 import { TrucksDriversProvider } from "@/app/context/TrucksDriversContext";
@@ -122,17 +120,13 @@ function WCBNewPage() {
               <DialogTitle>WCB Claim Details</DialogTitle>
             </VisuallyHidden.Root>
             <SettingsProvider>
-              <InfoCardProvider>
-                <CreateObjectProvider>
-                  <HiredEmployeesProvider>
-                    <TrucksDriversProvider>
-                      <WCBProvider wcbId={selectedWCBId}>
-                        <UniversalCard config={WCB_CARD_CONFIG} />
-                      </WCBProvider>
-                    </TrucksDriversProvider>
-                  </HiredEmployeesProvider>
-                </CreateObjectProvider>
-              </InfoCardProvider>
+              <HiredEmployeesProvider>
+                <TrucksDriversProvider>
+                  <WCBProvider wcbId={selectedWCBId}>
+                    <UniversalCard config={WCB_CARD_CONFIG} />
+                  </WCBProvider>
+                </TrucksDriversProvider>
+              </HiredEmployeesProvider>
             </SettingsProvider>
           </DialogContent>
         </Dialog>

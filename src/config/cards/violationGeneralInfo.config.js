@@ -112,9 +112,129 @@ export const VIOLATION_GENERAL_INFO_CONFIG = {
           editable: false,
         },
         {
+          key: "trailer_1_license_plate",
+          label: "Trailer 1 License Plate",
+          type: "text",
+          editable: false,
+        },
+        {
           key: "trailer_1_violation",
           label: "Trailer 1 Violation",
           type: "textarea",
+          editable: false,
+        },
+        {
+          key: "trailer_2_unit_number",
+          label: "Trailer 2 Unit #",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "trailer_2_license_plate",
+          label: "Trailer 2 License Plate",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "trailer_2_violation",
+          label: "Trailer 2 Violation",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "converter_unit_number",
+          label: "Converter Unit Number",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "converter_violation",
+          label: "Converter Violation",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "truck_unit_number",
+          label: "Truck Unit Number",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "truck_license_plate",
+          label: "Truck License Plate",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "truck_make_model",
+          label: "Truck Make/Model",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "police_involved",
+          label: "Police Involved",
+          type: "boolean",
+          editable: false,
+        },
+        {
+          key: "police_report_number",
+          label: "Police Report Number",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "officer_and_department",
+          label: "Officer and Department",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "lawyer_company",
+          label: "Lawyer Company",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "lawyer_email",
+          label: "Lawyer Email",
+          type: "email",
+          editable: false,
+        },
+        {
+          key: "lawyer_phone",
+          label: "Lawyer Phone",
+          type: "phone",
+          editable: false,
+        },
+        {
+          key: "lawyer_other_info",
+          label: "Lawyer Other Info",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "lawyer_result",
+          label: "Lawyer Result",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "additional_info",
+          label: "Additional Info",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "has_ticket",
+          label: "Has Ticket",
+          type: "boolean",
+          editable: false,
+        },
+        {
+          key: "traffic_violation_indicated",
+          label: "Traffic Violation Indicated",
+          type: "boolean",
           editable: false,
         },
       ],
@@ -161,6 +281,27 @@ export const VIOLATION_GENERAL_INFO_CONFIG = {
       ],
     },
   ],
+
+  // Custom actions
+  customActions: [
+    {
+      label: "View on Map",
+      icon: "MapPin",
+      variant: "outline",
+      onClick: (entityData, helpers) => {
+        if (entityData.gps_coordinates && entityData.gps_coordinates.length > 0) {
+          helpers.handleOpenMap(entityData.gps_coordinates, entityData.location);
+        }
+      },
+      disabled: (entityData) =>
+        !entityData.gps_coordinates || entityData.gps_coordinates.length === 0,
+    },
+  ],
+
+  // Map modal configuration
+  mapModal: {
+    enabled: true,
+  },
 };
 
 export default VIOLATION_GENERAL_INFO_CONFIG;

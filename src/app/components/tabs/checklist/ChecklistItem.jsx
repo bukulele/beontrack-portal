@@ -54,6 +54,13 @@ function ChecklistItem({
   entityId,
   apiRoute,
 }) {
+  // All hooks must be called at the top level
+  const [fileUploaderOpen, setFileUploaderOpen] = useState(false);
+  const [viewFilesOpen, setViewFilesOpen] = useState(false);
+  const { data: session } = useSession();
+  const { startLoading, stopLoading } = useLoader();
+  const userRoles = useUserRoles();
+
   // If this is a data field item (not file upload), use InlineDataField
   if (item.itemType === "data") {
     return (
@@ -68,12 +75,6 @@ function ChecklistItem({
   }
 
   // File-based checklist item (existing logic)
-  const [fileUploaderOpen, setFileUploaderOpen] = useState(false);
-  const [viewFilesOpen, setViewFilesOpen] = useState(false);
-
-  const { data: session } = useSession();
-  const { startLoading, stopLoading } = useLoader();
-  const userRoles = useUserRoles();
 
   // Get item data from entity
   const itemData = entityData[item.key];

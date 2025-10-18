@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, Download, Plus, MapPin, FileText } from "lucide-react";
 import InfoField from "./InfoField";
 import StatusBadge from "./StatusBadge";
 import FileSectionAccordion from "./FileSectionAccordion";
 import Image from "next/image";
 import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
+import RelatedEntityDropdown from "./RelatedEntityDropdown";
+import MapDialog from "../timecard/MapDialog";
 
 /**
  * GeneralInfoTab - Full-featured general information tab
@@ -33,8 +35,27 @@ function GeneralInfoTab({
   loadData,
   entityType,
   entityId,
+  additionalContexts,
 }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [mapDialogOpen, setMapDialogOpen] = useState(false);
+  const [mapCoordinates, setMapCoordinates] = useState("");
+  const [mapLocation, setMapLocation] = useState("");
+
+  // Icon mapping for custom actions
+  const iconMap = {
+    Download,
+    Plus,
+    MapPin,
+    FileText,
+  };
+
+  // Handle map modal open
+  const handleOpenMap = (coordinates, location) => {
+    setMapCoordinates(coordinates);
+    setMapLocation(location);
+    setMapDialogOpen(true);
+  };
 
   if (!entityData) {
     return (
@@ -141,6 +162,7 @@ function GeneralInfoTab({
                         entityId={entityId}
                         onSave={loadData}
                         sideContent={sideContent}
+                        additionalContexts={additionalContexts}
                       />
                     );
                   })}
@@ -160,10 +182,74 @@ function GeneralInfoTab({
                 entityId={entityId}
               />
             ))}
+
+
+            {/* Related Entities (for read-only mode) */}
+            {config.relatedEntities && config.relatedEntities.length > 0 && (
+              <Card className="mt-4">
+                <CardHeader className="p-4 pb-3">
+                  <CardTitle className="text-sm font-semibold text-muted-foreground uppercase">
+                    Related Entities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 flex flex-wrap gap-3">
+                  {config.relatedEntities.map((relatedConfig, index) => (
+                    <RelatedEntityDropdown
+                      key={index}
+                      label={relatedConfig.label}
+                      relatedIds={entityData[relatedConfig.dataKey] || []}
+                      entitiesList={relatedConfig.entitiesList || {}}
+                      entityType={relatedConfig.entityType}
+                      displayField={relatedConfig.displayField || "id"}
+                      defaultLabel={relatedConfig.defaultLabel || "Select..."}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Custom Actions (for read-only mode) */}
+            {config.customActions && config.customActions.length > 0 && (
+              <Card className="mt-4">
+                <CardHeader className="p-4 pb-3">
+                  <CardTitle className="text-sm font-semibold text-muted-foreground uppercase">
+                    Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 flex flex-wrap gap-2">
+                  {config.customActions.map((action, index) => {
+                    const IconComponent = iconMap[action.icon];
+
+                    return (
+                      <Button
+                        key={index}
+                        variant={action.variant || "outline"}
+                        size={action.size || "default"}
+                        onClick={() => action.onClick(entityData, { handleOpenMap })}
+                        disabled={action.disabled?.(entityData) || false}
+                      >
+                        {IconComponent && <IconComponent className="h-4 w-4 mr-2" />}
+                        {action.label}
+                      </Button>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
     </ScrollArea>
+
+      {/* Map Dialog */}
+      {config.mapModal && (
+        <MapDialog
+          open={mapDialogOpen}
+          onClose={() => setMapDialogOpen(false)}
+          coordinates={mapCoordinates}
+          location={mapLocation}
+        />
+      )}
 
       {/* Edit Dialog */}
       {config.editFormConfig && (

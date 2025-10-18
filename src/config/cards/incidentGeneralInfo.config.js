@@ -151,8 +151,92 @@ export const INCIDENT_GENERAL_INFO_CONFIG = {
           editable: false,
         },
         {
+          key: "cargo_1_commodity",
+          label: "Cargo 1 Commodity",
+          type: "text",
+          editable: false,
+        },
+        {
           key: "cargo_1_damage",
           label: "Cargo 1 Damage",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "cargo_2_bol_po_number",
+          label: "Cargo 2 BOL/PO",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "cargo_2_commodity",
+          label: "Cargo 2 Commodity",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "cargo_2_damage",
+          label: "Cargo 2 Damage",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "trailer_1_license_plate",
+          label: "Trailer 1 License Plate",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "trailer_2_license_plate",
+          label: "Trailer 2 License Plate",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "converter_unit_number",
+          label: "Converter Unit Number",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "converter_damage",
+          label: "Converter Damage",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "police_involved",
+          label: "Police Involved",
+          type: "boolean",
+          editable: false,
+        },
+        {
+          key: "police_report_number",
+          label: "Police Report Number",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "officer_and_department",
+          label: "Officer and Department",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "towing_info",
+          label: "Towing Info",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "additional_info",
+          label: "Additional Info",
+          type: "textarea",
+          editable: false,
+        },
+        {
+          key: "analysis",
+          label: "Analysis",
           type: "textarea",
           editable: false,
         },
@@ -200,6 +284,27 @@ export const INCIDENT_GENERAL_INFO_CONFIG = {
       ],
     },
   ],
+
+  // Custom actions
+  customActions: [
+    {
+      label: "View on Map",
+      icon: "MapPin",
+      variant: "outline",
+      onClick: (entityData, helpers) => {
+        if (entityData.gps_coordinates && entityData.gps_coordinates.length > 0) {
+          helpers.handleOpenMap(entityData.gps_coordinates, entityData.location);
+        }
+      },
+      disabled: (entityData) =>
+        !entityData.gps_coordinates || entityData.gps_coordinates.length === 0,
+    },
+  ],
+
+  // Map modal configuration
+  mapModal: {
+    enabled: true,
+  },
 };
 
 export default INCIDENT_GENERAL_INFO_CONFIG;

@@ -181,6 +181,27 @@ export const WCB_GENERAL_INFO_CONFIG = {
       ],
     },
   ],
+
+  // Custom actions
+  customActions: [
+    {
+      label: "View on Map",
+      icon: "MapPin",
+      variant: "outline",
+      onClick: (entityData, helpers) => {
+        if (entityData.gps_coordinates && entityData.gps_coordinates.length > 0) {
+          helpers.handleOpenMap(entityData.gps_coordinates, entityData.location);
+        }
+      },
+      disabled: (entityData) =>
+        !entityData.gps_coordinates || entityData.gps_coordinates.length === 0,
+    },
+  ],
+
+  // Map modal configuration
+  mapModal: {
+    enabled: true,
+  },
 };
 
 export default WCB_GENERAL_INFO_CONFIG;

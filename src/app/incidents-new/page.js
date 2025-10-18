@@ -6,8 +6,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IncidentProvider } from "@/app/context/IncidentContext";
-import { InfoCardProvider } from "@/app/context/InfoCardContext";
-import { CreateObjectProvider } from "@/app/context/CreateObjectContext";
 import { SettingsProvider } from "@/app/context/SettingsContext";
 import { TrucksDriversProvider } from "@/app/context/TrucksDriversContext";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
@@ -102,15 +100,11 @@ function IncidentsNewPage() {
               <DialogTitle>Incident Details</DialogTitle>
             </VisuallyHidden.Root>
             <SettingsProvider>
-              <InfoCardProvider>
-                <CreateObjectProvider>
-                  <TrucksDriversProvider>
-                    <IncidentProvider incidentId={selectedIncidentId}>
-                      <UniversalCard config={INCIDENT_CARD_CONFIG} />
-                    </IncidentProvider>
-                  </TrucksDriversProvider>
-                </CreateObjectProvider>
-              </InfoCardProvider>
+              <TrucksDriversProvider>
+                <IncidentProvider incidentId={selectedIncidentId}>
+                  <UniversalCard config={INCIDENT_CARD_CONFIG} />
+                </IncidentProvider>
+              </TrucksDriversProvider>
             </SettingsProvider>
           </DialogContent>
         </Dialog>

@@ -208,7 +208,7 @@ export function ActivityHistoryModal({
         <div className="space-y-4">
           {visibleActivities.length === 0 ? (
             <p className="text-center text-slate-500 py-8">
-              No activity history. Click "Add Activity" to get started.
+              No activity history. Click &quot;Add Activity&quot; to get started.
             </p>
           ) : (
             visibleActivities.map((activity, index) => {

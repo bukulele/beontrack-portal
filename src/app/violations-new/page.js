@@ -6,8 +6,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ViolationProvider } from "@/app/context/ViolationContext";
-import { InfoCardProvider } from "@/app/context/InfoCardContext";
-import { CreateObjectProvider } from "@/app/context/CreateObjectContext";
 import { SettingsProvider } from "@/app/context/SettingsContext";
 import { TrucksDriversProvider } from "@/app/context/TrucksDriversContext";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
@@ -102,15 +100,11 @@ function ViolationsNewPage() {
               <DialogTitle>Violation Details</DialogTitle>
             </VisuallyHidden.Root>
             <SettingsProvider>
-              <InfoCardProvider>
-                <CreateObjectProvider>
-                  <TrucksDriversProvider>
-                    <ViolationProvider violationId={selectedViolationId}>
-                      <UniversalCard config={VIOLATION_CARD_CONFIG} />
-                    </ViolationProvider>
-                  </TrucksDriversProvider>
-                </CreateObjectProvider>
-              </InfoCardProvider>
+              <TrucksDriversProvider>
+                <ViolationProvider violationId={selectedViolationId}>
+                  <UniversalCard config={VIOLATION_CARD_CONFIG} />
+                </ViolationProvider>
+              </TrucksDriversProvider>
             </SettingsProvider>
           </DialogContent>
         </Dialog>

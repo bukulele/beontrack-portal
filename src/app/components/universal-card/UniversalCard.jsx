@@ -8,6 +8,8 @@ import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import LogTab from "@/app/components/tabs/log/LogTab";
 import ListTab from "@/app/components/tabs/list/ListTab";
 import TimeCardTab from "@/app/components/tabs/timecard/TimeCardTab";
+import SubEntitiesTab from "@/app/components/tabs/sub-entities/SubEntitiesTab";
+import ActivityLogTab from "@/app/components/tabs/activity-log/ActivityLogTab";
 import { TruckContext } from "@/app/context/TruckContext";
 import { DriverContext } from "@/app/context/DriverContext";
 import { EquipmentContext } from "@/app/context/EquipmentContext";
@@ -17,6 +19,7 @@ import { ViolationContext } from "@/app/context/ViolationContext";
 import { WCBContext } from "@/app/context/WCBContext";
 import { IncidentsListContext } from "@/app/context/IncidentsListContext";
 import { ViolationsListContext } from "@/app/context/ViolationsListContext";
+import { WCBListContext } from "@/app/context/WCBListContext";
 import { TrucksDriversContext } from "@/app/context/TrucksDriversContext";
 
 /**
@@ -34,6 +37,7 @@ const CONTEXT_MAP = {
   // List contexts for referenced data
   IncidentsListProvider: IncidentsListContext,
   ViolationsListProvider: ViolationsListContext,
+  WCBListProvider: WCBListContext,
   TrucksDriversProvider: TrucksDriversContext,
 };
 
@@ -49,8 +53,9 @@ const CONTEXT_MAP = {
  * @param {string} config.defaultTab - Default tab ID to open
  * @param {string} config.initialTab - Initial tab ID (overrides defaultTab if provided)
  * @param {string} config.width - Width class (default: 'w-[1024px]')
+ * @param {Function} onLightboxChange - Callback when lightbox state changes
  */
-function UniversalCard({ config }) {
+function UniversalCard({ config, onLightboxChange }) {
   // Determine which tab to open initially
   const initialTabId = config.initialTab || config.defaultTab || config.tabs[0]?.id;
   const [activeTab, setActiveTab] = useState(initialTabId);
@@ -65,17 +70,40 @@ function UniversalCard({ config }) {
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
 
-  // Access additional contexts if specified (for list tabs, etc.)
+  // Call all additional context hooks at top level (Rules of Hooks)
+  const incidentsListContext = useContext(IncidentsListContext);
+  const violationsListContext = useContext(ViolationsListContext);
+  const wcbListContext = useContext(WCBListContext);
+  const trucksDriversContext = useContext(TrucksDriversContext);
+
+  // Map context data based on config
   const additionalContexts = {};
   if (config.additionalContexts) {
     config.additionalContexts.forEach((contextConfig) => {
-      const AdditionalContext = CONTEXT_MAP[contextConfig.provider];
-      const additionalContextData = useContext(AdditionalContext);
+      let contextData;
+
+      // Map provider name to actual context data
+      switch (contextConfig.provider) {
+        case 'IncidentsListProvider':
+          contextData = incidentsListContext;
+          break;
+        case 'ViolationsListProvider':
+          contextData = violationsListContext;
+          break;
+        case 'WCBListProvider':
+          contextData = wcbListContext;
+          break;
+        case 'TrucksDriversProvider':
+          contextData = trucksDriversContext;
+          break;
+        default:
+          contextData = null;
+      }
 
       // Support multiple data keys (comma-separated)
       const dataKeys = contextConfig.dataKey.split(',');
       dataKeys.forEach((key) => {
-        additionalContexts[key.trim()] = additionalContextData?.[key.trim()];
+        additionalContexts[key.trim()] = contextData?.[key.trim()];
       });
     });
   }
@@ -111,6 +139,7 @@ function UniversalCard({ config }) {
             loadData={loadData}
             entityType={config.entity.type}
             entityId={entityData.id}
+            additionalContexts={additionalContexts}
           />
         );
 
@@ -139,11 +168,31 @@ function UniversalCard({ config }) {
           />
         );
 
+      case "sub-entities":
+        return (
+          <SubEntitiesTab
+            config={tab.config}
+            contextData={entityData}
+            loadData={loadData}
+            entityId={entityData.id}
+          />
+        );
+
+      case "activity-log":
+        return (
+          <ActivityLogTab
+            config={tab.config}
+            contextData={entityData}
+            loadData={loadData}
+            entityId={entityData.id}
+          />
+        );
+
       default:
         return (
           <div className="p-4">
             <p className="text-sm text-muted-foreground">
-              Tab type "{tab.type}" not implemented yet
+              Tab type &quot;{tab.type}&quot; not implemented yet
             </p>
           </div>
         );

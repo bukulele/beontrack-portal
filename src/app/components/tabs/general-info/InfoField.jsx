@@ -38,6 +38,7 @@ function InfoField({
   entityId,
   onSave,
   sideContent,
+  additionalContexts,
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value || "");
@@ -99,7 +100,7 @@ function InfoField({
   // Format display value
   const getDisplayValue = () => {
     if (fieldConfig.formatter) {
-      return fieldConfig.formatter(value, entityData);
+      return fieldConfig.formatter(value, entityData, additionalContexts);
     }
 
     if (fieldConfig.type === "select" && fieldConfig.selectOptions) {

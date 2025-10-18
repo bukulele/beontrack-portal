@@ -133,7 +133,7 @@ export function DriverBackgroundModal({
         <DialogHeader>
           <DialogTitle>Driver Background</DialogTitle>
           <DialogDescription>
-            Edit driver's educational background, accident history, and license information.
+            Edit driver&apos;s educational background, accident history, and license information.
           </DialogDescription>
         </DialogHeader>
 

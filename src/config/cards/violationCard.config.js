@@ -1,14 +1,18 @@
 import { VIOLATION_CHECKLIST_CONFIG } from "@/config/checklists/violationChecklist.config";
 import { VIOLATION_GENERAL_INFO_CONFIG } from "@/config/cards/violationGeneralInfo.config";
+import { inspectionConfig } from "@/config/tabs/sub-entities/inspection.config";
+import { ticketsConfig } from "@/config/tabs/sub-entities/tickets.config";
+import { violationLogConfig } from "@/config/tabs/activity-log/violationLog.config";
 
 /**
  * Violation Card Configuration for Universal Card System
  *
- * Phase 5A: Only 2 tabs (general-info + checklist)
- * Deferred tabs:
- * - Inspection tab (needs custom-violation-details type - Phase 8)
- * - Tickets tab (needs custom-violation-details type - Phase 8)
- * - Log tab (needs log type - Phase 6)
+ * Phase 9: All 5 tabs complete
+ * - General Info (phase 5A)
+ * - Documents Checklist (phase 5A)
+ * - Inspection (phase 9 - sub-entities)
+ * - Tickets (phase 9 - sub-entities)
+ * - Log (phase 9 - activity-log)
  */
 
 export const VIOLATION_CARD_CONFIG = {
@@ -32,7 +36,7 @@ export const VIOLATION_CARD_CONFIG = {
   // Default tab to open
   defaultTab: "general-info",
 
-  // Tabs configuration - Phase 5A: Only 2 tabs
+  // Tabs configuration - Phase 9: All 5 tabs
   tabs: [
     {
       id: "general-info",
@@ -46,8 +50,24 @@ export const VIOLATION_CARD_CONFIG = {
       type: "checklist",
       config: VIOLATION_CHECKLIST_CONFIG,
     },
-    // TODO Phase 8: Add Inspection and Tickets tabs
-    // TODO Phase 6: Add Log tab
+    {
+      id: "inspection",
+      label: "Inspection",
+      type: "sub-entities",
+      config: inspectionConfig,
+    },
+    {
+      id: "tickets",
+      label: "Tickets",
+      type: "sub-entities",
+      config: ticketsConfig,
+    },
+    {
+      id: "log",
+      label: "Log",
+      type: "activity-log",
+      config: violationLogConfig,
+    },
   ],
 };
 
