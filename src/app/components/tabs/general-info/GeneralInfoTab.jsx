@@ -8,6 +8,7 @@ import { Pencil, Download, Plus, MapPin, FileText } from "lucide-react";
 import InfoField from "./InfoField";
 import StatusBadge from "./StatusBadge";
 import FileSectionAccordion from "./FileSectionAccordion";
+import PhotoGallerySection from "./PhotoGallerySection";
 import Image from "next/image";
 import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
 import RelatedEntityDropdown from "./RelatedEntityDropdown";
@@ -235,6 +236,17 @@ function GeneralInfoTab({
                   })}
                 </CardContent>
               </Card>
+            )}
+
+            {/* Photo Gallery Section */}
+            {config.photoGallery && (
+              <div className="mt-4">
+                <PhotoGallerySection
+                  config={config.photoGallery}
+                  entityData={entityData}
+                  loadData={loadData}
+                />
+              </div>
             )}
           </div>
         </div>

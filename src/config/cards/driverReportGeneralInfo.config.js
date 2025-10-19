@@ -206,6 +206,14 @@ export const DRIVER_REPORT_GENERAL_INFO_CONFIG = {
   mapModal: {
     enabled: true,
   },
+
+  // Photo gallery configuration
+  photoGallery: {
+    title: "Driver Report Photos",
+    photoSources: ["photos"],
+    gridCols: 5,
+    upload: null, // Driver reports are read-only, no upload
+  },
 };
 
 // Export field templates for conditional use

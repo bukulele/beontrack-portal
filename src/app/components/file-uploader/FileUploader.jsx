@@ -63,6 +63,10 @@ export function FileUploader({
       // Check if required field is filled
       if (field.required) {
         if (field.type === 'file') {
+          // Handle both single file and array of files
+          if (Array.isArray(value)) {
+            return value.length > 0;
+          }
           return !!value; // File must be selected
         }
         return value !== undefined && value !== null && value !== '';
@@ -113,14 +117,28 @@ export function FileUploader({
   const handleFieldChange = async (fieldName, value) => {
     const field = config.fields.find(f => f.name === fieldName);
 
-    // Process file if it's a file input
+    // Process file(s) if it's a file input
     if (field?.type === 'file' && value) {
       startLoading();
       try {
-        const processedFile = await processFile(value, {
-          compress: field.props?.compress !== false,
-        });
-        setFieldValues(prev => ({ ...prev, [fieldName]: processedFile }));
+        // Check if value is an array (multiple files)
+        if (Array.isArray(value)) {
+          // Process all files
+          const processedFiles = await Promise.all(
+            value.map(file =>
+              processFile(file, {
+                compress: field.props?.compress !== false,
+              })
+            )
+          );
+          setFieldValues(prev => ({ ...prev, [fieldName]: processedFiles }));
+        } else {
+          // Process single file
+          const processedFile = await processFile(value, {
+            compress: field.props?.compress !== false,
+          });
+          setFieldValues(prev => ({ ...prev, [fieldName]: processedFile }));
+        }
       } catch (error) {
         console.error('Error processing file:', error);
         setFieldValues(prev => ({ ...prev, [fieldName]: value }));
@@ -175,7 +193,15 @@ export function FileUploader({
 
       if (value !== undefined && value !== null && value !== '') {
         if (field.type === 'file') {
-          formData.append(field.name, value);
+          // Handle array of files (multiple)
+          if (Array.isArray(value)) {
+            value.forEach(file => {
+              formData.append(field.name, file);
+            });
+          } else {
+            // Handle single file
+            formData.append(field.name, value);
+          }
         } else {
           formData.append(field.name, value);
         }
@@ -249,6 +275,14 @@ export function FileUploader({
             const error = fieldErrors[field.name];
 
             if (field.type === 'file') {
+              const handleRemove = Array.isArray(value)
+                ? (index) => {
+                    // Remove file at index from array
+                    const newFiles = value.filter((_, i) => i !== index);
+                    handleFieldChange(field.name, newFiles.length > 0 ? newFiles : null);
+                  }
+                : () => handleFieldChange(field.name, null);
+
               return (
                 <div key={field.name} className="space-y-2">
                   <FileInput
@@ -259,7 +293,7 @@ export function FileUploader({
                   {value && (
                     <FilePreview
                       file={value}
-                      onRemove={() => handleFieldChange(field.name, null)}
+                      onRemove={handleRemove}
                     />
                   )}
                 </div>

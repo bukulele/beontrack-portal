@@ -302,6 +302,17 @@ export const VIOLATION_GENERAL_INFO_CONFIG = {
   mapModal: {
     enabled: true,
   },
+
+  // Photo gallery configuration
+  photoGallery: {
+    title: "Violation Photos",
+    photoSources: ["violation_photos", "report_photos"],
+    gridCols: 5,
+    upload: {
+      entityType: "violation",
+      dataType: "violation_id",
+    },
+  },
 };
 
 export default VIOLATION_GENERAL_INFO_CONFIG;

@@ -9,13 +9,50 @@ import { createImagePreviewURL, revokePreviewURL, isImage, isPDF, formatFileSize
 /**
  * FilePreview Component
  *
- * Displays preview of uploaded file with option to remove
+ * Displays preview of uploaded file(s) with option to remove
+ * Supports both single file and array of files
+ *
+ * @param {File|File[]} file - File or array of files to preview
+ * @param {Function} onRemove - Callback when file is removed (receives index for arrays)
+ * @param {boolean} showRemove - Whether to show remove button
+ */
+export function FilePreview({ file, onRemove, showRemove = true }) {
+  // Handle array of files
+  if (Array.isArray(file)) {
+    return (
+      <div className="space-y-2">
+        {file.map((singleFile, index) => (
+          <SingleFilePreview
+            key={index}
+            file={singleFile}
+            onRemove={onRemove ? () => onRemove(index) : undefined}
+            showRemove={showRemove}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Handle single file
+  return (
+    <SingleFilePreview
+      file={file}
+      onRemove={onRemove}
+      showRemove={showRemove}
+    />
+  );
+}
+
+/**
+ * SingleFilePreview Component
+ *
+ * Displays preview of a single uploaded file with option to remove
  *
  * @param {File} file - File to preview
  * @param {Function} onRemove - Callback when file is removed
  * @param {boolean} showRemove - Whether to show remove button
  */
-export function FilePreview({ file, onRemove, showRemove = true }) {
+function SingleFilePreview({ file, onRemove, showRemove = true }) {
   const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {

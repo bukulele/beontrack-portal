@@ -9,20 +9,33 @@ import { Label } from '@/components/ui/label';
  * FileInput Component
  *
  * Custom file input with drag & drop support
+ * Supports both single and multiple file selection
  *
  * @param {Object} field - Field configuration
- * @param {Function} onChange - File change handler
+ * @param {Object} field.props - Field props (optional)
+ * @param {boolean} field.props.multiple - Enable multiple file selection
+ * @param {Function} onChange - File change handler (receives File or File[])
  * @param {boolean} disabled - Whether input is disabled
  * @param {string} error - Validation error message
  */
 export function FileInput({ field, onChange, disabled = false, error }) {
-  const { name, label, required, validation = {} } = field;
+  const { name, label, required, validation = {}, props = {} } = field;
+  const { multiple = false } = props;
   const inputRef = useRef(null);
 
   const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onChange(file);
+    if (multiple) {
+      // Handle multiple files - return array
+      const files = Array.from(e.target.files || []);
+      if (files.length > 0) {
+        onChange(files);
+      }
+    } else {
+      // Handle single file - return file
+      const file = e.target.files?.[0];
+      if (file) {
+        onChange(file);
+      }
     }
   };
 
@@ -54,12 +67,13 @@ export function FileInput({ field, onChange, disabled = false, error }) {
           accept={validation.accept || '*/*'}
           onChange={handleFileSelect}
           disabled={disabled}
+          multiple={multiple}
         />
 
         <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
 
         <p className="text-sm text-slate-600 mb-1">
-          Click to upload or drag and drop
+          {multiple ? 'Click to upload multiple files or drag and drop' : 'Click to upload or drag and drop'}
         </p>
 
         {validation.accept && (

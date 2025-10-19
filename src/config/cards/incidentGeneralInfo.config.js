@@ -305,6 +305,17 @@ export const INCIDENT_GENERAL_INFO_CONFIG = {
   mapModal: {
     enabled: true,
   },
+
+  // Photo gallery configuration
+  photoGallery: {
+    title: "Incident Photos",
+    photoSources: ["incident_photos", "report_photos"],
+    gridCols: 5,
+    upload: {
+      entityType: "incident",
+      dataType: "incident_id",
+    },
+  },
 };
 
 export default INCIDENT_GENERAL_INFO_CONFIG;
