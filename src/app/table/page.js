@@ -1,423 +1,230 @@
 "use client";
 
-import Menu from "../components/menu/Menu";
-import { useState, useEffect } from "react";
-import ThreeDotsLoader from "../components/loader/ThreeDotsLoader";
-import { OFFICE_TABLE_FIELDS_SAFETY } from "@/data/tables/employees";
-import { TRUCKS_TABLE_FIELDS } from "@/data/tables/trucks";
-import { DRIVER_REPORT_TABLE_FIELDS } from "@/data/tables/driver-reports";
-import { MAIN_DASHBOARD_TEMPLATE } from "../assets/dashboardData";
-import { useLoader } from "../context/LoaderContext";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import useUserRoles from "../functions/useUserRoles";
-import Button from "../components/button/Button";
-import { SettingsProvider } from "../context/SettingsContext";
-import DashboardContainer from "../components/dashboardContainer/DashboardContainer";
-import Cookies from "js-cookie";
-import { RotatingLines } from "react-loader-spinner";
-import { EQUIPMENT_TABLE_FIELDS } from "@/data/tables/equipment";
-import { InfoCardProvider } from "../context/InfoCardContext";
-import { INCIDENTS_TABLE } from "@/data/tables/incidents";
-import { CreateObjectProvider } from "../context/CreateObjectContext";
-import {
-  GO_TO_TABLE_LINKS_FUEL_REPORT,
-  GO_TO_TABLE_LINKS_FUEL_REPORT_QUARTERLY,
-} from "../assets/tableData";
-import {
-  FUEL_REPORT_TABLE,
-  FUEL_REPORT_TABLE_QUARTERLY,
-} from "@/data/tables/fuel-reports";
-import { VIOLATIONS_TABLE } from "@/data/tables/violations";
-import { WCB_TABLE } from "@/data/tables/wcb";
-import TableView from "../components/tableContainer/TableView_unstable";
-import {
-  DRIVERS_TABLE_FIELDS_REPORT,
-  DRIVERS_TABLE_FIELDS_RECRUITING,
-  DRIVERS_TABLE_FIELDS_SAFETY,
-  DRIVERS_TABLE_DOCUMENTS_EXPIRING,
-  DRIVERS_TABLE_TO_BE_REVIEWED_BY_SAFETY,
-  DRIVERS_SEALS_REPORT,
-} from "@/data/tables/drivers";
-import AvailabilitySheet from "../components/dispatchSection/AvailabilitySheet";
-import { DRIVERS_AVAILABILITY_SHEET } from "../components/dispatchSection/dispatch_assets/tableFields";
-import { AvailabilityProvider } from "../context/AvailabilityContext";
-import { DriverAttendanceProvider } from "../context/DriverAttendanceContext";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Box } from "@mui/material";
-import { TrucksDriversProvider } from "../context/TrucksDriversContext";
-import SealsReport from "../components/sealsReport/SealsReport";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { DataGrid } from "@mui/x-data-grid";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import UniversalCard from "@/app/components/universal-card/UniversalCard";
+import { getEntityConfig, isValidEntityType } from "@/config/entities";
 
-const TablePage = (props) => {
-  const SPECIAL_MENU_POINTS = [
-    "all_drivers_data",
-    "dispatch_availability",
-    "seals_report",
-  ];
-  const getDefaultMenuPointChosen = () => {
-    const searchParams = props.searchParams;
-    const targetMenuPoint = searchParams.report;
+// Context providers
+import { SettingsProvider } from "@/app/context/SettingsContext";
+import { InfoCardProvider } from "@/app/context/InfoCardContext";
+import { CreateObjectProvider } from "@/app/context/CreateObjectContext";
+import { DriverProvider } from "@/app/context/DriverContext";
+import { TruckProvider } from "@/app/context/TruckContext";
+import { EmployeeProvider } from "@/app/context/EmployeeContext";
+import { EquipmentProvider } from "@/app/context/EquipmentContext";
+import { IncidentProvider } from "@/app/context/IncidentContext";
+import { ViolationProvider } from "@/app/context/ViolationContext";
+import { WCBProvider } from "@/app/context/WCBContext";
+import { TrucksDriversProvider } from "@/app/context/TrucksDriversContext";
+import { IncidentsListProvider } from "@/app/context/IncidentsListContext";
+import { ViolationsListProvider } from "@/app/context/ViolationsListContext";
 
-    if (targetMenuPoint) {
-      return targetMenuPoint;
-    }
+/**
+ * Unified Table Page
+ *
+ * Modern configuration-driven table page that handles ALL entity types via URL parameter.
+ * Replaces 7+ separate entity pages with a single unified implementation.
+ *
+ * Usage:
+ * - /table?entity=drivers
+ * - /table?entity=trucks
+ * - /table?entity=employees
+ * - /table?entity=equipment
+ * - /table?entity=incidents
+ * - /table?entity=violations
+ * - /table?entity=wcb
+ *
+ * Features:
+ * - Configuration-driven (no hard-coded entity logic)
+ * - Seamless entity switching (no page reload)
+ * - UniversalCard integration
+ * - MUI DataGrid for tables
+ * - shadcn/ui Dialog for cards
+ */
 
-    const savedData = Cookies.get("4tracks_menuClickData");
-    return savedData ? savedData : "dashboard";
-  };
+// Context provider wrapper component
+function EntityContextWrapper({ entityType, entityId, children }) {
+  // Determine which context provider(s) to use based on entity type
+  const ContextProvider = {
+    drivers: DriverProvider,
+    trucks: TruckProvider,
+    employees: EmployeeProvider,
+    equipment: EquipmentProvider,
+    incidents: IncidentProvider,
+    violations: ViolationProvider,
+    wcb: WCBProvider,
+  }[entityType];
 
-  const [menuPointChosen, setMenuPointChosen] = useState(
-    getDefaultMenuPointChosen
-  );
-  const [reportIsLoading, setReportIsLoading] = useState(false);
-  const [serverData, setServerData] = useState(null);
-  const [reportData, setReportData] = useState(null);
-  const [tableTemplate, setTableTemplate] = useState(null);
-  const [tableType, setTableType] = useState("");
-  const [dashboardTemplate, setDashboardTemplate] = useState(null);
-  const [goToTableLinks, setGoToTableLinks] = useState([]);
-  const [menuCollapsed, setMenuCollapsed] = useState(true);
+  if (!ContextProvider) {
+    return <>{children}</>;
+  }
 
-  const userRoles = useUserRoles();
+  // Special case: drivers need additional context providers
+  if (entityType === "drivers") {
+    return (
+      <IncidentsListProvider>
+        <ViolationsListProvider>
+          <TrucksDriversProvider>
+            <DriverProvider userId={entityId}>{children}</DriverProvider>
+          </TrucksDriversProvider>
+        </ViolationsListProvider>
+      </IncidentsListProvider>
+    );
+  }
 
-  const { startLoading, stopLoading } = useLoader();
+  // Standard entity providers use the same prop name pattern
+  const idProp = {
+    trucks: "truckId",
+    employees: "employeeId",
+    equipment: "equipmentId",
+    incidents: "incidentId",
+    violations: "violationId",
+    wcb: "wcbId",
+  }[entityType];
 
-  const router = useRouter();
+  return <ContextProvider {...{ [idProp]: entityId }}>{children}</ContextProvider>;
+}
 
-  const { status } = useSession();
+function UnifiedTablePage() {
+  const searchParams = useSearchParams();
+  const entityType = searchParams.get("entity") || "drivers";
 
-  const handleMenuClick = (data) => {
-    if (data === "toggle_menu") {
-      setMenuCollapsed((prev) => !prev);
-    } else {
-      router.replace("/table");
-      setMenuPointChosen(data);
+  // Validate and get entity configuration
+  const isValid = isValidEntityType(entityType);
+  const entityConfig = getEntityConfig(entityType);
 
-      if (data !== "expiring-driver-docs") {
-        // Set or refresh the cookie with an 8-hour expiration
-        Cookies.set("4tracks_menuClickData", data, { expires: 1 / 3 });
-      }
-    }
-  };
+  // State
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(null);
+  const [cardOpen, setCardOpen] = useState(false);
 
-  const loadTableData = () => {
-    setServerData(null);
-    setGoToTableLinks([]);
-    startLoading();
-
-    let fetchLink = "";
-    if (menuPointChosen === "dashboard") {
-      setTableTemplate(null);
-      setDashboardTemplate(MAIN_DASHBOARD_TEMPLATE);
-      setTableType("");
-      fetchLink = "/api/get-main-dashboard";
-    } else if (menuPointChosen === "recruiting") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_TABLE_FIELDS_RECRUITING);
-      fetchLink = "/api/get-drivers-recruiting";
-    } else if (menuPointChosen === "active_drivers") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_TABLE_FIELDS_SAFETY);
-      fetchLink = "/api/get-drivers-safety";
-    } else if (menuPointChosen === "all_drivers_data") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_TABLE_FIELDS_REPORT);
-      fetchLink = "";
-      stopLoading();
-    } else if (menuPointChosen === "trucks") {
-      setDashboardTemplate(null);
-      setTableTemplate(TRUCKS_TABLE_FIELDS);
-      setTableType("truck");
-      fetchLink = "/api/get-trucks-table";
-    } else if (menuPointChosen === "equipment") {
-      setDashboardTemplate(null);
-      setTableTemplate(EQUIPMENT_TABLE_FIELDS);
-      setTableType("equipment");
-      fetchLink = "/api/get-equipment";
-    } else if (menuPointChosen === "driver_reports") {
-      setDashboardTemplate(null);
-      setTableTemplate(DRIVER_REPORT_TABLE_FIELDS);
-      setTableType("driver_reports");
-      fetchLink = "/api/get-driver-reports";
-    } else if (menuPointChosen === "expiring-driver-docs") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_TABLE_DOCUMENTS_EXPIRING);
-      fetchLink = "/api/get-expiring-documents-drivers";
-    } else if (menuPointChosen === "drivers_to_be_reviewed") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_TABLE_TO_BE_REVIEWED_BY_SAFETY);
-      fetchLink = "/api/get-drivers-to-be-reviewed";
-    } else if (menuPointChosen === "incidents") {
-      setDashboardTemplate(null);
-      setTableType("incident");
-      setTableTemplate(INCIDENTS_TABLE);
-      fetchLink = "/api/get-incidents-table";
-    } else if (menuPointChosen === "fuel-report") {
-      setDashboardTemplate(null);
-      setTableType("fuel-report");
-      setGoToTableLinks(GO_TO_TABLE_LINKS_FUEL_REPORT);
-      setTableTemplate(FUEL_REPORT_TABLE);
-      fetchLink = "/api/get-fuel-transactions";
-    } else if (menuPointChosen === "fuel-report-quarterly") {
-      setDashboardTemplate(null);
-      setTableType("fuel-report");
-      setTableTemplate(FUEL_REPORT_TABLE_QUARTERLY);
-      setGoToTableLinks(GO_TO_TABLE_LINKS_FUEL_REPORT_QUARTERLY);
-      fetchLink = "/api/get-fuel-quarterly";
-    } else if (menuPointChosen === "violations") {
-      setDashboardTemplate(null);
-      setTableType("violation");
-      setTableTemplate(VIOLATIONS_TABLE);
-      fetchLink = "/api/get-violations";
-    } else if (menuPointChosen === "office_employees") {
-      setDashboardTemplate(null);
-      setTableType("employee");
-      setTableTemplate(OFFICE_TABLE_FIELDS_SAFETY);
-      fetchLink = "/api/get-office-employees";
-    } else if (menuPointChosen === "wcb_claims") {
-      setDashboardTemplate(null);
-      setTableType("wcb");
-      setTableTemplate(WCB_TABLE);
-      fetchLink = "/api/get-wcb-claims";
-    } else if (menuPointChosen === "dispatch_availability") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_AVAILABILITY_SHEET);
-      fetchLink = "";
-      stopLoading();
-    } else if (menuPointChosen === "seals_report") {
-      setDashboardTemplate(null);
-      setTableType("driver");
-      setTableTemplate(DRIVERS_SEALS_REPORT);
-      fetchLink = "/api/get-seals";
-    } else {
-      setDashboardTemplate(null);
-      setTableTemplate(null);
-      setServerData(null);
-      setTableType("");
-      stopLoading();
-    }
-
-    if (fetchLink.length > 0) {
-      fetch(fetchLink, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((response) => {
-          if (response.status === 403) {
-            stopLoading();
-            return response.json().then((data) => {
-              Cookies.remove("4tracks_menuClickData");
-              router.push("/no-access-section");
-              throw new Error(data.message);
-            });
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setServerData(data);
-          stopLoading();
-        })
-        .catch((error) => console.log(error.message));
-    }
-  };
-
-  const loadReport = () => {
-    setReportIsLoading(true);
-    fetch("/api/get-drivers-report", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setReportData(data);
-        setReportIsLoading(false);
-      });
-  };
-
+  // Fetch data when entity type changes
   useEffect(() => {
-    if (status === "unauthenticated") {
-      stopLoading();
-      router.push("/");
-    }
-  }, [status]);
+    fetchData();
+  }, [entityType]);
 
-  useEffect(() => {
-    if (userRoles.includes("no roles")) {
-      router.push("/no-access");
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(entityConfig.apiEndpoint);
+      const result = await response.json();
+      setData(result);
+    } catch (error) {
+      console.error(`Failed to fetch ${entityType}:`, error);
+      setData([]);
+    } finally {
+      setLoading(false);
     }
-  }, [userRoles]);
+  };
 
-  useEffect(() => {
-    if (menuPointChosen === "") {
-      return;
-    }
+  const handleRowClick = (params) => {
+    setSelectedId(params.row[entityConfig.idField]);
+    setCardOpen(true);
+  };
 
-    if (userRoles.length === 0 || userRoles.includes("no roles")) {
-      return;
-    }
+  const handleCloseCard = () => {
+    setCardOpen(false);
+    setSelectedId(null);
+    fetchData(); // Refresh data after card closes
+  };
 
-    loadTableData();
-  }, [menuPointChosen, userRoles]);
+  // Map table columns to DataGrid format
+  const columns = entityConfig.columns.map((col) => ({
+    field: col.field,
+    headerName: col.headerName,
+    width: col.width || 150,
+    valueGetter: col.valueGetter || undefined,
+    flex: col.flex || undefined,
+  }));
+
+  // Show error if invalid entity type
+  if (!isValid) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-red-600">Invalid Entity Type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>The entity type &quot;{entityType}&quot; is not valid.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Valid types: drivers, trucks, employees, equipment, incidents, violations, wcb
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <SettingsProvider>
-      <InfoCardProvider>
-        <CreateObjectProvider>
-          <AvailabilityProvider>
-            <DriverAttendanceProvider>
-              <ThreeDotsLoader />
-              <ThemeProvider
-                theme={createTheme({
-                  breakpoints: {
-                    values: {
-                      desktop: 1280,
-                      extraLarge: 3000,
-                    },
-                  },
-                })}
-              >
-                {status === "authenticated" &&
-                  userRoles.length > 0 &&
-                  !userRoles.includes("no roles") && (
-                    <div className="flex flex-col justify-center min-h-screen max-h-screen w-screen bg-white">
-                      <Box
-                        sx={{ height: "100vh", width: "100%", display: "fex" }}
-                      >
-                        <Box
-                          sx={{
-                            maxHeight: "100%",
-                            borderRight: "1px solid #e0e0e0",
-                            width: menuCollapsed ? "50px" : "250px",
-                          }}
-                        >
-                          <Menu
-                            menuClick={handleMenuClick}
-                            menuPointChosen={menuPointChosen}
-                            reportIsLoading={reportIsLoading}
-                            reportDataSet={!!reportData}
-                            menuCollapsed={menuCollapsed}
-                          />
-                        </Box>
-                        <Box
-                          sx={{
-                            padding: 1,
-                            maxHeight: "100%",
-                            flexBasis: 0,
-                            flexGrow: 1,
-                            width: "100%",
-                            maxWidth: "100%",
-                          }}
-                        >
-                          {serverData &&
-                          tableTemplate &&
-                          !SPECIAL_MENU_POINTS.includes(menuPointChosen) ? (
-                            <TableView
-                              key={menuPointChosen}
-                              data={serverData}
-                              columns={tableTemplate}
-                              handleRefresh={loadTableData}
-                              tableType={tableType}
-                              menuPointChosen={menuPointChosen}
-                              goToTable={handleMenuClick}
-                              goToTableLinks={goToTableLinks}
-                            />
-                          ) : serverData && dashboardTemplate ? (
-                            <DashboardContainer
-                              key={menuPointChosen}
-                              dashboardTemplate={dashboardTemplate}
-                              data={serverData}
-                              tileClick={handleMenuClick}
-                            />
-                          ) : null}
-                          {reportData &&
-                          tableTemplate &&
-                          menuPointChosen === "all_drivers_data" ? (
-                            <TableView
-                              key={menuPointChosen}
-                              data={reportData}
-                              columns={tableTemplate}
-                              handleRefresh={loadReport}
-                              tableType={tableType}
-                              menuPointChosen={menuPointChosen}
-                              goToTable={handleMenuClick}
-                              goToTableLinks={goToTableLinks}
-                              reportIsLoading={reportIsLoading}
-                            />
-                          ) : !reportData &&
-                            tableTemplate &&
-                            menuPointChosen === "all_drivers_data" ? (
-                            <div className="gap-1 w-full min-h-full max-h-full flex flex-col">
-                              <div className="flex-auto flex justify-center items-center w-full h-full">
-                                {reportIsLoading ? (
-                                  <div className="flex flex-col gap-5 items-center justify-center">
-                                    <p className="font-bold uppercase">
-                                      Report is Loading
-                                    </p>
-                                    <RotatingLines
-                                      visible={true}
-                                      height="50"
-                                      width="50"
-                                      strokeColor="orange"
-                                      strokeWidth="5"
-                                      animationDuration="0.75"
-                                      ariaLabel="rotating-lines-loading"
-                                    />
-                                  </div>
-                                ) : (
-                                  <Button
-                                    content={"Load Report"}
-                                    fn={() => loadReport()}
-                                    style={"classicButton"}
-                                    highlighted={true}
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          ) : null}
-                          {tableTemplate &&
-                            menuPointChosen === "dispatch_availability" && (
-                              <TrucksDriversProvider>
-                                <AvailabilitySheet
-                                  key={menuPointChosen}
-                                  columns={tableTemplate}
-                                />
-                              </TrucksDriversProvider>
-                            )}
-                          {serverData &&
-                            tableTemplate &&
-                            menuPointChosen === "seals_report" && (
-                              <TrucksDriversProvider>
-                                <SealsReport
-                                  key={menuPointChosen}
-                                  columns={tableTemplate}
-                                  data={serverData}
-                                  handleRefresh={loadTableData}
-                                  tableType={tableType}
-                                  menuPointChosen={menuPointChosen}
-                                />
-                              </TrucksDriversProvider>
-                            )}
-                        </Box>
-                      </Box>
-                    </div>
-                  )}
-              </ThemeProvider>
-            </DriverAttendanceProvider>
-          </AvailabilityProvider>
-        </CreateObjectProvider>
-      </InfoCardProvider>
-    </SettingsProvider>
-  );
-};
+    <div className="min-h-screen bg-slate-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Page Header */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-2xl">{entityConfig.name}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              View and manage {entityConfig.name.toLowerCase()} using the Universal Card system
+            </p>
+          </CardHeader>
+        </Card>
 
-export default TablePage;
+        {/* Data Table */}
+        <Card>
+          <CardContent className="p-0">
+            <div style={{ height: 600, width: "100%" }}>
+              <DataGrid
+                rows={data}
+                columns={columns}
+                loading={loading}
+                onRowClick={handleRowClick}
+                pageSizeOptions={[10, 25, 50, 100]}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 100 } },
+                }}
+                density="compact"
+                disableRowSelectionOnClick
+                sx={{
+                  border: 0,
+                  "& .MuiDataGrid-cell:focus": { outline: "none" },
+                  "& .MuiDataGrid-row:hover": {
+                    cursor: "pointer",
+                    backgroundColor: "rgba(0, 0, 0, 0.04)",
+                  },
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Universal Card Dialog */}
+      {selectedId && (
+        <Dialog open={cardOpen} onOpenChange={handleCloseCard}>
+          <DialogContent className="max-w-[1100px] p-0 gap-0 border-0 shadow-none bg-transparent [&>button]:hidden">
+            <VisuallyHidden.Root>
+              <DialogTitle>{entityConfig.dialogTitle}</DialogTitle>
+            </VisuallyHidden.Root>
+            <SettingsProvider>
+              <InfoCardProvider>
+                <CreateObjectProvider>
+                  <EntityContextWrapper entityType={entityType} entityId={selectedId}>
+                    <UniversalCard config={entityConfig.cardConfig} />
+                  </EntityContextWrapper>
+                </CreateObjectProvider>
+              </InfoCardProvider>
+            </SettingsProvider>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
+export default UnifiedTablePage;
