@@ -9,9 +9,9 @@ function checkDate(date, daysThreshold) {
   const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
   if (daysDifference <= 0) {
-    return "#ff9c9c"; // Date has already passed
+    return "daysWarn_red"; // Date has already passed
   } else if (daysDifference < daysThreshold) {
-    return "#f7e09e"; // Less than the specified number of days left
+    return "daysWarn_yellow"; // Less than the specified number of days left
   } else {
     return "";
   }
