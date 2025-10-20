@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { DataGrid } from "@mui/x-data-grid";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -90,7 +90,7 @@ function EntityContextWrapper({ entityType, entityId, children }) {
   return <ContextProvider {...{ [idProp]: entityId }}>{children}</ContextProvider>;
 }
 
-function UnifiedTablePage() {
+function TablePageContent() {
   const searchParams = useSearchParams();
   const entityType = searchParams.get("entity") || "drivers";
 
@@ -224,6 +224,14 @@ function UnifiedTablePage() {
         </Dialog>
       )}
     </div>
+  );
+}
+
+function UnifiedTablePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-8">Loading...</div>}>
+      <TablePageContent />
+    </Suspense>
   );
 }
 

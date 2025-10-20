@@ -7,7 +7,7 @@ import {
   DRIVERTYPE_CHOICES,
   ROUTES_CHOICES,
 } from "@/app/assets/tableData";
-import checkDate from "@/app/functions/checkDate_unstable";
+import checkDate from "@/app/functions/checkDate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import formatDate from "@/app/functions/formatDate";
