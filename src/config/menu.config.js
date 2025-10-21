@@ -194,6 +194,22 @@ export const MENU_SECTIONS = [
 ];
 
 /**
+ * Role ID mapping - maps role names to actual Azure AD role IDs from environment
+ * This needs to be a static object because Next.js replaces process.env at build time
+ */
+const ROLE_IDS = {
+  PORTAL_DISPATCH: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_DISPATCH,
+  PORTAL_SAFETY: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_SAFETY,
+  PORTAL_RECRUITING: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_RECRUITING,
+  PORTAL_PAYROLL: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PAYROLL,
+  PORTAL_PAYROLL_MANAGER: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PAYROLL_MANAGER,
+  PORTAL_PLANNER: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PLANNER,
+  PORTAL_SHOP: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_SHOP,
+  PORTAL_ADMIN: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_ADMIN,
+  PORTAL_HR: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_HR,
+};
+
+/**
  * Get menu items visible to user based on their roles
  * @param {string[]} userRoles - Array of user role IDs (from Azure AD)
  * @returns {object[]} Filtered menu sections with visible items
@@ -207,9 +223,10 @@ export const getVisibleMenuSections = (userRoles) => {
     ...section,
     items: section.items.filter(item => {
       // Check if user has any of the required roles
-      return item.roles.some(requiredRole =>
-        userRoles.includes(process.env[`NEXT_PUBLIC_AZURE_ROLE_${requiredRole}`])
-      );
+      return item.roles.some(requiredRole => {
+        const roleId = ROLE_IDS[requiredRole];
+        return roleId && userRoles.includes(roleId);
+      });
     })
   })).filter(section => section.items.length > 0); // Remove empty sections
 };
