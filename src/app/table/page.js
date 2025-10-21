@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGridPro } from "@mui/x-data-grid-pro";
+import { Box } from "@mui/material";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/app/components/sidebar/AppSidebar";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
 import { getEntityConfig, isValidEntityType } from "@/config/entities";
+import CustomToolbar from "@/app/components/table/CustomToolbar";
 
 // Context providers
 import { SettingsProvider } from "@/app/context/SettingsContext";
@@ -148,7 +150,7 @@ function TablePageContent() {
   const handleCloseCard = () => {
     setCardOpen(false);
     setSelectedId(null);
-    fetchData(); // Refresh data after card closes
+    // Removed auto-refresh - user can manually refresh via toolbar
   };
 
   // Map table columns to DataGrid format
@@ -187,47 +189,44 @@ function TablePageContent() {
       </div>
 
       <SidebarInset>
-        <div className="min-h-screen bg-slate-50 p-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Page Header */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-2xl">{entityConfig.name}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
-                  View and manage {entityConfig.name.toLowerCase()} using the Universal Card system
-                </p>
-              </CardHeader>
-            </Card>
-
-            {/* Data Table */}
-            <Card>
-              <CardContent className="p-0">
-                <div style={{ height: 600, width: "100%" }}>
-                  <DataGrid
-                    rows={data}
-                    columns={columns}
-                    loading={loading}
-                    onRowClick={handleRowClick}
-                    pageSizeOptions={[10, 25, 50, 100]}
-                    initialState={{
-                      pagination: { paginationModel: { pageSize: 100 } },
-                    }}
-                    density="compact"
-                    disableRowSelectionOnClick
-                    sx={{
-                      border: 0,
-                      "& .MuiDataGrid-cell:focus": { outline: "none" },
-                      "& .MuiDataGrid-row:hover": {
-                        cursor: "pointer",
-                        backgroundColor: "rgba(0, 0, 0, 0.04)",
-                      },
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        {/* Full-height flex container */}
+        <Box sx={{ height: "100vh", width: "100%", display: "flex", flexDirection: "column", p: 1 }}>
+          {/* Data Table with double-box pattern for 100% height */}
+          <Box sx={{ flex: 1, position: "relative" }}>
+            <Box sx={{ position: "absolute", inset: 0 }}>
+              <DataGridPro
+                rows={data}
+                columns={columns}
+                loading={loading}
+                onRowClick={handleRowClick}
+                pageSizeOptions={[10, 25, 50, 100]}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 100 } },
+                }}
+                density="compact"
+                disableRowSelectionOnClick
+                headerFilters
+                slots={{
+                  toolbar: CustomToolbar,
+                }}
+                slotProps={{
+                  toolbar: {
+                    onRefresh: fetchData,
+                    onAdd: null, // TODO: Add create functionality per entity type
+                  },
+                }}
+                sx={{
+                  border: "none",
+                  "& .MuiDataGrid-cell:focus": { outline: "none" },
+                  "& .MuiDataGrid-row:hover": {
+                    cursor: "pointer",
+                    backgroundColor: "rgba(0, 0, 0, 0.04)",
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
       </SidebarInset>
 
       {/* Universal Card Dialog */}
