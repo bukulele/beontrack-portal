@@ -48,7 +48,8 @@ export function AppSidebar({ reportIsLoading, reportDataSet }) {
   const isActive = (route) => {
     if (route.startsWith("/table?entity=")) {
       const entity = route.split("entity=")[1];
-      return pathname === "/table" && searchParams.get("entity") === entity;
+      const currentEntity = searchParams.get("entity") || "drivers"; // Default entity is "drivers"
+      return pathname === "/table" && currentEntity === entity;
     }
     return pathname === route;
   };

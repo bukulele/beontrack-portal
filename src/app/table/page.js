@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { DataGrid } from "@mui/x-data-grid";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
@@ -94,6 +94,7 @@ function EntityContextWrapper({ entityType, entityId, children }) {
 
 function TablePageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const entityType = searchParams.get("entity") || "drivers";
 
   // Validate and get entity configuration
@@ -105,6 +106,20 @@ function TablePageContent() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
+
+  // Handle redirect on mount if no entity param
+  useEffect(() => {
+    const currentEntity = searchParams.get("entity");
+
+    if (!currentEntity) {
+      // No entity param - check localStorage or use default
+      const lastVisitedTable = localStorage.getItem("lastVisitedTable") || "drivers";
+      router.replace(`/table?entity=${lastVisitedTable}`);
+    } else {
+      // Save current entity to localStorage
+      localStorage.setItem("lastVisitedTable", currentEntity);
+    }
+  }, [searchParams, router]);
 
   // Fetch data when entity type changes
   useEffect(() => {
