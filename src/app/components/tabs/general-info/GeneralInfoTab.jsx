@@ -237,19 +237,19 @@ function GeneralInfoTab({
                 </CardContent>
               </Card>
             )}
-
-            {/* Photo Gallery Section */}
-            {config.photoGallery && (
-              <div className="mt-4">
-                <PhotoGallerySection
-                  config={config.photoGallery}
-                  entityData={entityData}
-                  loadData={loadData}
-                />
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Photo Gallery Section - Full Width */}
+        {config.photoGallery && (
+          <div className="px-4 pb-4">
+            <PhotoGallerySection
+              config={config.photoGallery}
+              entityData={entityData}
+              loadData={loadData}
+            />
+          </div>
+        )}
       </div>
     </ScrollArea>
 

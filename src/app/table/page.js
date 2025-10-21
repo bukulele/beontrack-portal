@@ -203,9 +203,10 @@ function TablePageContent() {
                 initialState={{
                   pagination: { paginationModel: { pageSize: 100 } },
                 }}
-                density="compact"
                 disableRowSelectionOnClick
                 headerFilters
+                sortingOrder={["asc", "desc"]}
+                rowHeight={30}
                 slots={{
                   toolbar: CustomToolbar,
                 }}
@@ -213,6 +214,23 @@ function TablePageContent() {
                   toolbar: {
                     onRefresh: fetchData,
                     onAdd: null, // TODO: Add create functionality per entity type
+                  },
+                  headerFilterCell: {
+                    InputComponentProps: {
+                      variant: 'outlined',
+                      size: 'small',
+                      sx: {
+                        '& .MuiInputBase-input': {
+                          padding: '4px 8px',
+                        },
+                        '& .MuiInputLabel-root': {
+                          transform: 'translate(14px, 5px) scale(1)',
+                        },
+                        '& .MuiInputLabel-shrink': {
+                          transform: 'translate(14px, -9px) scale(0.75)',
+                        },
+                      },
+                    },
                   },
                 }}
                 sx={{

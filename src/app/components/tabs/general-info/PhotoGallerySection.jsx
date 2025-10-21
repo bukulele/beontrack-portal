@@ -109,7 +109,7 @@ function PhotoGallerySection({ config, entityData, loadData }) {
               No photos uploaded yet
             </p>
           ) : (
-            <div className={`grid gap-2 grid-cols-${config.gridCols || 5}`}>
+            <div className="grid gap-2 grid-cols-5">
               {photoGrid}
             </div>
           )}
