@@ -6,6 +6,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/app/components/sidebar/AppSidebar";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
 import { getEntityConfig, isValidEntityType } from "@/config/entities";
 
@@ -163,46 +165,55 @@ function TablePageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Page Header */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-2xl">{entityConfig.name}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">
-              View and manage {entityConfig.name.toLowerCase()} using the Universal Card system
-            </p>
-          </CardHeader>
-        </Card>
-
-        {/* Data Table */}
-        <Card>
-          <CardContent className="p-0">
-            <div style={{ height: 600, width: "100%" }}>
-              <DataGrid
-                rows={data}
-                columns={columns}
-                loading={loading}
-                onRowClick={handleRowClick}
-                pageSizeOptions={[10, 25, 50, 100]}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 100 } },
-                }}
-                density="compact"
-                disableRowSelectionOnClick
-                sx={{
-                  border: 0,
-                  "& .MuiDataGrid-cell:focus": { outline: "none" },
-                  "& .MuiDataGrid-row:hover": {
-                    cursor: "pointer",
-                    backgroundColor: "rgba(0, 0, 0, 0.04)",
-                  },
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+    <>
+      {/* Sidebar Trigger (Keyboard shortcut: Cmd+B / Ctrl+B) */}
+      <div className="fixed top-4 left-4 z-50">
+        <SidebarTrigger />
       </div>
+
+      <SidebarInset>
+        <div className="min-h-screen bg-slate-50 p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Page Header */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-2xl">{entityConfig.name}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  View and manage {entityConfig.name.toLowerCase()} using the Universal Card system
+                </p>
+              </CardHeader>
+            </Card>
+
+            {/* Data Table */}
+            <Card>
+              <CardContent className="p-0">
+                <div style={{ height: 600, width: "100%" }}>
+                  <DataGrid
+                    rows={data}
+                    columns={columns}
+                    loading={loading}
+                    onRowClick={handleRowClick}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 100 } },
+                    }}
+                    density="compact"
+                    disableRowSelectionOnClick
+                    sx={{
+                      border: 0,
+                      "& .MuiDataGrid-cell:focus": { outline: "none" },
+                      "& .MuiDataGrid-row:hover": {
+                        cursor: "pointer",
+                        backgroundColor: "rgba(0, 0, 0, 0.04)",
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </SidebarInset>
 
       {/* Universal Card Dialog */}
       {selectedId && (
@@ -223,15 +234,18 @@ function TablePageContent() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </>
   );
 }
 
 function UnifiedTablePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-8">Loading...</div>}>
-      <TablePageContent />
-    </Suspense>
+    <SidebarProvider>
+      <AppSidebar />
+      <Suspense fallback={<div className="min-h-screen bg-slate-50 p-8">Loading...</div>}>
+        <TablePageContent />
+      </Suspense>
+    </SidebarProvider>
   );
 }
 
