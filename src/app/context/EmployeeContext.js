@@ -4,17 +4,20 @@ import useUserRoles from "../functions/useUserRoles";
 
 export const EmployeeContext = createContext();
 
-export const EmployeeProvider = ({ children, userId }) => {
+export const EmployeeProvider = ({ children, userId, employeeId }) => {
   const [userData, setUserData] = useState(null);
 
   const { startLoading, stopLoading } = useLoader();
 
   const userRoles = useUserRoles();
 
-  // Memoize loadEmployeeData to ensure it only changes when userId changes
+  // Support both userId (legacy) and employeeId (universal table page)
+  const id = employeeId || userId;
+
+  // Memoize loadEmployeeData to ensure it only changes when id changes
   const loadEmployeeData = useCallback(() => {
     startLoading();
-    fetch(`/api/get-employee-data/${userId}`, {
+    fetch(`/api/get-employee-data/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -35,7 +38,7 @@ export const EmployeeProvider = ({ children, userId }) => {
       .catch((error) => {
         console.error("Failed to fetch data:", error);
       });
-  }, [userId, userRoles]);
+  }, [id, userRoles]);
 
   useEffect(() => {
     loadEmployeeData();

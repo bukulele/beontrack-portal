@@ -55,7 +55,7 @@ export const ENTITY_CONFIGS = {
     name: "Office Employees",
     columns: OFFICE_TABLE_FIELDS_SAFETY,
     cardConfig: EMPLOYEE_CARD_CONFIG,
-    apiEndpoint: "/api/get-employees",
+    apiEndpoint: "/api/get-office-employees",
     idField: "id",
     dialogTitle: "Employee Details",
   },
