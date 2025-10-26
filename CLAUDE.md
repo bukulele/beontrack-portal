@@ -39,6 +39,12 @@ This is a Next.js 14 application serving as an office management system for 4Tra
 
 #### Key Features
 - **Dashboard**: Multi-role dashboard with different views including shop dashboard for 4K displays
+- **Navigation**: Modern sidebar with grouped sections and role-based visibility
+  - **Employees**: Office employees, production employees (drivers), reports, expiring docs, WCB claims, incidents
+  - **Equipment**: Trucks, trailers, reports, accidents, issues, service orders
+  - **Suppliers**: Suppliers, purchase orders, deliveries, invoices, payments, performance reports, contracts, quality issues, expiring docs
+  - **Customers**: Customers, orders, claims, quotes, invoices
+  - **Legacy**: Original flat navigation structure (temporary, will be removed)
 - **Card System**: Detailed info cards for each entity (driver cards, truck cards, etc.) with tabbed interfaces
   - **General Info Tab**: Read-only overview with inline field display and clickable file viewing sections
   - **Checklist Tab**: Configuration-driven checklist with compact rows for data fields and file uploads
@@ -72,6 +78,7 @@ This is a Next.js 14 application serving as an office management system for 4Tra
   - `src/config/cards/`: Entity card configurations
   - `src/config/checklists/`: Checklist configurations (e.g., `truckChecklist.config.js`)
   - `src/config/forms/`: Form configurations
+  - `src/config/menu.config.js`: Sidebar navigation menu configuration with role-based visibility
 - `src/components/ui/`: shadcn/ui components
 - `src/middleware.js`: Authentication and authorization middleware
 - `src/apiMappingMiddleware.js`: Role-based API access control
