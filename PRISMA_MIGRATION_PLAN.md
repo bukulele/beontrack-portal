@@ -2,7 +2,7 @@
 
 **Project Start Date**: 2025-01-26
 **Status**: 🚧 In Progress
-**Current Phase**: Phase 0 - Next.js Update
+**Current Phase**: Phase 2 - Base Schema Design
 
 ---
 
@@ -23,21 +23,24 @@
 
 ### **PHASE 0: Next.js Update** ⚠️ PREREQUISITE
 **Duration**: 1-2 days
-**Status**: ⬜ Not Started
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Started**: 2025-01-26
+**Completed**: 2025-01-26
 
 **Tasks**:
-- [ ] Create feature branch: `git checkout -b upgrade-nextjs-15`
-- [ ] Update dependencies: `npm install next@latest react@latest react-dom@latest eslint-config-next@latest`
-- [ ] Review breaking changes documentation
-- [ ] Test build: `npm run build`
-- [ ] Test dev server: `npm run dev`
-- [ ] Fix any breaking changes
-- [ ] Commit: "Upgrade to Next.js 15"
-- [ ] Merge to main
+- [x] Create feature branch: `git checkout -b upgrade-nextjs-15`
+- [x] Update dependencies: `npm install next@latest react@latest react-dom@latest eslint@latest eslint-config-next@latest`
+- [x] Review breaking changes documentation
+- [x] Test build: `npm run build`
+- [x] Test dev server: `npm run dev`
+- [x] Fix breaking changes:
+  - [x] Updated `images.domains` → `images.remotePatterns` in next.config.mjs
+  - [x] Renamed `src/middleware.js` → `src/proxy.js`
+  - [x] Fixed Suspense boundary in `/table` page for `useSearchParams()`
+- [x] Commit: "Upgrade to Next.js 16 and add Prisma migration plan"
+- [x] Merge to main
 
-**Deliverable**: Next.js 15.2.x running
+**Deliverable**: ✅ Next.js 16.0.0 running (React 19.2.0, ESLint 9)
 
 **Django Migration Impact**: ✅ None (framework update only)
 
@@ -45,21 +48,28 @@
 
 ### **PHASE 1: Infrastructure Setup**
 **Duration**: 1 day
-**Status**: ⬜ Not Started
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Started**: 2025-01-26
+**Completed**: 2025-01-26
 
 **Tasks**:
-- [ ] Create PostgreSQL Docker container with persistent volume
-- [ ] Install Prisma: `npm install prisma @prisma/client`
-- [ ] Initialize Prisma: `npx prisma init`
-- [ ] Configure `.env.local` with DATABASE_URL
-- [ ] Update `.gitignore` (add `.env.local`, `uploads/`)
-- [ ] Create Prisma client singleton: `src/lib/prisma.js`
-- [ ] Create upload directory structure: `mkdir -p uploads/{employees,trucks,drivers}`
-- [ ] Test database connection
+- [x] Install PostgreSQL 16 via Homebrew: `brew install postgresql@16`
+- [x] Start PostgreSQL service: `brew services start postgresql@16`
+- [x] Create development database: `createdb bot_demo_dev`
+- [x] Install Prisma: `npm install -D prisma --legacy-peer-deps`
+- [x] Install Prisma Client: `npm install @prisma/client --legacy-peer-deps`
+- [x] Initialize Prisma: `npx prisma init`
+- [x] Configure `.env.local` with DATABASE_URL: `postgresql://nikita_sazonov@localhost:5432/bot_demo_dev`
+- [x] Create Prisma client singleton: `src/lib/prisma.js`
+- [x] Create upload directory structure: `mkdir -p uploads/{employees,trucks,drivers}`
+- [x] Test database connection: ✅ Connected successfully
 
-**Deliverable**: ✅ PostgreSQL running with persistent storage, Prisma installed
+**Deliverable**: ✅ PostgreSQL 16.10 running locally, Prisma 6.x installed
+
+**Notes**:
+- Used local PostgreSQL via Homebrew instead of Docker (Docker not available)
+- PostgreSQL runs as background service and starts automatically on system boot
+- Database persists in `/opt/homebrew/var/postgresql@16`
 
 **Django Migration Impact**: ✅ None (Django will use same PostgreSQL)
 
@@ -298,9 +308,9 @@ bot-demo/
 
 | Phase | Status | Started | Completed | Duration |
 |-------|--------|---------|-----------|----------|
-| Phase 0: Next.js Update | ⬜ Not Started | - | - | - |
-| Phase 1: Infrastructure | ⬜ Not Started | - | - | - |
-| Phase 2: Schema Design | ⬜ Not Started | - | - | - |
+| Phase 0: Next.js Update | ✅ Completed | 2025-01-26 | 2025-01-26 | ~2 hours |
+| Phase 1: Infrastructure | ✅ Completed | 2025-01-26 | 2025-01-26 | ~1 hour |
+| Phase 2: Schema Design | 🚧 In Progress | 2025-01-26 | - | - |
 | Phase 3: File Uploads | ⬜ Not Started | - | - | - |
 | Phase 4: REST API | ⬜ Not Started | - | - | - |
 | Phase 5: Frontend | ⬜ Not Started | - | - | - |
@@ -357,12 +367,13 @@ npx prisma generate
 | 2025-01-26 | Prisma Studio for admin | Built-in, free | Less features than Django admin |
 | 2025-01-26 | Separate document tables | Better type safety | More normalized |
 | 2025-01-26 | Start with Office Employees | Simplest entity | Validates entire workflow |
+| 2025-01-26 | Homebrew PostgreSQL instead of Docker | Docker not available | Local install, auto-starts |
 
 ---
 
 ## 🚨 DJANGO MIGRATION READINESS CHECKLIST
 
-- [ ] Same PostgreSQL database
+- [x] Same PostgreSQL database (bot_demo_dev on localhost:5432)
 - [ ] Django-standard naming (snake_case)
 - [ ] Standard field types
 - [ ] UUID primary keys
@@ -376,7 +387,7 @@ npx prisma generate
 
 ## ✅ SUCCESS CRITERIA
 
-- [ ] PostgreSQL persistent across restarts
+- [x] PostgreSQL persistent across restarts (auto-starts via brew services)
 - [ ] Can create employees via UI
 - [ ] Can upload real PDF/image files
 - [ ] Files downloadable/viewable
@@ -384,7 +395,7 @@ npx prisma generate
 - [ ] Prisma Studio usable as admin
 - [ ] Clean REST API functional
 - [ ] Complete Django documentation
-- [ ] Can pause/resume at any phase
+- [x] Can pause/resume at any phase (PRISMA_MIGRATION_PLAN.md tracks progress)
 
 ---
 
