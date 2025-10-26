@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+
+// Force dynamic rendering for this page (required for useSearchParams in Next.js 16)
+export const dynamic = 'force-dynamic';
 import { useSearchParams, useRouter } from "next/navigation";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 import { Box } from "@mui/material";
@@ -270,15 +273,13 @@ function TablePageContent() {
   );
 }
 
-function UnifiedTablePage() {
+export default function UnifiedTablePage() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <Suspense fallback={<div className="min-h-screen bg-slate-50 p-8">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-8">Loading...</div>}>
+      <SidebarProvider>
+        <AppSidebar />
         <TablePageContent />
-      </Suspense>
-    </SidebarProvider>
+      </SidebarProvider>
+    </Suspense>
   );
 }
-
-export default UnifiedTablePage;

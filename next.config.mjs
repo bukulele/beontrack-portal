@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["portaldev.4tracksltd.com", "portal.4tracksltd.com"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'portaldev.4tracksltd.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'portal.4tracksltd.com',
+      },
+    ],
   },
 };
 
