@@ -5,11 +5,227 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum EmployeeStatus {
+  // Recruiting Phase
+  new
+  application_received
+  under_review
+  application_on_hold
+  rejected
+
+  // Employment Phase
+  trainee
+  active
+  resigned
+
+  // Leave Phase
+  vacation
+  on_leave
+  wcb // Workers' compensation
+
+  // Separation Phase
+  terminated
+  suspended
+}
+
+enum EmploymentType {
+  full_time
+  part_time
+  contract
+}
+
+enum DocumentType {
+  // Identity & Work Authorization
+  government_id
+  work_authorization
+  sin_ssn
+
+  // Banking & Tax
+  direct_deposit
+  tax_forms
+
+  // Hiring Documents
+  employment_application
+  resume
+  background_check_consent
+  emergency_contact
+
+  // Employment Contract & Policies
+  employment_contract
+  company_policies
+  confidentiality_agreement
+  benefits_enrollment
+
+  // Certifications & Qualifications
+  professional_certifications
+  education_verification
+  safety_training
+
+  // Other
+  immigration_documents
+  other_documents
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  username      String   @unique @db.VarChar(150)
+  email         String   @unique @db.VarChar(254)
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  firstName     String?  @map("first_name") @db.VarChar(150)
+  lastName      String?  @map("last_name") @db.VarChar(150)
+  isActive      Boolean  @default(true) @map("is_active")
+  isStaff       Boolean  @default(false) @map("is_staff")
+  isSuperuser   Boolean  @default(false) @map("is_superuser")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  employeesCreated        OfficeEmployee[] @relation("EmployeeCreatedBy")
+  employeesUpdated        OfficeEmployee[] @relation("EmployeeUpdatedBy")
+  documentsUploaded       Document[]       @relation("DocumentUploadedBy")
+  documentsReviewed       Document[]       @relation("DocumentReviewedBy")
+  activityLogsPerformed   ActivityLog[]    @relation("ActivityLogPerformedBy")
+
+  @@map("users")
+}
+
+model OfficeEmployee {
+  id                      String          @id @default(uuid()) @db.Uuid
+
+  // Identity
+  employeeId              String          @unique @map("employee_id") @db.VarChar(50)
+  firstName               String          @map("first_name") @db.VarChar(100)
+  lastName                String          @map("last_name") @db.VarChar(100)
+
+  // Contact
+  email                   String?         @db.VarChar(254)
+  phoneNumber             String?         @map("phone_number") @db.VarChar(20)
+  emergencyContactName    String?         @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone   String?         @map("emergency_contact_phone") @db.VarChar(20)
+
+  // Address
+  addressLine1            String?         @map("address_line1") @db.VarChar(255)
+  addressLine2            String?         @map("address_line2") @db.VarChar(255)
+  city                    String?         @db.VarChar(100)
+  stateProvince           String?         @map("state_province") @db.VarChar(100)
+  postalCode              String?         @map("postal_code") @db.VarChar(20)
+  country                 String?         @db.VarChar(100)
+
+  // Employment
+  hireDate                DateTime?       @map("hire_date") @db.Date
+  terminationDate         DateTime?       @map("termination_date") @db.Date
+  jobTitle                String?         @map("job_title") @db.VarChar(100)
+  department              String?         @db.VarChar(100)
+  employmentType          EmploymentType? @map("employment_type")
+  officeLocation          String?         @map("office_location") @db.VarChar(100)
+  dateOfBirth             DateTime?       @map("date_of_birth") @db.Date
+
+  // Status
+  status                  EmployeeStatus  @default(new)
+
+  // Photo
+  profilePhotoId          String?         @map("profile_photo_id") @db.Uuid
+  profilePhoto            Document?       @relation("EmployeeProfilePhoto", fields: [profilePhotoId], references: [id])
+
+  // Audit
+  createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById             String          @map("created_by_id") @db.Uuid
+  createdBy               User            @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+  updatedById             String          @map("updated_by_id") @db.Uuid
+  updatedBy               User            @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id])
+  isDeleted               Boolean         @default(false) @map("is_deleted")
+  deletedAt               DateTime?       @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations
+  documents               Document[]      @relation("EmployeeDocuments")
+  activityLogs            ActivityLog[]   @relation("EmployeeActivityLogs")
+
+  @@map("office_employees")
+}
+
+model Document {
+  id                String        @id @default(uuid()) @db.Uuid
+
+  // Employee relation
+  employeeId        String        @map("employee_id") @db.Uuid
+  employee          OfficeEmployee @relation("EmployeeDocuments", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Document details
+  documentType      DocumentType  @map("document_type")
+  filePath          String        @map("file_path") @db.VarChar(500)
+  fileName          String        @map("file_name") @db.VarChar(255)
+  mimeType          String        @map("mime_type") @db.VarChar(100)
+  fileSize          Int           @map("file_size") // bytes
+  version           Int           @default(1)
+
+  // Metadata (JSON for flexible fields like expiry_date, notes, document_number, etc.)
+  metadata          Json?         @db.JsonB
+
+  // Review status
+  reviewStatus      ReviewStatus  @default(pending) @map("review_status")
+  reviewedById      String?       @map("reviewed_by_id") @db.Uuid
+  reviewedBy        User?         @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt        DateTime?     @map("reviewed_at") @db.Timestamptz(6)
+
+  // Upload info
+  uploadedById      String        @map("uploaded_by_id") @db.Uuid
+  uploadedBy        User          @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+
+  // Audit
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isDeleted         Boolean       @default(false) @map("is_deleted")
+  deletedAt         DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations
+  employeeProfilePhotos OfficeEmployee[] @relation("EmployeeProfilePhoto")
+
+  @@map("documents")
+}
+
+model ActivityLog {
+  id            String          @id @default(uuid()) @db.Uuid
+
+  // Employee relation
+  employeeId    String          @map("employee_id") @db.Uuid
+  employee      OfficeEmployee  @relation("EmployeeActivityLogs", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Action details
+  actionType    String          @map("action_type") @db.VarChar(50) // created, updated, status_changed, document_uploaded, etc.
+  fieldName     String?         @map("field_name") @db.VarChar(100)
+  oldValue      String?         @map("old_value") @db.Text
+  newValue      String?         @map("new_value") @db.Text
+
+  // Performed by
+  performedById String          @map("performed_by_id") @db.Uuid
+  performedBy   User            @relation("ActivityLogPerformedBy", fields: [performedById], references: [id])
+
+  // Timestamp
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("activity_logs")
 }

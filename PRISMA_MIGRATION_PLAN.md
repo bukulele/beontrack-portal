@@ -77,30 +77,66 @@
 
 ### **PHASE 2: Base Schema Design** 🔑 CRITICAL
 **Duration**: 2-3 days
-**Status**: ⬜ Not Started
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Started**: 2025-10-27
+**Completed**: 2025-10-27
+
+**IMPORTANT CONTEXT**:
+- ⚠️ The existing Django system is **LEGACY** and highly customized for 4Tracks Ltd (transportation company)
+- 🎯 This phase creates a **NEW, STANDARDIZED** schema for a general-purpose ERP product
+- 🎯 Target markets: Production companies, logistics companies, service companies, government structures
+- 📋 **Scope**: Office employees only (production/driver-specific features deferred to future phases)
 
 **Tasks**:
-- [ ] Design base Prisma schema in `prisma/schema.prisma`
-- [ ] Implement User model (Django-compatible)
-- [ ] Implement EntityStatus enum
-- [ ] Implement OfficeEmployee model
-- [ ] Implement DocumentType and ReviewStatus enums
-- [ ] Implement EmployeeDocument model
-- [ ] Implement EmployeeActivityLog model
-- [ ] Run migration: `npx prisma migrate dev --name init_office_employees`
-- [ ] Generate Prisma Client: `npx prisma generate`
-- [ ] Verify in Prisma Studio: `npx prisma studio`
+- [x] Design base Prisma schema in `prisma/schema.prisma`
+- [x] Implement User model (Django-compatible)
+- [x] Implement EmployeeStatus enum (13 statuses - simplified from legacy 13)
+- [x] Implement OfficeEmployee model (standardized fields, NOT legacy 4Tracks-specific)
+- [x] Implement DocumentType enum (18 comprehensive document types for North American hiring)
+- [x] Implement ReviewStatus enum (3 values: pending, approved, rejected)
+- [x] Implement EmploymentType enum (3 values: full_time, part_time, contract)
+- [x] Implement Document model (universal file tracking, replaces legacy EmployeeDocument)
+- [x] Implement ActivityLog model (audit trail)
+- [x] Run migration: `npx prisma migrate dev --name init_standardized_schema`
+- [x] Generate Prisma Client: `npx prisma generate`
+- [x] Verify in Prisma Studio: `npx prisma studio`
+
+**Schema Details**:
+
+**EmployeeStatus Enum (13 values)**:
+- Recruiting: `new`, `application_received`, `under_review`, `application_on_hold`, `rejected`
+- Employment: `trainee`, `active`, `resigned`
+- Leave: `vacation`, `on_leave`, `wcb` (workers' compensation)
+- Separation: `terminated`, `suspended`
+
+**DocumentType Enum (18 values)**:
+- Identity & Work Auth: `government_id`, `work_authorization`, `sin_ssn`
+- Banking & Tax: `direct_deposit`, `tax_forms`
+- Hiring Docs: `employment_application`, `resume`, `background_check_consent`, `emergency_contact`
+- Contracts & Policies: `employment_contract`, `company_policies`, `confidentiality_agreement`, `benefits_enrollment`
+- Certifications: `professional_certifications`, `education_verification`, `safety_training`
+- Other: `immigration_documents`, `other_documents`
+
+**OfficeEmployee Model (standardized fields)**:
+- Identity: employee_id, first_name, last_name
+- Contact: email, phone_number, emergency_contact_name, emergency_contact_phone
+- Address: address_line1, address_line2, city, state_province, postal_code, country
+- Employment: hire_date, termination_date, job_title, department, employment_type (enum)
+- Status: status (enum)
+- Photo: profile_photo_id (FK to Document)
+- Audit: created_at, updated_at, created_by, updated_by, is_deleted, deleted_at
 
 **Key Design Decisions**:
-- UUID primary keys (Django-compatible)
-- snake_case column names with @map()
-- Explicit PostgreSQL types (@db.VarChar, @db.Timestamptz)
-- Audit trail fields (createdAt, updatedAt, createdBy, updatedBy)
-- Soft delete pattern (isDeleted, deletedAt)
+- ✅ UUID primary keys (Django-compatible)
+- ✅ snake_case column names with @map()
+- ✅ Explicit PostgreSQL types (@db.VarChar, @db.Timestamptz)
+- ✅ Audit trail fields (created_at, updated_at, created_by, updated_by)
+- ✅ Soft delete pattern (is_deleted, deleted_at)
+- ✅ Generic/Standardized: NO client-specific fields (no "terminal", "card_number", "immigration_status" from legacy)
+- ✅ Country-agnostic: Generic document types, companies can customize labels later
+- ✅ Simple status workflow: 13 practical statuses, not a "game" with excessive micro-states
 
-**Deliverable**: ✅ Database schema created, empty tables ready
+**Deliverable**: ✅ Database schema created, empty tables ready, standardized for multi-client ERP
 
 **Django Migration Impact**: ✅ **EASY** - Standard Django patterns used
 
@@ -310,7 +346,7 @@ bot-demo/
 |-------|--------|---------|-----------|----------|
 | Phase 0: Next.js Update | ✅ Completed | 2025-01-26 | 2025-01-26 | ~2 hours |
 | Phase 1: Infrastructure | ✅ Completed | 2025-01-26 | 2025-01-26 | ~1 hour |
-| Phase 2: Schema Design | 🚧 In Progress | 2025-01-26 | - | - |
+| Phase 2: Schema Design | ✅ Completed | 2025-10-27 | 2025-10-27 | ~1.5 hours |
 | Phase 3: File Uploads | ⬜ Not Started | - | - | - |
 | Phase 4: REST API | ⬜ Not Started | - | - | - |
 | Phase 5: Frontend | ⬜ Not Started | - | - | - |
