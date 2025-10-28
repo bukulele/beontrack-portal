@@ -42,3 +42,13 @@ next-env.d.ts
 # PM2 ecosystem config
 ecosystem.config.js
 /src/generated/prisma
+
+# Uploaded files (keep directory structure with .gitkeep)
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/employees/
+!/uploads/employees/.gitkeep
+!/uploads/trucks/
+!/uploads/trucks/.gitkeep
+!/uploads/drivers/
+!/uploads/drivers/.gitkeep
