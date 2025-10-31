@@ -22,6 +22,7 @@ import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import FileUploader from "@/app/components/file-uploader/FileUploader";
 import ViewFilesModal from "./ViewFilesModal";
 import useUserRoles from "@/app/functions/useUserRoles";
+import { UPLOAD_MODES } from "@/config/file-uploader/uploaderSchema";
 
 /**
  * CompactFileRow - Compact row for file-based checklist items
@@ -111,7 +112,7 @@ export function CompactFileRow({
     if (!item.fileUpload) return null;
 
     return {
-      mode: "immediate",
+      mode: item.fileUpload.mode || UPLOAD_MODES.IMMEDIATE,
       entityType: entityType,
       entityId: entityId,
       accept: item.fileUpload.accept || "image/*,application/pdf",

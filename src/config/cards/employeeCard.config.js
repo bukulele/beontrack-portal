@@ -1,4 +1,5 @@
-import { EMPLOYEE_CHECKLIST_CONFIG } from "@/config/checklists/employeeChecklist.config";
+import { EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG } from "@/config/checklists/employeePreHiringChecklist.config";
+import { EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG } from "@/config/checklists/employeeOnboardingChecklist.config";
 import { EMPLOYEE_GENERAL_INFO_CONFIG } from "@/config/cards/employeeGeneralInfo.config";
 import { employeeLogConfig } from "@/config/cards/employeeLog.config";
 import { employeeTimeCardConfig } from "@/config/tabs/timecard/timeCard.config";
@@ -6,7 +7,8 @@ import { employeeTimeCardConfig } from "@/config/tabs/timecard/timeCard.config";
 /**
  * Employee Card Configuration for Universal Card System
  *
- * Phase 8: 4 tabs (general-info + checklist + log + timecard)
+ * Updated for Prisma schema - PRISMA_MIGRATION_PLAN.md Phase 4
+ * 5 tabs: general-info + pre-hiring + onboarding + notes + timecard
  */
 
 export const EMPLOYEE_CARD_CONFIG = {
@@ -25,7 +27,7 @@ export const EMPLOYEE_CARD_CONFIG = {
   // Default tab to open
   defaultTab: "general-info",
 
-  // Tabs configuration - Phase 8: 4 tabs (general + checklist + log + timecard)
+  // Tabs configuration - 5 tabs (general + pre-hiring + onboarding + notes + timecard)
   tabs: [
     {
       id: "general-info",
@@ -34,10 +36,16 @@ export const EMPLOYEE_CARD_CONFIG = {
       config: EMPLOYEE_GENERAL_INFO_CONFIG,
     },
     {
-      id: "checklist",
-      label: "Checklist",
+      id: "pre-hiring",
+      label: "Pre-Hiring",
       type: "checklist",
-      config: EMPLOYEE_CHECKLIST_CONFIG,
+      config: EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG,
+    },
+    {
+      id: "onboarding",
+      label: "Onboarding",
+      type: "checklist",
+      config: EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG,
     },
     {
       id: "notes",

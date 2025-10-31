@@ -110,18 +110,29 @@
 - Separation: `terminated`, `suspended`
 
 **DocumentType Enum (18 values)**:
-- Identity & Work Auth: `government_id`, `work_authorization`, `sin_ssn`
-- Banking & Tax: `direct_deposit`, `tax_forms`
-- Hiring Docs: `employment_application`, `resume`, `background_check_consent`, `emergency_contact`
-- Contracts & Policies: `employment_contract`, `company_policies`, `confidentiality_agreement`, `benefits_enrollment`
-- Certifications: `professional_certifications`, `education_verification`, `safety_training`
-- Other: `immigration_documents`, `other_documents`
+- Identity & Work Auth (3): `government_id`, `work_authorization`, `sin_ssn`
+- Banking & Tax (2): `direct_deposit`, `tax_forms`
+- Hiring Docs (4): `employment_application`, `resume`, `background_check_consent`, `emergency_contact`
+- Contracts & Policies (4): `employment_contract`, `company_policies`, `confidentiality_agreement`, `benefits_enrollment`
+- Certifications (3): `professional_certifications`, `education_verification`, `safety_training`
+- Other (2): `immigration_documents`, `other_documents`
+
+**Document Checklist Organization (Phase 4)**:
+- **Pre-Hiring Checklist** (7 docs): `resume`, `government_id`, `work_authorization`, `immigration_documents`, `education_verification`, `professional_certifications`, `background_check_consent`
+  - Purpose: Applicant uploads before offer acceptance
+  - Used by: Recruiting/HR for candidate evaluation
+- **Onboarding Checklist** (9 docs): `employment_contract`, `company_policies`, `confidentiality_agreement`, `sin_ssn`, `direct_deposit`, `tax_forms`, `benefits_enrollment`, `safety_training`, `other_documents`
+  - Purpose: Employee completes after joining company
+  - Used by: Payroll/HR for employee setup
+- **Not used as document types in checklists**:
+  - `employment_application` - Not a separate document (the pre-hiring checklist itself is the application)
+  - `emergency_contact` - Not a document (data fields in OfficeEmployee: emergencyContactName, emergencyContactPhone)
 
 **OfficeEmployee Model (standardized fields)**:
 - Identity: employee_id, first_name, last_name
 - Contact: email, phone_number, emergency_contact_name, emergency_contact_phone
 - Address: address_line1, address_line2, city, state_province, postal_code, country
-- Employment: hire_date, termination_date, job_title, department, employment_type (enum)
+- Employment: hire_date, termination_date, job_title, department, employment_type (enum), office_location, date_of_birth
 - Status: status (enum)
 - Photo: profile_photo_id (FK to Document)
 - Audit: created_at, updated_at, created_by, updated_by, is_deleted, deleted_at
@@ -195,35 +206,62 @@
 
 ### **PHASE 4: REST API Implementation** 🌐 NEW ARCHITECTURE
 **Duration**: 2-3 days
-**Status**: ⬜ Not Started
-**Started**: -
-**Completed**: -
+**Status**: ✅ Completed
+**Started**: 2025-10-31
+**Completed**: 2025-10-31
 
 **Tasks**:
-- [ ] Create API specification document: `API_SPECIFICATION.md`
-  - [ ] Base URL and versioning
-  - [ ] Standard response format
-  - [ ] Error format
-  - [ ] Authentication requirements
-- [ ] Implement Employees API routes:
-  - [ ] GET /api/v1/employees (list with filtering, pagination)
-  - [ ] POST /api/v1/employees (create)
-  - [ ] GET /api/v1/employees/:id (single with relations)
-  - [ ] PATCH /api/v1/employees/:id (update)
-  - [ ] DELETE /api/v1/employees/:id (soft delete)
-  - [ ] GET /api/v1/employees/:id/documents (list documents)
-  - [ ] POST /api/v1/employees/:id/documents (upload - reuse from Phase 3)
-  - [ ] GET /api/v1/employees/:id/activity (activity log)
-- [ ] Test all endpoints with Postman/Thunder Client
-- [ ] Verify pagination works
-- [ ] Verify filtering works
-- [ ] Verify error handling
+- [x] Create API specification document: `docs/API_SPECIFICATION.md`
+- [x] Implement Employees API routes (6 new endpoints):
+  - [x] GET /api/v1/employees (list with filtering, pagination, sorting)
+  - [x] POST /api/v1/employees (create with auto User creation)
+  - [x] GET /api/v1/employees/:id (single with documents, activityLogs relations)
+  - [x] PATCH /api/v1/employees/:id (update with automatic field-level change tracking)
+  - [x] DELETE /api/v1/employees/:id (soft delete)
+  - [x] GET /api/v1/employees/:id/activity (paginated activity log)
+  - [x] GET /api/v1/employees/:id/documents (reused from Phase 3)
+  - [x] POST /api/v1/employees/:id/documents (reused from Phase 3)
+- [x] Create API helpers: `src/lib/apiHelpers.js`
+- [x] Create document metadata schemas: `src/config/prisma/documentMetadataSchemas.js` (18 DocumentTypes with field definitions)
+- [x] Update entity config to use `/api/v1/employees`
+- [x] Update general info config (removed legacy fields, uses camelCase, 26 OfficeEmployee fields)
+- [x] Create two checklist configs:
+  - [x] `src/config/checklists/employeePreHiringChecklist.config.js` (7 docs)
+  - [x] `src/config/checklists/employeeOnboardingChecklist.config.js` (9 docs)
+- [x] Update employee card config (5 tabs: general-info, pre-hiring, onboarding, notes, timecard)
+- [x] Fix UPLOAD_MODES hardcoding in CompactFileRow.jsx
+- [ ] Test all endpoints with Postman (deferred to Phase 5)
 
-**Deliverable**: ✅ Full CRUD API for Office Employees
+**Implementation Details**:
+- **camelCase API**: Frontend uses camelCase, Prisma @map() auto-transforms to/from snake_case DB
+- **Django migration**: Use djangorestframework-camel-case for same API contract
+- **Emergency contact**: Data fields in OfficeEmployee model (emergencyContactName, emergencyContactPhone), not document
+- **Document checklists**: Split into pre-hiring (applicant uploads) vs onboarding (company docs post-acceptance)
+- **Activity logging**: Automatic field-level change tracking in PATCH endpoint
+- **File uploads**: Uses UPLOAD_MODES.IMMEDIATE from uploaderSchema.js
 
-**Django Migration Impact**: ✅ **DOCUMENTED** - Partner has clear spec to implement
+**Files Created (12)**:
+1. `src/app/api/v1/employees/route.js` - List & Create
+2. `src/app/api/v1/employees/[id]/route.js` - Detail, Update, Delete
+3. `src/app/api/v1/employees/[id]/activity/route.js` - Activity log
+4. `src/lib/apiHelpers.js` - API utilities
+5. `src/config/prisma/documentMetadataSchemas.js` - Metadata field schemas
+6. `src/config/checklists/employeePreHiringChecklist.config.js` - Pre-hiring checklist
+7. `src/config/checklists/employeeOnboardingChecklist.config.js` - Onboarding checklist
+8. `docs/API_SPECIFICATION.md` - Complete API documentation
 
-**Pause Point**: ✋ Test all API endpoints
+**Files Modified (5)**:
+1. `src/config/entities/index.js` - Updated API endpoint
+2. `src/config/cards/employeeGeneralInfo.config.js` - Removed legacy, added camelCase
+3. `src/config/cards/employeeCard.config.js` - Added both checklist tabs
+4. `src/app/components/tabs/checklist/CompactFileRow.jsx` - Fixed UPLOAD_MODES
+5. `PRISMA_MIGRATION_PLAN.md` - Updated schema details and Phase 4 status
+
+**Deliverable**: ✅ Full CRUD API for Office Employees + Frontend configs ready
+
+**Django Migration Impact**: ✅ **DOCUMENTED** - Complete API spec with camelCase examples
+
+**Pause Point**: ✋ Ready for Phase 5 - Frontend integration and testing
 
 ---
 
@@ -365,7 +403,7 @@ bot-demo/
 | Phase 1: Infrastructure | ✅ Completed | 2025-01-26 | 2025-01-26 | ~1 hour |
 | Phase 2: Schema Design | ✅ Completed | 2025-10-27 | 2025-10-27 | ~1.5 hours |
 | Phase 3: File Uploads | ✅ Completed | 2025-10-28 | 2025-10-28 | ~2 hours |
-| Phase 4: REST API | ⬜ Not Started | - | - | - |
+| Phase 4: REST API | ✅ Completed | 2025-10-31 | 2025-10-31 | ~3 hours |
 | Phase 5: Frontend | ⬜ Not Started | - | - | - |
 | Phase 6: Documentation | ⬜ Not Started | - | - | - |
 

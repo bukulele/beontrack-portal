@@ -1,34 +1,54 @@
-import {
-  STATUS_CHOICES,
-  DEPARTMENT_CHOICES,
-  IMMIGRATION_STATUS,
-  UPDATE_STATUS_CHOICES_EMPLOYEE,
-  TERMINAL_CHOICES,
-} from "@/config/clientData";
 import { EMPLOYEE_EDIT_FORM_CONFIG } from "@/config/forms/employeeEditForm.config";
 
 /**
  * Employee General Info Tab Configuration
  *
- * Matches OLD EMPLOYEE_COMMON_CHECKLIST from tableData.js (lines 589-674)
- * Employee documents are DIFFERENT from driver documents!
+ * Updated for Prisma schema - PRISMA_MIGRATION_PLAN.md Phase 4
+ * Uses standardized OfficeEmployee fields (26 fields)
+ * Removed legacy 4Tracks-specific fields (terminal, card_number, immigration_status)
  */
+
+// Prisma EmployeeStatus enum (13 values)
+const EMPLOYEE_STATUS_CHOICES = {
+  new: "New Application",
+  application_received: "Application Received",
+  under_review: "Under Review",
+  application_on_hold: "On Hold",
+  rejected: "Rejected",
+  trainee: "Trainee",
+  active: "Active",
+  resigned: "Resigned",
+  vacation: "On Vacation",
+  on_leave: "On Leave",
+  wcb: "WCB",
+  terminated: "Terminated",
+  suspended: "Suspended",
+};
+
+// Prisma EmploymentType enum (3 values)
+const EMPLOYMENT_TYPE_CHOICES = {
+  full_time: "Full Time",
+  part_time: "Part Time",
+  contract: "Contract",
+};
 
 export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   // Edit form configuration
   editFormConfig: EMPLOYEE_EDIT_FORM_CONFIG,
 
-  // Image configuration (employee photo)
+  // Image configuration (profile photo)
   image: {
-    src: (entityData) => entityData.employee_photo?.file || "/no_photo_driver.png",
+    src: (entityData) => entityData.profilePhoto?.filePath
+      ? `/api/v1/files/${entityData.profilePhoto.filePath}`
+      : "/no_photo_driver.png",
     alt: "Employee Photo",
     width: 200,
     height: 300,
     // Data shown BELOW photo
     additionalInfo: [
       {
-        // Immigration Status
-        value: (entityData) => IMMIGRATION_STATUS[entityData.immigration_status] || "N/A",
+        // Employment Type
+        value: (entityData) => EMPLOYMENT_TYPE_CHOICES[entityData.employmentType] || "N/A",
         bold: true,
       },
     ],
@@ -36,26 +56,18 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
 
   // Status badge configuration
   statusConfig: {
-    statusChoices: STATUS_CHOICES,
+    statusChoices: EMPLOYEE_STATUS_CHOICES,
     editable: true,
-    // Employee has TWO status dropdowns: update_status + status
-    updateStatus: UPDATE_STATUS_CHOICES_EMPLOYEE,
   },
 
-  // Field sections - ONE SECTION, NO TITLE (flat list)
+  // Field sections - Standardized Prisma OfficeEmployee fields (camelCase)
   sections: [
     {
-      // NO title property!
+      // NO title property - flat list
       fields: [
         {
-          key: "employee_id",
+          key: "employeeId",
           label: "Employee ID",
-          type: "text",
-          editable: false,
-        },
-        {
-          key: "card_number",
-          label: "Card #",
           type: "text",
           editable: false,
           actions: ["copy"],
@@ -65,31 +77,8 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
           label: "Name",
           type: "computed",
           editable: false,
-          formatter: (value, entityData) => `${entityData.first_name} ${entityData.last_name}`,
+          formatter: (value, entityData) => `${entityData.firstName} ${entityData.lastName}`,
           actions: ["copy"],
-        },
-        {
-          key: "phone_number",
-          label: "Phone",
-          type: "phone",
-          editable: false,
-          formatter: (value) => value ? `+1 ${value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}` : "N/A",
-          actions: ["whatsapp", "call", "copy"],
-        },
-        {
-          key: "emergency_contact",
-          label: "Emergency contact",
-          type: "text",
-          editable: false,
-          actions: ["copy"],
-        },
-        {
-          key: "emergency_phone",
-          label: "Emergency phone",
-          type: "phone",
-          editable: false,
-          formatter: (value) => value ? `+1 ${value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}` : "N/A",
-          actions: ["call", "copy"],
         },
         {
           key: "email",
@@ -99,64 +88,84 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
           actions: ["email", "copy"],
         },
         {
+          key: "phoneNumber",
+          label: "Phone",
+          type: "phone",
+          editable: false,
+          formatter: (value) => value ? `+1 ${value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}` : "N/A",
+          actions: ["whatsapp", "call", "copy"],
+        },
+        {
+          key: "emergencyContactName",
+          label: "Emergency Contact",
+          type: "text",
+          editable: false,
+          actions: ["copy"],
+        },
+        {
+          key: "emergencyContactPhone",
+          label: "Emergency Phone",
+          type: "phone",
+          editable: false,
+          formatter: (value) => value ? `+1 ${value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}` : "N/A",
+          actions: ["call", "copy"],
+        },
+        {
           key: "address",
           label: "Address",
           type: "computed",
           editable: false,
           formatter: (value, entityData) => {
             const parts = [
-              entityData.unit_or_suite,
-              entityData.street_number,
-              entityData.street,
+              entityData.addressLine1,
+              entityData.addressLine2,
               entityData.city,
-              entityData.province,
-              entityData.postal_code,
+              entityData.stateProvince,
+              entityData.postalCode,
+              entityData.country,
             ].filter(Boolean);
             return parts.join(", ") || "N/A";
           },
           actions: ["copy"],
         },
         {
-          key: "date_of_birth",
+          key: "dateOfBirth",
           label: "Date of Birth",
           type: "date",
           editable: false,
           sideInfo: (entityData) => {
-            if (!entityData.date_of_birth) return null;
-            const age = Math.floor((Date.now() - new Date(entityData.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+            if (!entityData.dateOfBirth) return null;
+            const age = Math.floor((Date.now() - new Date(entityData.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
             return `Age: ${age}`;
           },
         },
         {
-          key: "terminal",
-          label: "Terminal",
-          type: "select",
+          key: "jobTitle",
+          label: "Job Title",
+          type: "text",
           editable: false,
-          selectOptions: TERMINAL_CHOICES,
-          sideInfo: (entityData) => {
-            // Title | Department display
-            const title = entityData.title || "";
-            const dept = DEPARTMENT_CHOICES[entityData.department] || "";
-            if (title && dept) return `${title} | ${dept}`;
-            if (title) return title;
-            if (dept) return dept;
-            return null;
-          },
+          sideInfo: (entityData) => entityData.department || null,
         },
         {
-          key: "hiring_date",
-          label: "Hiring Date",
+          key: "officeLocation",
+          label: "Office Location",
+          type: "text",
+          editable: false,
+        },
+        {
+          key: "hireDate",
+          label: "Hire Date",
           type: "date",
           editable: false,
         },
         {
-          key: "date_of_leaving",
-          label: "Leaving Date",
+          key: "terminationDate",
+          label: "Termination Date",
           type: "date",
           editable: false,
           conditional: (entityData) => {
-            return entityData.date_of_leaving &&
-                   (entityData.status === "RE" || entityData.status === "TE");
+            return entityData.terminationDate &&
+                   (entityData.status === "resigned" || entityData.status === "terminated");
           },
         },
       ],
@@ -164,107 +173,143 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   ],
 
   // File sections - READ-ONLY display in General tab
-  // 3 sections matching OLD EmployeeCardData.js structure
-  // BUT only including documents from EMPLOYEE_COMMON_CHECKLIST (14 items total)
+  // Uses Prisma DocumentType enum values (18 types available)
+  // Organized into logical groups for employee onboarding
   fileSections: [
     {
-      title: "Docs & Dates",
+      title: "Identity & Work Authorization",
       defaultOpen: true,
       items: [
         {
-          key: "immigration_doc",
-          label: "Immigration Docs",
+          key: "government_id",
+          label: "Government ID",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "work_authorization",
+          label: "Work Authorization",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "immigration_documents",
+          label: "Immigration Documents",
+          optional: true,
+          itemType: "file",
+        },
+      ],
+    },
+    {
+      title: "Hiring & Employment",
+      defaultOpen: false,
+      items: [
+        {
+          key: "employment_application",
+          label: "Employment Application",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "resume",
+          label: "Resume/CV",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "background_check_consent",
+          label: "Background Check Consent",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "employment_contract",
+          label: "Employment Contract",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "company_policies",
+          label: "Company Policies Acknowledgement",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "confidentiality_agreement",
+          label: "Confidentiality Agreement",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "emergency_contact",
+          label: "Emergency Contact Form",
           optional: false,
           itemType: "file",
         },
       ],
     },
     {
-      title: "HR & Recruiting",
+      title: "Payroll & Benefits",
       defaultOpen: false,
       items: [
         {
-          key: "id_documents",
-          label: "ID Documents",
+          key: "sin_ssn",
+          label: "SIN/SSN",
           optional: false,
           itemType: "file",
         },
         {
-          key: "activity_history",
-          label: "Activity History",
-          optional: false,
-          itemType: "data",
-        },
-        {
-          key: "consents",
-          label: "Consent to Personal Investigation",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "employment_contracts",
-          label: "Employment Contract",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "passports",
-          label: "Passports",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "us_visas",
-          label: "US Visas",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "employee_resumes",
-          label: "Resumes",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "employee_memos",
-          label: "Employee Memos",
+          key: "direct_deposit",
+          label: "Direct Deposit (Void Cheque)",
           optional: false,
           itemType: "file",
         },
         {
-          key: "employee_ctpat_papers",
-          label: "CTPAT Papers",
+          key: "tax_forms",
+          label: "Tax Forms",
+          optional: false,
+          itemType: "file",
+        },
+        {
+          key: "benefits_enrollment",
+          label: "Benefits Enrollment",
           optional: true,
           itemType: "file",
         },
+      ],
+    },
+    {
+      title: "Certifications & Training",
+      defaultOpen: false,
+      items: [
+        {
+          key: "professional_certifications",
+          label: "Professional Certifications",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "education_verification",
+          label: "Education Verification",
+          optional: true,
+          itemType: "file",
+        },
+        {
+          key: "safety_training",
+          label: "Safety Training Certificates",
+          optional: true,
+          itemType: "file",
+        },
+      ],
+    },
+    {
+      title: "Other",
+      defaultOpen: false,
+      items: [
         {
           key: "other_documents",
           label: "Other Documents",
           optional: true,
-          itemType: "file",
-        },
-      ],
-    },
-    {
-      title: "Payroll",
-      defaultOpen: false,
-      items: [
-        {
-          key: "sin",
-          label: "SIN",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "void_check",
-          label: "Void Check",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "tax_papers",
-          label: "Tax Papers",
-          optional: false,
           itemType: "file",
         },
       ],
