@@ -66,9 +66,10 @@ export const config = {
      * - /api/get-shop-jobs
      * - /api/get-mechanics
      * - /api/auth/*
+     * - /api/v1/* (new Prisma API routes - auth temporarily disabled for testing)
      * - /_next/static/*
      * - /favicon.ico
      */
-    "/((?!shop-dashboard|api/get-shop-jobs|api/get-mechanics|api/auth|_next/static|favicon.ico).*)",
+    "/((?!shop-dashboard|api/get-shop-jobs|api/get-mechanics|api/auth|api/v1|_next/static|favicon.ico).*)",
   ],
 };

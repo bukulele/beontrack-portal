@@ -1,26 +1,48 @@
 import {
   DEPARTMENT_CHOICES,
   STATUS_CHOICES,
-  TERMINAL_CHOICES,
-  IMMIGRATION_STATUS,
 } from "@/app/assets/tableData";
+
+// Employee Status Enum mapping (from Prisma schema)
+const EMPLOYEE_STATUS_CHOICES = {
+  new: "New",
+  application_received: "Application Received",
+  under_review: "Under Review",
+  application_on_hold: "On Hold",
+  rejected: "Rejected",
+  trainee: "Trainee",
+  active: "Active",
+  resigned: "Resigned",
+  vacation: "Vacation",
+  on_leave: "On Leave",
+  wcb: "WCB",
+  terminated: "Terminated",
+  suspended: "Suspended",
+};
+
+// Employment Type Enum mapping
+const EMPLOYMENT_TYPE_CHOICES = {
+  full_time: "Full Time",
+  part_time: "Part Time",
+  contract: "Contract",
+};
 
 export const OFFICE_TABLE_FIELDS_SAFETY = [
   {
-    field: "employee_id",
+    field: "employeeId",
     headerName: "Employee ID",
     width: 150,
     defaultSort: true,
   },
   {
-    field: "first_name",
+    field: "firstName",
     headerName: "First Name",
     accessKey: "id",
     width: 150,
     modalType: "employee",
   },
   {
-    field: "last_name",
+    field: "lastName",
     headerName: "Last Name",
     accessKey: "id",
     width: 150,
@@ -30,15 +52,10 @@ export const OFFICE_TABLE_FIELDS_SAFETY = [
     field: "status",
     headerName: "Status",
     width: 150,
-    valueGetter: (value) => STATUS_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => EMPLOYEE_STATUS_CHOICES[value] || value || "N/A",
   },
   {
-    field: "status_note",
-    headerName: "Status Note",
-    width: 200,
-  },
-  {
-    field: "phone_number",
+    field: "phoneNumber",
     headerName: "Phone Number",
     width: 150,
     copyable: true,
@@ -50,47 +67,34 @@ export const OFFICE_TABLE_FIELDS_SAFETY = [
     copyable: true,
   },
   {
-    field: "date_of_birth",
+    field: "dateOfBirth",
     headerName: "Date of Birth",
     width: 150,
   },
   {
-    field: "hiring_date",
-    headerName: "Hiring Date",
+    field: "hireDate",
+    headerName: "Hire Date",
     width: 150,
-  },
-  {
-    field: "application_date",
-    headerName: "Application Date",
-    width: 150,
-  },
-  {
-    field: "immigration_status",
-    headerName: "Immigration Status",
-    width: 80,
-    valueGetter: (value) => IMMIGRATION_STATUS[value] || value || "N/A",
-  },
-  {
-    field: "immigration_doc_expiry_date",
-    headerName: "Immigrtion Doc Expiration Date",
-    width: 150,
-    valueGetter: (_, row) => row.immigration_doc?.expiry_date || "N/A",
-  },
-  {
-    field: "terminal",
-    headerName: "Terminal",
-    width: 100,
-    valueGetter: (value) => TERMINAL_CHOICES[value] || value || "N/A",
   },
   {
     field: "department",
     headerName: "Department",
     width: 150,
-    valueGetter: (value) => DEPARTMENT_CHOICES[value] || value || "N/A",
   },
   {
-    field: "title",
-    headerName: "Title",
+    field: "jobTitle",
+    headerName: "Job Title",
+    width: 150,
+  },
+  {
+    field: "employmentType",
+    headerName: "Employment Type",
+    width: 150,
+    valueGetter: (value) => EMPLOYMENT_TYPE_CHOICES[value] || value || "N/A",
+  },
+  {
+    field: "officeLocation",
+    headerName: "Office Location",
     width: 150,
   },
 ];

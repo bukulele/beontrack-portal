@@ -136,7 +136,7 @@ function TablePageContent() {
       setLoading(true);
       const response = await fetch(entityConfig.apiEndpoint);
       const result = await response.json();
-      setData(result);
+      setData(result.data);
     } catch (error) {
       console.error(`Failed to fetch ${entityType}:`, error);
       setData([]);
