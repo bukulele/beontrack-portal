@@ -85,6 +85,10 @@ enum ReviewStatus {
   rejected
 }
 
+enum EntityType {
+  employee
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -228,4 +232,56 @@ model ActivityLog {
   createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("activity_logs")
+}
+
+// ============================================================================
+// STATUS CONFIGURATION MODELS
+// ============================================================================
+
+/// Status configuration for entity types
+/// Stores available statuses, colors, and labels
+model StatusConfig {
+  id          String     @id @default(uuid()) @db.Uuid
+
+  // Entity configuration
+  entityType  EntityType @map("entity_type")
+  statusCode  String     @map("status_code") @db.VarChar(50) // e.g., "active", "new", "terminated"
+  statusLabel String     @map("status_label") @db.VarChar(100) // Human-readable label
+
+  // Display configuration
+  color       String     @db.VarChar(7) // Hex color code, e.g., "#22C55E"
+  sortOrder   Int        @default(0) @map("sort_order") // For UI ordering
+
+  // Audit
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  transitionsFrom StatusTransition[] @relation("TransitionFrom")
+  transitionsTo   StatusTransition[] @relation("TransitionTo")
+
+  @@unique([entityType, statusCode])
+  @@index([entityType])
+  @@map("status_configs")
+}
+
+/// Status transition rules
+/// Defines which statuses can transition to which (state machine)
+model StatusTransition {
+  id          String       @id @default(uuid()) @db.Uuid
+
+  // Transition definition
+  fromStatusId String      @map("from_status_id") @db.Uuid
+  fromStatus   StatusConfig @relation("TransitionFrom", fields: [fromStatusId], references: [id], onDelete: Cascade)
+
+  toStatusId   String      @map("to_status_id") @db.Uuid
+  toStatus     StatusConfig @relation("TransitionTo", fields: [toStatusId], references: [id], onDelete: Cascade)
+
+  // Audit
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([fromStatusId, toStatusId])
+  @@index([fromStatusId])
+  @@map("status_transitions")
 }

@@ -3,13 +3,15 @@ import React, { createContext, useState, useEffect } from "react";
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const [buttonsSettings, setButtonsSettings] = useState({});
   const [statusSettings, setStatusSettings] = useState({});
 
   const loadData = () => {
-    // LOADING STATUS BUTTONS SETTINGS
-    for (let source of ["driver", "employee"]) {
-      fetch(`/api/get-${source}-buttons-settings`, {
+    // Entity types to load status settings for
+    // Add 'driver', 'truck', 'equipment' when their endpoints are ready
+    const entitiesToLoad = ['employee'];
+
+    entitiesToLoad.forEach(entityType => {
+      fetch(`/api/v1/status-settings/${entityType}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -17,48 +19,20 @@ export const SettingsProvider = ({ children }) => {
       })
         .then((response) => {
           if (!response.ok) {
-            throw new Error("Network response was not ok");
+            throw new Error(`Failed to fetch ${entityType} status settings`);
           }
           return response.json();
         })
         .then((data) => {
-          setButtonsSettings((prevData) => {
-            return {
-              ...prevData,
-              [source]: data,
-            };
-          });
+          setStatusSettings((prevData) => ({
+            ...prevData,
+            [entityType]: data,
+          }));
         })
         .catch((error) => {
-          console.error("Failed to fetch data:", error);
+          console.error(`Failed to fetch ${entityType} status settings:`, error);
         });
-    }
-    // LOADING STATUS SETTINGS
-    for (let source of ["driver", "truck", "equipment", "employee"]) {
-      fetch(`/api/get-${source}-status-settings`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setStatusSettings((prevData) => {
-            return {
-              ...prevData,
-              [source]: data,
-            };
-          });
-        })
-        .catch((error) => {
-          console.error("Failed to fetch data:", error);
-        });
-    }
+    });
   };
 
   useEffect(() => {
@@ -66,7 +40,7 @@ export const SettingsProvider = ({ children }) => {
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ buttonsSettings, statusSettings }}>
+    <SettingsContext.Provider value={{ statusSettings }}>
       {children}
     </SettingsContext.Provider>
   );
