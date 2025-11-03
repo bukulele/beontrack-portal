@@ -17,7 +17,7 @@ export const EmployeeProvider = ({ children, userId, employeeId }) => {
   // Memoize loadEmployeeData to ensure it only changes when id changes
   const loadEmployeeData = useCallback(() => {
     startLoading();
-    fetch(`/api/get-employee-data/${id}`, {
+    fetch(`/api/v1/employees/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -31,9 +31,9 @@ export const EmployeeProvider = ({ children, userId, employeeId }) => {
         }
         return response.json();
       })
-      .then((data) => {
-        // console.log(data);
-        setUserData(data);
+      .then((response) => {
+        // v1 API returns: { success: true, data: {...} }
+        setUserData(response.data);
       })
       .catch((error) => {
         console.error("Failed to fetch data:", error);
