@@ -62,7 +62,8 @@ function ViewFilesModal({
   canEdit,
   canDelete,
   loadData,
-  apiRoute,
+  entityType,
+  entityId,
 }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState(null);
@@ -88,17 +89,11 @@ function ViewFilesModal({
     try {
       startLoading();
 
-      const response = await fetch(apiRoute, {
+      // Build generic DELETE endpoint: /api/v1/{entityType}/{entityId}/documents/{documentId}
+      const deleteUrl = `/api/v1/${entityType}/${entityId}/documents/${fileToDelete.id}`;
+
+      const response = await fetch(deleteUrl, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          endpointIdentifier: item.key,
-          id: fileToDelete.id,
-          changed_by: session.user.name,
-          username: session.user.name,
-        }),
       });
 
       if (response.ok) {
@@ -123,13 +118,16 @@ function ViewFilesModal({
 
   // Get display value for file name
   const getDisplayValue = (file) => {
-    if (file.dl_number) return file.dl_number;
-    if (file.number && item.key === "sin") return checkNumericInput(file.number);
-    if (file.number && item.key !== "sin") return file.number;
-    if (file.comment) return file.comment;
-    if (file.company) return file.company;
-    if (file.file) return extractFileNameFromURL(file.file);
-    return "No file";
+    // Prisma structure: Check metadata fields first
+    if (file.metadata) {
+      if (file.metadata.number) return file.metadata.number;
+      if (file.metadata.comment) return file.metadata.comment;
+      if (file.metadata.company) return file.metadata.company;
+      if (file.metadata.dl_number) return file.metadata.dl_number;
+    }
+
+    // Prisma structure: fileName is always present
+    return file.fileName || "No file";
   };
 
   return (
@@ -161,9 +159,9 @@ function ViewFilesModal({
                   {sortedFiles.map((file) => (
                     <TableRow key={file.id}>
                       <TableCell>
-                        {file.file ? (
+                        {file.filePath ? (
                           <Link
-                            href={file.file}
+                            href={`/api/v1/files/${file.filePath.replace(/^uploads\//, '')}`}
                             target="_blank"
                             className="font-semibold capitalize text-blue-600 hover:underline"
                           >

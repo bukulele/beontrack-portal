@@ -184,9 +184,13 @@ model OfficeEmployee {
 model Document {
   id                String        @id @default(uuid()) @db.Uuid
 
-  // Employee relation
-  employeeId        String        @map("employee_id") @db.Uuid
-  employee          OfficeEmployee @relation("EmployeeDocuments", fields: [employeeId], references: [id], onDelete: Cascade)
+  // Generic entity relation (replaces employeeId for scalability)
+  entityType        String        @map("entity_type") @db.VarChar(50) // 'employee', 'truck', 'driver', 'equipment', etc.
+  entityId          String        @map("entity_id") @db.Uuid
+
+  // Legacy employee relation (for profilePhoto backward compatibility)
+  employeeId        String?       @map("employee_id") @db.Uuid
+  employee          OfficeEmployee? @relation("EmployeeDocuments", fields: [employeeId], references: [id], onDelete: Cascade)
 
   // Document details
   documentType      DocumentType  @map("document_type")
@@ -218,6 +222,8 @@ model Document {
   // Relations
   employeeProfilePhotos OfficeEmployee[] @relation("EmployeeProfilePhoto")
 
+  @@index([entityType, entityId])
+  @@index([documentType])
   @@map("documents")
 }
 
@@ -257,9 +263,13 @@ model ActivityHistory {
 model ActivityLog {
   id            String          @id @default(uuid()) @db.Uuid
 
-  // Employee relation
-  employeeId    String          @map("employee_id") @db.Uuid
-  employee      OfficeEmployee  @relation("EmployeeActivityLogs", fields: [employeeId], references: [id], onDelete: Cascade)
+  // Generic entity relation
+  entityType    String          @map("entity_type") @db.VarChar(50)
+  entityId      String          @map("entity_id") @db.Uuid
+
+  // Legacy employee relation (for backward compatibility)
+  employeeId    String?         @map("employee_id") @db.Uuid
+  employee      OfficeEmployee? @relation("EmployeeActivityLogs", fields: [employeeId], references: [id], onDelete: Cascade)
 
   // Action details
   actionType    String          @map("action_type") @db.VarChar(50) // created, updated, status_changed, document_uploaded, etc.
@@ -274,6 +284,7 @@ model ActivityLog {
   // Timestamp
   createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  @@index([entityType, entityId])
   @@map("activity_logs")
 }
 

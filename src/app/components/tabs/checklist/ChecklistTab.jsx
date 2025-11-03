@@ -38,7 +38,6 @@ function ChecklistTab({
   loadData,
   entityType,
   entityId,
-  apiRoute = "/api/update-file",
 }) {
   const [allChecked, setAllChecked] = useState(false);
   const [progress, setProgress] = useState({ checked: 0, total: 0 });
@@ -189,7 +188,6 @@ function ChecklistTab({
                     loadData={loadData}
                     entityType={entityType}
                     entityId={entityId}
-                    apiRoute={apiRoute}
                   />
                 ))}
               </CardContent>

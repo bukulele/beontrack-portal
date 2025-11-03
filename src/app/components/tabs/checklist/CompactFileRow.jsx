@@ -68,9 +68,9 @@ export function CompactFileRow({
   const reviewedBy = latestItem.last_reviewed_by || "";
 
   // Role-based permissions
-  const canEdit = item.roles?.edit
-    ? item.roles.edit.some((role) => userRoles.includes(role))
-    : true;
+  // WORKAROUND: Auth system not implemented yet - allow all actions
+  const canEdit = true;
+  const canDelete = true;
 
   // Handle checkmark toggle
   const handleCheckmark = async (checked) => {
@@ -111,14 +111,29 @@ export function CompactFileRow({
   const getFileUploaderConfig = () => {
     if (!item.fileUpload) return null;
 
+    // Build generic API endpoint: /api/v1/{entityType}/{entityId}/documents
+    const apiEndpoint = `/api/v1/${entityType}/${entityId}/documents`;
+
     return {
+      title: `Upload ${item.label}`,
+      apiEndpoint: apiEndpoint,  // Generic for all entity types!
+      documentType: item.key,    // The document type (resume, government_id, etc.)
       mode: item.fileUpload.mode || UPLOAD_MODES.IMMEDIATE,
-      entityType: entityType,
-      entityId: entityId,
       accept: item.fileUpload.accept || "image/*,application/pdf",
-      fields: item.fileUpload.fields || [],
-      apiRoute: apiRoute,
-      endpointIdentifier: item.key,
+      fields: [
+        // File input field - first
+        {
+          type: 'file',
+          name: 'file',
+          label: item.label,
+          required: true,
+          validation: {
+            accept: item.fileUpload.accept || "image/*,application/pdf",
+          },
+        },
+        // Metadata fields - after file input
+        ...(item.fileUpload.fields || []),
+      ],
       onSuccess: () => {
         setFileUploaderOpen(false);
         loadData();
@@ -266,9 +281,10 @@ export function CompactFileRow({
           item={item}
           itemData={itemData}
           canEdit={canEdit}
+          canDelete={canDelete}
           loadData={loadData}
-          apiRoute={apiRoute}
           entityType={entityType}
+          entityId={entityId}
         />
       )}
     </>

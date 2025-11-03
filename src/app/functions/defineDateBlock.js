@@ -1,11 +1,17 @@
 import formatDate from "./formatDate";
-import findHighestIdObject from "./findHighestIdObject";
 
 function defineDateBlock(data) {
+  // Prisma structure: dates are in metadata JSONB field
+  const metadata = data?.metadata || {};
+
   let expiryDate =
-    formatDate(findHighestIdObject(data).expiration_date) ||
-    formatDate(findHighestIdObject(data).expiry_date);
-  let issueDate = formatDate(findHighestIdObject(data).issue_date);
+    formatDate(metadata.expiryDate) ||
+    formatDate(metadata.expiration_date) ||
+    formatDate(metadata.expiry_date);
+
+  let issueDate =
+    formatDate(metadata.issueDate) ||
+    formatDate(metadata.issue_date);
 
   return (
     <div className="w-fit ml-auto">

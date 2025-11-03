@@ -177,15 +177,14 @@ export function FileUploader({
     startLoading();
     const formData = new FormData();
 
-    // Add entity data
-    if (entityData.entityType && entityData.entityId) {
-      formData.append(entityData.entityType, entityData.entityId);
+    // Add documentType (required by Prisma API)
+    if (config.documentType) {
+      formData.append('documentType', config.documentType);
     }
 
-    // Add metadata
-    formData.append('endpointIdentifier', config.endpointIdentifier);
-    formData.append('last_changed_by', session?.user?.name || 'Unknown');
-    formData.append('updated_by', session?.user?.name || 'Unknown');
+    // Build metadata object from non-file fields
+    const metadata = {};
+    let fileField = null;
 
     // Add field values
     config.fields.forEach(field => {
@@ -193,20 +192,24 @@ export function FileUploader({
 
       if (value !== undefined && value !== null && value !== '') {
         if (field.type === 'file') {
-          // Handle array of files (multiple)
-          if (Array.isArray(value)) {
-            value.forEach(file => {
-              formData.append(field.name, file);
-            });
-          } else {
-            // Handle single file
-            formData.append(field.name, value);
-          }
+          // Store file separately (will be added as 'file' to FormData)
+          fileField = value;
         } else {
-          formData.append(field.name, value);
+          // Add to metadata object
+          metadata[field.name] = value;
         }
       }
     });
+
+    // Add main file
+    if (fileField) {
+      formData.append('file', fileField);
+    }
+
+    // Add metadata as JSON string if exists
+    if (Object.keys(metadata).length > 0) {
+      formData.append('metadata', JSON.stringify(metadata));
+    }
 
     // Submit
     try {

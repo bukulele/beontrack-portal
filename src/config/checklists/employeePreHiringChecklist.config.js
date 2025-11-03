@@ -30,9 +30,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf,.doc,.docx",
-        fields: getMetadataFields("resume"),
+        fields: getMetadataFields("resume", "employee"),
       },
 
       actions: {
@@ -58,9 +57,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("government_id"),
+        fields: getMetadataFields("government_id", "employee"),
       },
 
       actions: {
@@ -86,9 +84,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("work_authorization"),
+        fields: getMetadataFields("work_authorization", "employee"),
       },
 
       actions: {
@@ -114,9 +111,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("immigration_documents"),
+        fields: getMetadataFields("immigration_documents", "employee"),
       },
 
       actions: {
@@ -142,9 +138,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("education_verification"),
+        fields: getMetadataFields("education_verification", "employee"),
       },
 
       actions: {
@@ -170,9 +165,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("professional_certifications"),
+        fields: getMetadataFields("professional_certifications", "employee"),
       },
 
       actions: {
@@ -198,9 +192,8 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
-        apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("background_check_consent"),
+        fields: getMetadataFields("background_check_consent", "employee"),
       },
 
       actions: {

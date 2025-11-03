@@ -37,46 +37,49 @@ export function generateFilename(originalFilename) {
 }
 
 /**
- * Gets the full file path for an employee document
- * @param {string} employeeId - Employee UUID
+ * Gets the full file path for a document (GENERIC - supports any entity type)
+ * @param {string} entityType - Entity type (employee, truck, driver, etc.)
+ * @param {string} entityId - Entity UUID
  * @param {string} documentType - Type of document
  * @param {string} filename - File name
  * @returns {string} Full file path
  */
-export function getFilePath(employeeId, documentType, filename) {
-  return path.join(UPLOAD_BASE_DIR, 'employees', employeeId, documentType, filename);
+export function getFilePath(entityType, entityId, documentType, filename) {
+  return path.join(UPLOAD_BASE_DIR, entityType, entityId, documentType, filename);
 }
 
 /**
- * Gets the relative file path (for storing in database)
- * @param {string} employeeId - Employee UUID
+ * Gets the relative file path (for storing in database - GENERIC)
+ * @param {string} entityType - Entity type (employee, truck, driver, etc.)
+ * @param {string} entityId - Entity UUID
  * @param {string} documentType - Type of document
  * @param {string} filename - File name
  * @returns {string} Relative file path
  */
-export function getRelativeFilePath(employeeId, documentType, filename) {
-  return path.join('uploads', 'employees', employeeId, documentType, filename);
+export function getRelativeFilePath(entityType, entityId, documentType, filename) {
+  return path.join('uploads', entityType, entityId, documentType, filename);
 }
 
 /**
- * Saves an uploaded file to disk
- * @param {Buffer} fileBuffer - File buffer from multer
- * @param {string} employeeId - Employee UUID
+ * Saves an uploaded file to disk (GENERIC - supports any entity type)
+ * @param {Buffer} fileBuffer - File buffer
+ * @param {string} entityType - Entity type (employee, truck, driver, equipment, etc.)
+ * @param {string} entityId - Entity UUID
  * @param {string} documentType - Type of document
  * @param {string} originalFilename - Original file name
  * @returns {Promise<Object>} { filePath, fileName, fileSize }
  */
-export async function saveUploadedFile(fileBuffer, employeeId, documentType, originalFilename) {
+export async function saveUploadedFile(fileBuffer, entityType, entityId, documentType, originalFilename) {
   try {
     // Generate filename
     const fileName = generateFilename(originalFilename);
 
-    // Ensure document type directory exists (hybrid structure)
-    const documentDir = path.join(UPLOAD_BASE_DIR, 'employees', employeeId, documentType);
+    // Ensure document type directory exists (generic structure: uploads/{entityType}/{entityId}/{docType}/)
+    const documentDir = path.join(UPLOAD_BASE_DIR, entityType, entityId, documentType);
     await ensureDirectoryExists(documentDir);
 
     // Full file path
-    const filePath = getFilePath(employeeId, documentType, fileName);
+    const filePath = getFilePath(entityType, entityId, documentType, fileName);
 
     // Write file to disk
     await fs.writeFile(filePath, fileBuffer);
@@ -85,7 +88,7 @@ export async function saveUploadedFile(fileBuffer, employeeId, documentType, ori
     const stats = await fs.stat(filePath);
 
     return {
-      filePath: getRelativeFilePath(employeeId, documentType, fileName), // Relative path for DB
+      filePath: getRelativeFilePath(entityType, entityId, documentType, fileName), // Relative path for DB
       fileName: fileName,
       fileSize: stats.size,
     };

@@ -118,9 +118,28 @@ export async function GET(request, { params }) {
       );
     }
 
+    // Group documents by documentType for checklist consumption
+    // Checklist expects: { resume: [...], government_id: [...], etc. }
+    const groupedDocuments = {};
+    if (employee.documents) {
+      employee.documents.forEach(doc => {
+        if (!groupedDocuments[doc.documentType]) {
+          groupedDocuments[doc.documentType] = [];
+        }
+        groupedDocuments[doc.documentType].push(doc);
+      });
+    }
+
+    // Replace flat documents array with grouped object
+    const employeeData = {
+      ...employee,
+      documents: undefined, // Remove flat array
+      ...groupedDocuments,  // Spread grouped documents at top level
+    };
+
     return NextResponse.json({
       success: true,
-      data: employee,
+      data: employeeData,
     });
   } catch (error) {
     console.error('Error fetching employee:', error);

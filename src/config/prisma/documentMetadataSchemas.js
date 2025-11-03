@@ -7,11 +7,18 @@
  */
 
 /**
- * Get metadata field definitions for a specific document type
+ * Get metadata field definitions for a specific document type (GENERIC - entity-aware)
  * @param {string} documentType - DocumentType enum value from Prisma schema
+ * @param {string} entityType - Entity type (employee, truck, driver, equipment)
  * @returns {Array} Array of field definitions for file upload forms
  */
-export function getMetadataFields(documentType) {
+export function getMetadataFields(documentType, entityType) {
+  // For now, only employee schemas exist
+  // Future: Add schemas.truck, schemas.driver, schemas.equipment
+  if (entityType !== 'employee') {
+    console.warn(`No metadata schemas defined for entityType: ${entityType}`);
+    return [];
+  }
   const schemas = {
     // Identity & Work Authorization
     government_id: [
@@ -51,7 +58,6 @@ export function getMetadataFields(documentType) {
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     resume: [
-      { name: 'version', type: 'text', label: 'Version', placeholder: 'e.g., Latest, 2024, etc.' },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     background_check_consent: [
