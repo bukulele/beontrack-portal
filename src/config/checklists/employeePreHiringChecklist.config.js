@@ -219,7 +219,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
 
     // Activity History (special data-only item)
     {
-      key: "activity_history",
+      key: "activityHistory", // camelCase to match API response
       label: "Activity History",
       optional: false,
       itemType: "data",

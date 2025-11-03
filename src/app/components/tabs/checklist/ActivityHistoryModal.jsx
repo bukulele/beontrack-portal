@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,19 +34,34 @@ import { useLoader } from "@/app/context/LoaderContext";
 import { OPTION_LISTS } from "@/config/clientData";
 import checkActivityPeriod from "@/app/functions/checkActivityPeriod";
 
+const ACTIVITY_TEMPLATE = {
+  activityType: "",
+  description: "",
+  startDate: "",
+  endDate: "",
+  organizationName: "",
+  roleOrPosition: "",
+  location: "",
+  emailAddress: "",
+  tillNow: false,
+};
+
 /**
  * ActivityHistoryModal - Modal for editing activity history
  *
- * Allows adding, editing, and deleting activity history periods.
- * Shows validation warnings for gaps in history.
+ * ARCHITECTURE:
+ * - Takes a snapshot of itemData when modal opens
+ * - Works with the snapshot until save/cancel
+ * - Ignores parent data changes while open (prevents infinite loops)
+ * - Converts between camelCase (API) and snake_case (legacy UI) as needed
  *
  * @param {boolean} open - Modal open state
  * @param {Function} onClose - Close modal callback
  * @param {Object} item - Item configuration
- * @param {Array} itemData - Activity history data
- * @param {Object} entityData - Entity data
- * @param {Function} loadData - Reload entity data
- * @param {string} entityType - Entity type (driver/employee)
+ * @param {Array} itemData - Activity history data from parent
+ * @param {Object} entityData - Entity data (not used, included for consistency)
+ * @param {Function} loadData - Reload entity data callback
+ * @param {string} entityType - Entity type (employee/driver)
  * @param {number} entityId - Entity ID
  */
 export function ActivityHistoryModal({
@@ -59,52 +74,64 @@ export function ActivityHistoryModal({
   entityType,
   entityId,
 }) {
-  const ACTIVITY_TEMPLATE = {
-    activity_type: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-    organization_name: "",
-    role_or_position: "",
-    location: "",
-    email_address: "",
-    till_now: false,
-  };
-
   const [activities, setActivities] = useState([]);
-  const [originalActivities, setOriginalActivities] = useState([]);
   const [gaps, setGaps] = useState([]);
-  const [hasChanges, setHasChanges] = useState(false);
   const { startLoading, stopLoading } = useLoader();
 
   const period = 10; // years to check
 
-  // Initialize activities from itemData
-  useEffect(() => {
-    if (itemData && Array.isArray(itemData)) {
-      const activitiesData = itemData.map(item => ({ ...item }));
-      setActivities(activitiesData);
-      setOriginalActivities(JSON.parse(JSON.stringify(activitiesData)));
-    } else {
-      setActivities([]);
-      setOriginalActivities([]);
-    }
-    setHasChanges(false);
-  }, [itemData, open]);
+  // Take snapshot of initial data when modal opens
+  // This is the ONLY time we look at itemData - prevents infinite loops
+  const initialActivities = useMemo(() => {
+    if (!open) return [];
 
-  // Check for gaps and changes whenever activities change
+    if (!itemData || !Array.isArray(itemData)) return [];
+
+    // Convert API data (camelCase) to internal format
+    return itemData.map(item => ({
+      id: item.id,
+      activityType: item.activityType || item.activity_type || "",
+      description: item.description || "",
+      startDate: item.startDate || item.start_date || "",
+      endDate: item.endDate || item.end_date || "",
+      organizationName: item.organizationName || item.organization_name || "",
+      roleOrPosition: item.roleOrPosition || item.role_or_position || "",
+      location: item.location || "",
+      emailAddress: item.emailAddress || item.email_address || "",
+      tillNow: item.tillNow || item.till_now || false,
+    }));
+  }, [open]); // Only recalculate when modal opens
+
+  // Initialize activities from snapshot when modal opens
+  useEffect(() => {
+    if (open) {
+      setActivities(initialActivities);
+    }
+  }, [open, initialActivities]);
+
+  // Check for gaps whenever activities change
   useEffect(() => {
     if (activities.length > 0) {
-      const detectedGaps = checkActivityPeriod(activities, period);
+      // Convert to format expected by checkActivityPeriod
+      const activitiesForCheck = activities
+        .filter(a => !a._deleted)
+        .map(a => ({
+          start_date: a.startDate,
+          end_date: a.tillNow ? null : a.endDate,
+          till_now: a.tillNow,
+        }));
+
+      const detectedGaps = checkActivityPeriod(activitiesForCheck, period);
       setGaps(detectedGaps);
     } else {
       setGaps([]);
     }
+  }, [activities]);
 
-    // Check if there are changes
-    const changed = JSON.stringify(activities) !== JSON.stringify(originalActivities);
-    setHasChanges(changed);
-  }, [activities, originalActivities]);
+  // Check if there are unsaved changes
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(activities) !== JSON.stringify(initialActivities);
+  }, [activities, initialActivities]);
 
   const addActivity = () => {
     setActivities([...activities, { ...ACTIVITY_TEMPLATE }]);
@@ -119,14 +146,21 @@ export function ActivityHistoryModal({
   const deleteActivity = (index) => {
     const activity = activities[index];
     if (activity.id) {
-      // Mark for deletion
+      // Mark for deletion (has ID = exists in DB)
       const updated = [...activities];
-      updated[index] = { ...activity, delete: true };
+      updated[index] = { ...activity, _deleted: true };
       setActivities(updated);
     } else {
-      // Remove from list if not saved yet
+      // Remove from list (no ID = not saved yet)
       setActivities(activities.filter((_, i) => i !== index));
     }
+  };
+
+  const handleClose = () => {
+    // Reset state when closing
+    setActivities([]);
+    setGaps([]);
+    onClose();
   };
 
   const saveActivities = async () => {
@@ -136,22 +170,22 @@ export function ActivityHistoryModal({
       for (const activity of activities) {
         if (!activity) continue;
 
-        // Prepare activity data (convert snake_case to camelCase for API)
+        // Prepare activity data for API (camelCase)
         const activityData = {
-          activityType: activity.activity_type,
+          activityType: activity.activityType,
           description: activity.description || null,
-          startDate: activity.start_date,
-          endDate: activity.till_now ? null : activity.end_date,
-          tillNow: activity.till_now || false,
-          organizationName: activity.organization_name || null,
-          roleOrPosition: activity.role_or_position || null,
+          startDate: activity.startDate,
+          endDate: activity.tillNow ? null : activity.endDate,
+          tillNow: activity.tillNow || false,
+          organizationName: activity.organizationName || null,
+          roleOrPosition: activity.roleOrPosition || null,
           location: activity.location || null,
-          emailAddress: activity.email_address || null,
+          emailAddress: activity.emailAddress || null,
         };
 
         let response;
 
-        if (activity.id && !activity.delete) {
+        if (activity.id && !activity._deleted) {
           // UPDATE existing activity
           response = await fetch(`/api/v1/employees/${entityId}/activity-history/${activity.id}`, {
             method: "PATCH",
@@ -160,7 +194,7 @@ export function ActivityHistoryModal({
             },
             body: JSON.stringify(activityData),
           });
-        } else if (!activity.id && !activity.delete) {
+        } else if (!activity.id && !activity._deleted) {
           // CREATE new activity
           response = await fetch(`/api/v1/employees/${entityId}/activity-history`, {
             method: "POST",
@@ -169,22 +203,22 @@ export function ActivityHistoryModal({
             },
             body: JSON.stringify(activityData),
           });
-        } else if (activity.delete) {
+        } else if (activity._deleted && activity.id) {
           // DELETE activity
           response = await fetch(`/api/v1/employees/${entityId}/activity-history/${activity.id}`, {
             method: "DELETE",
           });
         }
 
-        if (!response.ok) {
+        if (response && !response.ok) {
           const error = await response.json();
           throw new Error(error.error || "Failed to save activity history");
         }
       }
 
       stopLoading();
-      loadData();
-      onClose();
+      loadData(); // Reload parent data
+      handleClose();
     } catch (error) {
       console.error("Error saving activity history:", error);
       alert(`Error: ${error.message}`);
@@ -192,10 +226,10 @@ export function ActivityHistoryModal({
     }
   };
 
-  const visibleActivities = activities.filter(a => !a.delete);
+  const visibleActivities = activities.filter(a => !a._deleted);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Activity History (last {period} years)</DialogTitle>
@@ -249,9 +283,9 @@ export function ActivityHistoryModal({
                       <div className="space-y-1">
                         <Label>Activity Type *</Label>
                         <Select
-                          value={activity.activity_type}
+                          value={activity.activityType}
                           onValueChange={(val) =>
-                            updateActivity(actualIndex, "activity_type", val)
+                            updateActivity(actualIndex, "activityType", val)
                           }
                         >
                           <SelectTrigger>
@@ -270,11 +304,11 @@ export function ActivityHistoryModal({
                       <div className="space-y-1">
                         <Label>Organization Name</Label>
                         <Input
-                          value={activity.organization_name || ""}
+                          value={activity.organizationName || ""}
                           onChange={(e) =>
                             updateActivity(
                               actualIndex,
-                              "organization_name",
+                              "organizationName",
                               e.target.value
                             )
                           }
@@ -288,9 +322,9 @@ export function ActivityHistoryModal({
                         <Label>Start Date *</Label>
                         <Input
                           type="date"
-                          value={activity.start_date || ""}
+                          value={activity.startDate || ""}
                           onChange={(e) =>
-                            updateActivity(actualIndex, "start_date", e.target.value)
+                            updateActivity(actualIndex, "startDate", e.target.value)
                           }
                         />
                       </div>
@@ -300,22 +334,22 @@ export function ActivityHistoryModal({
                         <InputGroup>
                           <InputGroupInput
                             type="date"
-                            value={activity.end_date || ""}
+                            value={activity.endDate || ""}
                             onChange={(e) =>
-                              updateActivity(actualIndex, "end_date", e.target.value)
+                              updateActivity(actualIndex, "endDate", e.target.value)
                             }
-                            disabled={activity.till_now}
+                            disabled={activity.tillNow}
                           />
                           <InputGroupAddon align="inline-end">
                             <div className="flex items-center gap-1.5">
                               <Checkbox
-                                checked={activity.till_now}
+                                checked={activity.tillNow}
                                 onCheckedChange={(checked) =>
-                                  updateActivity(actualIndex, "till_now", checked)
+                                  updateActivity(actualIndex, "tillNow", checked)
                                 }
                               />
                               <Label className="text-xs cursor-pointer" onClick={() =>
-                                updateActivity(actualIndex, "till_now", !activity.till_now)
+                                updateActivity(actualIndex, "tillNow", !activity.tillNow)
                               }>
                                 Till now
                               </Label>
@@ -329,11 +363,11 @@ export function ActivityHistoryModal({
                       <div className="space-y-1">
                         <Label>Role/Position</Label>
                         <Input
-                          value={activity.role_or_position || ""}
+                          value={activity.roleOrPosition || ""}
                           onChange={(e) =>
                             updateActivity(
                               actualIndex,
-                              "role_or_position",
+                              "roleOrPosition",
                               e.target.value
                             )
                           }
@@ -357,11 +391,11 @@ export function ActivityHistoryModal({
                       <Label>Email Address</Label>
                       <Input
                         type="email"
-                        value={activity.email_address || ""}
+                        value={activity.emailAddress || ""}
                         onChange={(e) =>
                           updateActivity(
                             actualIndex,
-                            "email_address",
+                            "emailAddress",
                             e.target.value
                           )
                         }
@@ -394,7 +428,7 @@ export function ActivityHistoryModal({
           </Button>
           <div className="flex-1" />
           <ButtonGroup>
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <Button onClick={saveActivities} disabled={!hasChanges}>

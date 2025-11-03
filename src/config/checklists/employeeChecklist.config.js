@@ -144,7 +144,7 @@ export const EMPLOYEE_CHECKLIST_CONFIG = {
     },
 
     {
-      key: "activity_history",
+      key: "activityHistory", // camelCase to match API response
       label: "Activity History",
       optional: false,
       itemType: "data", // Not a file upload, just displays activity
