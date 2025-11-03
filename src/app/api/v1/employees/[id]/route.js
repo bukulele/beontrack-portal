@@ -84,6 +84,13 @@ export async function GET(request, { params }) {
           },
           take: 50, // Latest 50 activity logs
         },
+        activityHistory: {
+          where: { isDeleted: false },
+          orderBy: [
+            { startDate: 'desc' },
+            { createdAt: 'desc' },
+          ],
+        },
         createdBy: {
           select: {
             id: true,

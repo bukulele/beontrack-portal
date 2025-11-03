@@ -128,10 +128,12 @@ export const OPTION_LISTS = {
 
   // Employment & Status
   ACTIVITY_CHOICES: [
-    { value: 'EMPLOYED', label: 'Employed' },
-    { value: 'UNEMPLOYED', label: 'Unemployed' },
-    { value: 'SCHOOLING', label: 'Schooling' },
-    { value: 'MILITARY', label: 'Military Service' },
+    { value: 'employment', label: 'Employment' },
+    { value: 'education', label: 'Education' },
+    { value: 'unemployment', label: 'Unemployment' },
+    { value: 'self_employed', label: 'Self-Employed' },
+    { value: 'military_service', label: 'Military Service' },
+    { value: 'other', label: 'Other' },
   ],
 
   IMMIGRATION_STATUS: [

@@ -136,35 +136,49 @@ export function ActivityHistoryModal({
       for (const activity of activities) {
         if (!activity) continue;
 
-        const data = new FormData();
-        data.append(entityType, entityId);
-        data.append("endpointIdentifier", entityType);
+        // Prepare activity data (convert snake_case to camelCase for API)
+        const activityData = {
+          activityType: activity.activity_type,
+          description: activity.description || null,
+          startDate: activity.start_date,
+          endDate: activity.till_now ? null : activity.end_date,
+          tillNow: activity.till_now || false,
+          organizationName: activity.organization_name || null,
+          roleOrPosition: activity.role_or_position || null,
+          location: activity.location || null,
+          emailAddress: activity.email_address || null,
+        };
 
-        // Append each field
-        for (const [key, value] of Object.entries(activity)) {
-          if (key === "end_date" && activity.till_now) {
-            data.append(key, "");
-          } else {
-            data.append(key, value);
-          }
-        }
+        let response;
 
-        let method;
         if (activity.id && !activity.delete) {
-          method = "PATCH";
+          // UPDATE existing activity
+          response = await fetch(`/api/v1/employees/${entityId}/activity-history/${activity.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(activityData),
+          });
         } else if (!activity.id && !activity.delete) {
-          method = "POST";
+          // CREATE new activity
+          response = await fetch(`/api/v1/employees/${entityId}/activity-history`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(activityData),
+          });
         } else if (activity.delete) {
-          method = "DELETE";
+          // DELETE activity
+          response = await fetch(`/api/v1/employees/${entityId}/activity-history/${activity.id}`, {
+            method: "DELETE",
+          });
         }
-
-        const response = await fetch("/api/activity-history", {
-          method,
-          body: data,
-        });
 
         if (!response.ok) {
-          throw new Error("Failed to save activity history");
+          const error = await response.json();
+          throw new Error(error.error || "Failed to save activity history");
         }
       }
 
@@ -173,6 +187,7 @@ export function ActivityHistoryModal({
       onClose();
     } catch (error) {
       console.error("Error saving activity history:", error);
+      alert(`Error: ${error.message}`);
       stopLoading();
     }
   };

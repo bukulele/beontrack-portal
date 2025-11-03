@@ -89,6 +89,15 @@ enum EntityType {
   employee
 }
 
+enum ActivityType {
+  employment
+  education
+  unemployment
+  self_employed
+  military_service
+  other
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -165,8 +174,9 @@ model OfficeEmployee {
   deletedAt               DateTime?       @map("deleted_at") @db.Timestamptz(6)
 
   // Relations
-  documents               Document[]      @relation("EmployeeDocuments")
-  activityLogs            ActivityLog[]   @relation("EmployeeActivityLogs")
+  documents               Document[]         @relation("EmployeeDocuments")
+  activityLogs            ActivityLog[]      @relation("EmployeeActivityLogs")
+  activityHistory         ActivityHistory[]  @relation("EmployeeActivityHistory")
 
   @@map("office_employees")
 }
@@ -209,6 +219,39 @@ model Document {
   employeeProfilePhotos OfficeEmployee[] @relation("EmployeeProfilePhoto")
 
   @@map("documents")
+}
+
+/// Activity History - Employment, education, and other activities
+/// Used for tracking applicant/employee activity over the last 10 years
+model ActivityHistory {
+  id                 String          @id @default(uuid()) @db.Uuid
+
+  // Employee relation
+  employeeId         String          @map("employee_id") @db.Uuid
+  employee           OfficeEmployee  @relation("EmployeeActivityHistory", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Activity details
+  activityType       ActivityType    @map("activity_type")
+  description        String?         @db.Text
+  startDate          DateTime        @map("start_date") @db.Date
+  endDate            DateTime?       @map("end_date") @db.Date
+  tillNow            Boolean         @default(false) @map("till_now") // If true, activity is ongoing
+
+  // Organization details
+  organizationName   String?         @map("organization_name") @db.VarChar(255)
+  roleOrPosition     String?         @map("role_or_position") @db.VarChar(255)
+  location           String?         @db.VarChar(255)
+  emailAddress       String?         @map("email_address") @db.VarChar(254)
+
+  // Audit
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isDeleted          Boolean         @default(false) @map("is_deleted")
+  deletedAt          DateTime?       @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([employeeId])
+  @@index([startDate, endDate])
+  @@map("activity_history")
 }
 
 model ActivityLog {
