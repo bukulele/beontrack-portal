@@ -1,4 +1,5 @@
 import { EMPLOYEE_EDIT_FORM_CONFIG } from "@/config/forms/employeeEditForm.config";
+import { EMPLOYMENT_TYPE_CHOICES } from "@/config/clientData";
 
 /**
  * Employee General Info Tab Configuration
@@ -23,13 +24,6 @@ const EMPLOYEE_STATUS_CHOICES = {
   wcb: "WCB",
   terminated: "Terminated",
   suspended: "Suspended",
-};
-
-// Prisma EmploymentType enum (3 values)
-const EMPLOYMENT_TYPE_CHOICES = {
-  full_time: "Full Time",
-  part_time: "Part Time",
-  contract: "Contract",
 };
 
 export const EMPLOYEE_GENERAL_INFO_CONFIG = {

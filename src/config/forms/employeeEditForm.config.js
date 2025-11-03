@@ -1,77 +1,144 @@
 import {
-  STATUS_CHOICES,
+  EMPLOYMENT_TYPE_CHOICES,
   DEPARTMENT_CHOICES,
   CANADIAN_PROVINCES,
+  COUNTRIES,
 } from "@/config/clientData";
 
 /**
  * Employee Edit Form Configuration
  *
- * Defines all editable fields for employee entities.
- * Based on CREATE_EMPLOYEE_TEMPLATE_SETTINGS from createObjectTemplate.js
+ * Updated for Prisma schema - aligned with OfficeEmployee model
+ * Uses camelCase field names matching Prisma schema
+ *
+ * Model: OfficeEmployee (26 fields)
+ * Editable fields: 17 fields (excludes audit fields, system fields, and relations)
  */
+
 export const EMPLOYEE_EDIT_FORM_CONFIG = {
   fields: [
+    // ========================================
+    // Identity Section
+    // ========================================
     {
-      key: "employee_id",
+      key: "employeeId",
       label: "Employee ID",
       type: "text",
       required: true,
-      disabled: true, // Primary identifier
+      disabled: true, // Primary identifier - read-only
     },
     {
-      key: "card_number",
-      label: "Card Number",
-      type: "text",
-      required: false,
-    },
-    {
-      key: "email",
-      label: "Email",
-      type: "email",
-      required: true,
-      adminOnly: true,
-    },
-    {
-      key: "first_name",
+      key: "firstName",
       label: "First Name",
       type: "text",
       required: true,
     },
     {
-      key: "last_name",
+      key: "lastName",
       label: "Last Name",
       type: "text",
       required: true,
     },
+
+    // ========================================
+    // Contact Section
+    // ========================================
     {
-      key: "phone_number",
-      label: "Phone Number",
-      type: "phone",
-      required: true,
+      key: "email",
+      label: "Email",
+      type: "email",
+      required: false,
     },
     {
-      key: "emergency_contact",
-      label: "Emergency Contact",
+      key: "phoneNumber",
+      label: "Phone Number",
+      type: "phone",
+      required: false,
+    },
+    {
+      key: "emergencyContactName",
+      label: "Emergency Contact Name",
       type: "text",
       required: false,
     },
     {
-      key: "emergency_phone",
-      label: "Emergency Phone",
+      key: "emergencyContactPhone",
+      label: "Emergency Contact Phone",
       type: "phone",
       required: false,
     },
+
+    // ========================================
+    // Personal Information
+    // ========================================
     {
-      key: "date_of_birth",
+      key: "dateOfBirth",
       label: "Date of Birth",
       type: "date",
-      required: true,
+      required: false,
+    },
+
+    // ========================================
+    // Address Section (Prisma fields)
+    // ========================================
+    {
+      key: "addressLine1",
+      label: "Address Line 1",
+      type: "text",
+      required: false,
     },
     {
-      key: "date_available",
-      label: "Date Available",
+      key: "addressLine2",
+      label: "Address Line 2 (Unit/Suite)",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "city",
+      label: "City",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "stateProvince",
+      label: "State/Province",
+      type: "select",
+      options: CANADIAN_PROVINCES,
+      required: false,
+    },
+    {
+      key: "postalCode",
+      label: "Postal Code",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "country",
+      label: "Country",
+      type: "select",
+      options: COUNTRIES,
+      required: false,
+    },
+
+    // ========================================
+    // Employment Section (Prisma fields)
+    // ========================================
+    {
+      key: "hireDate",
+      label: "Hire Date",
       type: "date",
+      required: false,
+    },
+    {
+      key: "terminationDate",
+      label: "Termination Date",
+      type: "date",
+      required: false,
+    },
+    {
+      key: "jobTitle",
+      label: "Job Title",
+      type: "text",
       required: false,
     },
     {
@@ -82,41 +149,17 @@ export const EMPLOYEE_EDIT_FORM_CONFIG = {
       required: false,
     },
     {
-      key: "street_number",
-      label: "Street Number",
-      type: "number",
-      required: true,
-    },
-    {
-      key: "street",
-      label: "Street",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "unit_or_suite",
-      label: "Unit or Suite",
-      type: "text",
+      key: "employmentType",
+      label: "Employment Type",
+      type: "select",
+      options: EMPLOYMENT_TYPE_CHOICES,
       required: false,
     },
     {
-      key: "city",
-      label: "City",
+      key: "officeLocation",
+      label: "Office Location",
       type: "text",
-      required: true,
-    },
-    {
-      key: "province",
-      label: "Province",
-      type: "select",
-      options: CANADIAN_PROVINCES,
-      required: true,
-    },
-    {
-      key: "postal_code",
-      label: "Postal Code",
-      type: "postal_code",
-      required: true,
+      required: false,
     },
   ],
 };

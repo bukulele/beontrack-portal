@@ -42,8 +42,14 @@ export function EntityEditDialog({
   const entityTypeLabel =
     entityType.charAt(0).toUpperCase() + entityType.slice(1);
 
+  // Handle dialog close - reset form state when closing without saving
+  const handleClose = () => {
+    form.reset(entityData); // Reset form to original server data
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Edit {entityTypeLabel}</DialogTitle>
@@ -64,7 +70,7 @@ export function EntityEditDialog({
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>

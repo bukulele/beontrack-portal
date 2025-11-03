@@ -136,6 +136,12 @@ export const OPTION_LISTS = {
     { value: 'other', label: 'Other' },
   ],
 
+  EMPLOYMENT_TYPE_CHOICES: [
+    { value: 'full_time', label: 'Full Time' },
+    { value: 'part_time', label: 'Part Time' },
+    { value: 'contract', label: 'Contract' },
+  ],
+
   IMMIGRATION_STATUS: [
     { value: '', label: '' },
     { value: 'LMIA', label: 'LMIA' },
@@ -430,3 +436,4 @@ export const TRUE_FALSE_CHOICES = arrayToObjectFormat(OPTION_LISTS.TRUE_FALSE_CH
 export const COUNTRIES = arrayToObjectFormat(OPTION_LISTS.COUNTRIES);
 export const USA_STATES = arrayToObjectFormat(OPTION_LISTS.USA_STATES);
 export const DRIVER_EMPLOYEE_CHOICES = arrayToObjectFormat(OPTION_LISTS.DRIVER_EMPLOYEE_CHOICES);
+export const EMPLOYMENT_TYPE_CHOICES = arrayToObjectFormat(OPTION_LISTS.EMPLOYMENT_TYPE_CHOICES);
