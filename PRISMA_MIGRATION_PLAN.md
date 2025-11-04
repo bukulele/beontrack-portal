@@ -2,7 +2,8 @@
 
 **Project Start Date**: 2025-01-26
 **Status**: 🚧 In Progress
-**Current Phase**: Phase 2 - Base Schema Design
+**Current Phase**: Phase 4.5 - Universal API Migration (Completed)
+**Next Phase**: Phase 5 - Frontend Integration
 
 ---
 
@@ -265,6 +266,64 @@
 
 ---
 
+### **PHASE 4.5: Universal API Migration** 🔄 ARCHITECTURE IMPROVEMENT
+**Duration**: 1 day
+**Status**: ✅ Completed
+**Started**: 2025-11-04
+**Completed**: 2025-11-04
+
+**IMPORTANT CONTEXT**:
+- Migrated from entity-specific endpoints `/api/v1/employees` to universal pattern `/api/v1/[entityType]`
+- **NO backward compatibility** - complete migration with database reset
+- All entity types now use **plural form** (e.g., `employees`, `trucks`, `drivers`)
+
+**Tasks**:
+- [x] Update Prisma schema to remove specific foreign keys
+  - [x] Remove `employeeId` from Document model
+  - [x] Remove `employeeId` from ActivityLog model
+  - [x] Change EntityType enum from `'employee'` to `'employees'` (plural)
+  - [x] Run migration: `npx prisma migrate dev --name remove_employee_fk`
+- [x] Update all API routes to use universal pattern
+  - [x] Update VALID_ENTITY_TYPES to use plural forms
+  - [x] Update ENTITY_MODELS mappings
+  - [x] Remove backward compatibility code
+- [x] Update status settings endpoint
+  - [x] Change query from `'employee'` to `'employees'`
+- [x] Update file serving endpoint
+  - [x] Disable authentication for testing
+- [x] Update configuration files
+  - [x] Fix photo URL construction (strip `uploads/` prefix)
+  - [x] Update entity configs to use plural entity types
+- [x] Reset database and reseed with new data
+  - [x] Update seed script to use `'employees'` entity type
+  - [x] Restore status configuration seeding
+- [x] Test photo upload and display functionality
+
+**Implementation Details**:
+- **Generic Database Pattern**: Uses `entityType + entityId` instead of specific foreign keys
+- **Dynamic Routing**: Single set of API routes handles all entity types
+- **Scalability**: Easy to add new entity types (trucks, drivers, equipment)
+- **File Structure**: `uploads/{entityType}/{uuid}/{documentType}/{filename}`
+- **Status Management**: Database-driven with 13 statuses and 21 transitions
+
+**Files Modified (8)**:
+1. `prisma/schema.prisma` - Removed employeeId foreign keys
+2. `prisma/migrations/.../migration.sql` - Updated EntityType enum
+3. `prisma/seed.js` - Updated to use 'employees'
+4. `src/app/api/v1/[entityType]/[id]/documents/route.js` - Plural entity types
+5. `src/app/api/v1/files/[...path]/route.js` - Disabled auth
+6. `src/app/api/v1/status-settings/employee/route.js` - Query 'employees'
+7. `src/config/cards/employeeGeneralInfo.config.js` - Fixed photo URL
+8. `CLAUDE.md` - Documented migration
+
+**Deliverable**: ✅ Universal API architecture fully functional, photo upload working
+
+**Django Migration Impact**: ✅ **IMPROVED** - Same universal pattern for Django
+
+**Pause Point**: ✋ Ready for Phase 5 - Frontend integration with other entity types
+
+---
+
 ### **PHASE 5: Frontend Integration** 🎨 UI CONNECTION
 **Duration**: 2-3 days
 **Status**: ⬜ Not Started
@@ -404,6 +463,7 @@ bot-demo/
 | Phase 2: Schema Design | ✅ Completed | 2025-10-27 | 2025-10-27 | ~1.5 hours |
 | Phase 3: File Uploads | ✅ Completed | 2025-10-28 | 2025-10-28 | ~2 hours |
 | Phase 4: REST API | ✅ Completed | 2025-10-31 | 2025-10-31 | ~3 hours |
+| Phase 4.5: Universal API Migration | ✅ Completed | 2025-11-04 | 2025-11-04 | ~3 hours |
 | Phase 5: Frontend | ⬜ Not Started | - | - | - |
 | Phase 6: Documentation | ⬜ Not Started | - | - | - |
 
@@ -459,6 +519,10 @@ npx prisma generate
 | 2025-01-26 | Separate document tables | Better type safety | More normalized |
 | 2025-01-26 | Start with Office Employees | Simplest entity | Validates entire workflow |
 | 2025-01-26 | Homebrew PostgreSQL instead of Docker | Docker not available | Local install, auto-starts |
+| 2025-11-04 | Universal API with [entityType] pattern | Scalability, maintainability | Easier to add new entities |
+| 2025-11-04 | Plural entity type naming | Standard REST convention | More intuitive API |
+| 2025-11-04 | Generic entityType+entityId pattern | Avoid entity-specific foreign keys | Simpler schema, better flexibility |
+| 2025-11-04 | No backward compatibility | Clean migration | Database reset required |
 
 ---
 
@@ -505,8 +569,10 @@ npx prisma generate
 | Date | Change | Phase | Notes |
 |------|--------|-------|-------|
 | 2025-01-26 | Plan created | Setup | Initial plan approved |
+| 2025-11-04 | Universal API migration completed | Phase 4.5 | Migrated to [entityType] pattern with plural naming |
+| 2025-11-04 | Documentation updated | Phase 4.5 | Updated CLAUDE.md and PRISMA_MIGRATION_PLAN.md |
 
 ---
 
-**Last Updated**: 2025-01-26
-**Next Review Date**: After Phase 0 completion
+**Last Updated**: 2025-11-04
+**Next Review Date**: Before Phase 5 (Frontend integration with other entities)
