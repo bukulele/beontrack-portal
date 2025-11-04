@@ -74,6 +74,9 @@ enum DocumentType {
   education_verification
   safety_training
 
+  // Profile
+  profile_photo
+
   // Other
   immigration_documents
   other_documents

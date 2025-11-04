@@ -9,6 +9,7 @@ import InfoField from "./InfoField";
 import StatusBadge from "./StatusBadge";
 import FileSectionAccordion from "./FileSectionAccordion";
 import PhotoGallerySection from "./PhotoGallerySection";
+import ProfilePhotoDisplay from "./ProfilePhotoDisplay";
 import Image from "next/image";
 import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
 import RelatedEntityDropdown from "./RelatedEntityDropdown";
@@ -74,13 +75,31 @@ function GeneralInfoTab({
           {/* Left Side - Image */}
           {config.image && (
             <div className="flex flex-col gap-4 w-64 shrink-0">
-              <Image
-                src={config.image.src(entityData)}
-                alt={config.image.alt || "Entity Image"}
-                width={config.image.width || 300}
-                height={config.image.height || 200}
-                className="rounded-lg object-contain"
-              />
+              {/* Use ProfilePhotoDisplay for interactive photo editing if configured */}
+              {config.image.interactive ? (
+                <ProfilePhotoDisplay
+                  entityData={entityData}
+                  entityType={entityType}
+                  entityId={entityId}
+                  onReload={loadData}
+                  width={config.image.width || 200}
+                  height={config.image.height || 300}
+                  photoSrc={config.image.src}
+                  placeholder={config.image.placeholder}
+                  uploadEndpoint={config.image.uploadEndpoint(entityId)}
+                  updateEndpoint={config.image.updateEndpoint(entityId)}
+                  photoFieldName={config.image.photoFieldName}
+                  documentType={config.image.documentType}
+                />
+              ) : (
+                <Image
+                  src={config.image.src(entityData)}
+                  alt={config.image.alt || "Entity Image"}
+                  width={config.image.width || 300}
+                  height={config.image.height || 200}
+                  className="rounded-lg object-contain"
+                />
+              )}
 
               {/* Additional info below image */}
               {config.image.additionalInfo && (

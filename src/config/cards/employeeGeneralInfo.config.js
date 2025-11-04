@@ -32,9 +32,18 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
 
   // Image configuration (profile photo)
   image: {
+    interactive: true, // Enable interactive photo editing
     src: (entityData) => entityData.profilePhoto?.filePath
       ? `/api/v1/files/${entityData.profilePhoto.filePath}`
-      : "/no_photo_driver.png",
+      : null,
+    placeholder: {
+      icon: "User", // Lucide icon name shown when no photo exists
+    },
+    // API endpoints for photo upload/update
+    uploadEndpoint: (entityId) => `/api/v1/employees/${entityId}/documents`,
+    updateEndpoint: (entityId) => `/api/v1/employees/${entityId}`,
+    photoFieldName: "profilePhotoId",
+    documentType: "profile_photo",
     alt: "Employee Photo",
     width: 200,
     height: 300,

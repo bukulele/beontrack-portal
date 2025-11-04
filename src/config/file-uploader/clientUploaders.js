@@ -15,6 +15,7 @@ import {
   documentsWithExpiryDateConfig,
 } from './uploaders/documents.uploader';
 import { photosUploaderConfig } from './uploaders/photos.uploader';
+import { employeePhotoUploaderConfig } from './uploaders/employeePhoto.uploader';
 
 /**
  * Register all client-specific uploader configurations
@@ -28,6 +29,7 @@ export function registerClientUploaders() {
   registerUploaderConfig('documents_with_issue_date', documentsWithIssueDateConfig);
   registerUploaderConfig('documents_with_expiry_date', documentsWithExpiryDateConfig);
   registerUploaderConfig('photos', photosUploaderConfig);
+  registerUploaderConfig('employee_photo', employeePhotoUploaderConfig);
 }
 
 /**
