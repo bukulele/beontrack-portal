@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "EntityType" AS ENUM ('employee');
+CREATE TYPE "EntityType" AS ENUM ('employees');
 
 -- CreateTable
 CREATE TABLE "status_configs" (

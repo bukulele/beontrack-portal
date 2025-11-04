@@ -1,10 +1,10 @@
 /**
- * Employees API - Next.js 16
+ * Universal Entity Collection API - Next.js 16
  *
- * GET /api/v1/employees - List employees with filtering and pagination
- * POST /api/v1/employees - Create new employee
+ * GET /api/v1/{entityType} - List entities with filtering and pagination
+ * POST /api/v1/{entityType} - Create new entity
  *
- * Follows Prisma schema from PRISMA_MIGRATION_PLAN.md
+ * Supports: employees (extensible to trucks, drivers, equipment)
  */
 
 import { NextResponse } from 'next/server';
@@ -12,11 +12,19 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
+// Supported entity types
+const VALID_ENTITY_TYPES = ['employees'];
+
+// Map entity types to Prisma models
+const ENTITY_MODELS = {
+  employees: 'officeEmployee',
+};
+
 /**
- * GET /api/v1/employees
- * List employees with filtering, pagination, and sorting
+ * GET /api/v1/{entityType}
+ * List entities with filtering, pagination, and sorting
  */
-export async function GET(request) {
+export async function GET(request, { params }) {
   try {
     // Authenticate user
     // TEMPORARILY DISABLED FOR TESTING
@@ -28,13 +36,25 @@ export async function GET(request) {
     //   );
     // }
 
+    // Next.js 16: params is now a Promise
+    const { entityType } = await params;
+
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}` },
+        { status: 400 }
+      );
+    }
+
+    const modelName = ENTITY_MODELS[entityType];
+
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const search = searchParams.get('search');
     const status = searchParams.get('status');
-    const department = searchParams.get('department');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
@@ -46,29 +66,33 @@ export async function GET(request) {
       );
     }
 
-    // Build where clause
+    // Build where clause (entity-specific filters)
     const where = {
       isDeleted: false,
     };
 
-    // Search filter (firstName, lastName, email, employeeId)
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { employeeId: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    // Entity-specific filters (for employees)
+    if (entityType === 'employees') {
+      // Search filter (firstName, lastName, email, employeeId)
+      if (search) {
+        where.OR = [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { employeeId: { contains: search, mode: 'insensitive' } },
+        ];
+      }
 
-    // Status filter
-    if (status) {
-      where.status = status;
-    }
+      // Status filter
+      if (status) {
+        where.status = status;
+      }
 
-    // Department filter
-    if (department) {
-      where.department = { contains: department, mode: 'insensitive' };
+      // Department filter
+      const department = searchParams.get('department');
+      if (department) {
+        where.department = { contains: department, mode: 'insensitive' };
+      }
     }
 
     // Build orderBy clause
@@ -80,8 +104,8 @@ export async function GET(request) {
     const skip = (page - 1) * limit;
 
     // Execute queries in parallel
-    const [employees, totalCount] = await Promise.all([
-      prisma.officeEmployee.findMany({
+    const [entities, totalCount] = await Promise.all([
+      prisma[modelName].findMany({
         where,
         skip,
         take: limit,
@@ -110,15 +134,9 @@ export async function GET(request) {
               lastName: true,
             },
           },
-          _count: {
-            select: {
-              documents: true,
-              activityLogs: true,
-            },
-          },
         },
       }),
-      prisma.officeEmployee.count({ where }),
+      prisma[modelName].count({ where }),
     ]);
 
     // Calculate pagination metadata
@@ -128,7 +146,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      data: employees,
+      data: entities,
       pagination: {
         page,
         limit,
@@ -139,10 +157,10 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('Error fetching employees:', error);
+    console.error(`Error fetching ${entityType}:`, error);
     return NextResponse.json(
       {
-        error: 'Failed to fetch employees',
+        error: `Failed to fetch ${entityType}`,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
       { status: 500 }
@@ -151,10 +169,10 @@ export async function GET(request) {
 }
 
 /**
- * POST /api/v1/employees
- * Create a new employee
+ * POST /api/v1/{entityType}
+ * Create a new entity
  */
-export async function POST(request) {
+export async function POST(request, { params }) {
   try {
     // Authenticate user
     // TEMPORARILY DISABLED FOR TESTING
@@ -166,55 +184,71 @@ export async function POST(request) {
     //   );
     // }
 
-    // Parse request body
-    const body = await request.json();
+    // Next.js 16: params is now a Promise
+    const { entityType } = await params;
 
-    // Validate required fields
-    const { employeeId, firstName, lastName } = body;
-    if (!employeeId || !firstName || !lastName) {
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
       return NextResponse.json(
-        { error: 'Missing required fields: employeeId, firstName, lastName' },
+        { error: `Invalid entity type: ${entityType}` },
         { status: 400 }
       );
     }
 
-    // Check if employeeId already exists
-    const existingEmployee = await prisma.officeEmployee.findUnique({
-      where: { employeeId },
-    });
+    const modelName = ENTITY_MODELS[entityType];
 
-    if (existingEmployee) {
-      return NextResponse.json(
-        { error: 'Employee ID already exists' },
-        { status: 400 }
-      );
+    // Parse request body
+    const body = await request.json();
+
+    // Entity-specific validation (for employees)
+    if (entityType === 'employees') {
+      const { employeeId, firstName, lastName } = body;
+      if (!employeeId || !firstName || !lastName) {
+        return NextResponse.json(
+          { error: 'Missing required fields: employeeId, firstName, lastName' },
+          { status: 400 }
+        );
+      }
+
+      // Check if employeeId already exists
+      const existingEntity = await prisma[modelName].findUnique({
+        where: { employeeId },
+      });
+
+      if (existingEntity) {
+        return NextResponse.json(
+          { error: 'Employee ID already exists' },
+          { status: 400 }
+        );
+      }
     }
 
     // Find or create user record for testing (normally from session)
     // TEMPORARILY USING HARDCODED EMAIL FOR TESTING
     let user = await prisma.user.findUnique({
-      where: { email: 'test@example.com' },
+      where: { email: 'admin@example.com' },
     });
 
     if (!user) {
-      // Create a new user if not found (for development)
       user = await prisma.user.create({
         data: {
-          email: 'test@example.com',
-          username: 'testuser',
-          passwordHash: '', // Empty for OAuth users
-          firstName: 'Test',
+          email: 'admin@example.com',
+          username: 'admin',
+          passwordHash: '',
+          firstName: 'Admin',
           lastName: 'User',
         },
       });
     }
 
-    // Create employee
-    const employee = await prisma.officeEmployee.create({
-      data: {
-        employeeId,
-        firstName,
-        lastName,
+    // Build entity data (entity-specific for employees)
+    let entityData = {};
+
+    if (entityType === 'employees') {
+      entityData = {
+        employeeId: body.employeeId,
+        firstName: body.firstName,
+        lastName: body.lastName,
         email: body.email || null,
         phoneNumber: body.phoneNumber || null,
         emergencyContactName: body.emergencyContactName || null,
@@ -235,7 +269,12 @@ export async function POST(request) {
         status: body.status || 'new',
         createdById: user.id,
         updatedById: user.id,
-      },
+      };
+    }
+
+    // Create entity
+    const entity = await prisma[modelName].create({
+      data: entityData,
       include: {
         createdBy: {
           select: {
@@ -259,23 +298,24 @@ export async function POST(request) {
     // Create activity log
     await prisma.activityLog.create({
       data: {
-        employeeId: employee.id,
+        entityType,
+        entityId: entity.id,
         actionType: 'created',
-        newValue: `${firstName} ${lastName}`,
+        newValue: entityType === 'employees' ? `${entity.firstName} ${entity.lastName}` : entity.id,
         performedById: user.id,
       },
     });
 
     return NextResponse.json({
       success: true,
-      data: employee,
-      message: 'Employee created successfully',
+      data: entity,
+      message: `${entityType} created successfully`,
     }, { status: 201 });
   } catch (error) {
-    console.error('Error creating employee:', error);
+    console.error(`Error creating ${entityType}:`, error);
     return NextResponse.json(
       {
-        error: 'Failed to create employee',
+        error: `Failed to create ${entityType}`,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
       { status: 500 }

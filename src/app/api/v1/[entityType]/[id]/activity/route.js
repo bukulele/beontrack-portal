@@ -1,9 +1,9 @@
 /**
- * Employee Activity Log API - Next.js 16
+ * Universal Activity Log API - Next.js 16
  *
- * GET /api/v1/employees/:id/activity - Get activity log for employee
+ * GET /api/v1/{entityType}/{id}/activity - Get activity log for entity
  *
- * Follows Prisma schema from PRISMA_MIGRATION_PLAN.md
+ * Supports: employees (extensible to trucks, drivers, equipment)
  */
 
 import { NextResponse } from 'next/server';
@@ -11,9 +11,17 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
+// Supported entity types
+const VALID_ENTITY_TYPES = ['employees'];
+
+// Map entity types to Prisma models
+const ENTITY_MODELS = {
+  employees: 'officeEmployee',
+};
+
 /**
- * GET /api/v1/employees/:id/activity
- * Get paginated activity log for an employee
+ * GET /api/v1/{entityType}/{id}/activity
+ * Get paginated activity log for an entity
  */
 export async function GET(request, { params }) {
   try {
@@ -28,7 +36,17 @@ export async function GET(request, { params }) {
     // }
 
     // Next.js 16: params is now a Promise
-    const { id: employeeId } = await params;
+    const { entityType, id } = await params;
+
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}` },
+        { status: 400 }
+      );
+    }
+
+    const modelName = ENTITY_MODELS[entityType];
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
@@ -43,14 +61,14 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Verify employee exists
-    const employee = await prisma.officeEmployee.findUnique({
-      where: { id: employeeId },
+    // Verify entity exists
+    const entity = await prisma[modelName].findUnique({
+      where: { id },
     });
 
-    if (!employee || employee.isDeleted) {
+    if (!entity || entity.isDeleted) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: `${entityType} not found` },
         { status: 404 }
       );
     }
@@ -62,7 +80,8 @@ export async function GET(request, { params }) {
     const [activityLogs, totalCount] = await Promise.all([
       prisma.activityLog.findMany({
         where: {
-          employeeId,
+          entityType,
+          entityId: id,
         },
         skip,
         take: limit,
@@ -82,7 +101,10 @@ export async function GET(request, { params }) {
         },
       }),
       prisma.activityLog.count({
-        where: { employeeId },
+        where: {
+          entityType,
+          entityId: id,
+        },
       }),
     ]);
 

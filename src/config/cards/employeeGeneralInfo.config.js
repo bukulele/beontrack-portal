@@ -34,7 +34,7 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   image: {
     interactive: true, // Enable interactive photo editing
     src: (entityData) => entityData.profilePhoto?.filePath
-      ? `/api/v1/files/${entityData.profilePhoto.filePath}`
+      ? `/api/v1/files/${entityData.profilePhoto.filePath.replace(/^uploads\//, '')}`
       : null,
     placeholder: {
       icon: "User", // Lucide icon name shown when no photo exists

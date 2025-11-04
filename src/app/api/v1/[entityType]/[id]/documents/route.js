@@ -4,7 +4,7 @@
  * GET  /api/v1/{entityType}/{id}/documents - List documents for entity
  * POST /api/v1/{entityType}/{id}/documents - Upload document for entity
  *
- * Supports: employee, truck, driver, equipment
+ * Supports: employees, trucks, drivers, equipment
  * Scalable architecture - add new entity types without changing this file
  */
 
@@ -15,13 +15,13 @@ import { prisma } from '@/lib/prisma';
 import { saveUploadedFile } from '@/lib/fileUpload';
 
 // Supported entity types
-const VALID_ENTITY_TYPES = ['employee', 'truck', 'driver', 'equipment'];
+const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
 
 // Map entity types to Prisma models (for validation)
 const ENTITY_MODELS = {
-  employee: 'officeEmployee',
-  // truck: 'truck',        // TODO: Add when Truck model exists
-  // driver: 'driver',      // TODO: Add when Driver model exists
+  employees: 'officeEmployee',
+  // trucks: 'truck',        // TODO: Add when Truck model exists
+  // drivers: 'driver',      // TODO: Add when Driver model exists
   // equipment: 'equipment', // TODO: Add when Equipment model exists
 };
 
@@ -239,7 +239,6 @@ export async function POST(request, { params }) {
       data: {
         entityType,
         entityId: id,
-        employeeId: entityType === 'employee' ? id : null, // Keep for backward compat
         documentType,
         filePath,
         fileName,
@@ -265,7 +264,6 @@ export async function POST(request, { params }) {
       data: {
         entityType,
         entityId: id,
-        employeeId: entityType === 'employee' ? id : null, // Keep for backward compat
         actionType: 'document_uploaded',
         fieldName: documentType,
         newValue: fileName,

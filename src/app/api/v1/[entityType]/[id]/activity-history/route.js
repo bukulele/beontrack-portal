@@ -1,10 +1,10 @@
 /**
- * Activity History API - Next.js 16
+ * Universal Activity History API - Next.js 16
  *
- * GET /api/v1/employees/:id/activity-history - List all activity history for an employee
- * POST /api/v1/employees/:id/activity-history - Create new activity history entry
+ * GET /api/v1/{entityType}/{id}/activity-history - List all activity history
+ * POST /api/v1/{entityType}/{id}/activity-history - Create new activity history entry
  *
- * Follows Prisma schema from PRISMA_MIGRATION_PLAN.md
+ * Note: Activity history is currently employee-specific but uses universal API pattern
  */
 
 import { NextResponse } from 'next/server';
@@ -12,9 +12,17 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
+// Supported entity types (only employees have activity history for now)
+const VALID_ENTITY_TYPES = ['employees'];
+
+// Map entity types to Prisma models
+const ENTITY_MODELS = {
+  employees: 'officeEmployee',
+};
+
 /**
- * GET /api/v1/employees/:id/activity-history
- * Get all activity history entries for an employee
+ * GET /api/v1/{entityType}/{id}/activity-history
+ * Get all activity history entries for an entity
  */
 export async function GET(request, { params }) {
   try {
@@ -29,21 +37,31 @@ export async function GET(request, { params }) {
     // }
 
     // Next.js 16: params is now a Promise
-    const { id } = await params;
+    const { entityType, id } = await params;
 
-    // Verify employee exists
-    const employee = await prisma.officeEmployee.findUnique({
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}. Activity history only supports: ${VALID_ENTITY_TYPES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    const modelName = ENTITY_MODELS[entityType];
+
+    // Verify entity exists
+    const entity = await prisma[modelName].findUnique({
       where: { id },
     });
 
-    if (!employee) {
+    if (!entity) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: `${entityType} not found` },
         { status: 404 }
       );
     }
 
-    // Fetch activity history
+    // Fetch activity history (using employeeId since it's employee-specific feature)
     const activityHistory = await prisma.activityHistory.findMany({
       where: {
         employeeId: id,
@@ -55,7 +73,10 @@ export async function GET(request, { params }) {
       ],
     });
 
-    return NextResponse.json(activityHistory);
+    return NextResponse.json({
+      success: true,
+      data: activityHistory,
+    });
   } catch (error) {
     console.error('Error fetching activity history:', error);
     return NextResponse.json(
@@ -69,7 +90,7 @@ export async function GET(request, { params }) {
 }
 
 /**
- * POST /api/v1/employees/:id/activity-history
+ * POST /api/v1/{entityType}/{id}/activity-history
  * Create new activity history entry
  */
 export async function POST(request, { params }) {
@@ -85,16 +106,26 @@ export async function POST(request, { params }) {
     // }
 
     // Next.js 16: params is now a Promise
-    const { id } = await params;
+    const { entityType, id } = await params;
 
-    // Verify employee exists
-    const employee = await prisma.officeEmployee.findUnique({
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}. Activity history only supports: ${VALID_ENTITY_TYPES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    const modelName = ENTITY_MODELS[entityType];
+
+    // Verify entity exists
+    const entity = await prisma[modelName].findUnique({
       where: { id },
     });
 
-    if (!employee) {
+    if (!entity) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: `${entityType} not found` },
         { status: 404 }
       );
     }
@@ -133,7 +164,10 @@ export async function POST(request, { params }) {
       },
     });
 
-    return NextResponse.json(activityHistory, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      data: activityHistory,
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating activity history:', error);
     return NextResponse.json(

@@ -124,7 +124,8 @@ async function main() {
   console.log('📝 Creating activity logs...');
   await prisma.activityLog.create({
     data: {
-      employeeId: employee1.id,
+      entityType: 'employees',
+      entityId: employee1.id,
       actionType: 'created',
       fieldName: 'status',
       newValue: 'active',
@@ -134,7 +135,8 @@ async function main() {
 
   await prisma.activityLog.create({
     data: {
-      employeeId: employee2.id,
+      entityType: 'employees',
+      entityId: employee2.id,
       actionType: 'created',
       fieldName: 'status',
       newValue: 'trainee',
@@ -144,7 +146,8 @@ async function main() {
 
   await prisma.activityLog.create({
     data: {
-      employeeId: employee3.id,
+      entityType: 'employees',
+      entityId: employee3.id,
       actionType: 'created',
       fieldName: 'status',
       newValue: 'under_review',
@@ -153,6 +156,88 @@ async function main() {
   });
   console.log('   ✓ Created activity logs');
 
+  // Create employee status configurations
+  console.log('🎨 Creating employee status configurations...');
+
+  const statusConfigs = [
+    // Recruiting Phase
+    { code: 'new', label: 'New Application', color: '#3B82F6', order: 1 },
+    { code: 'application_received', label: 'Application Received', color: '#8B5CF6', order: 2 },
+    { code: 'under_review', label: 'Under Review', color: '#F59E0B', order: 3 },
+    { code: 'application_on_hold', label: 'On Hold', color: '#6B7280', order: 4 },
+    { code: 'rejected', label: 'Rejected', color: '#EF4444', order: 5 },
+
+    // Employment Phase
+    { code: 'trainee', label: 'Trainee', color: '#10B981', order: 6 },
+    { code: 'active', label: 'Active', color: '#22C55E', order: 7 },
+    { code: 'resigned', label: 'Resigned', color: '#F97316', order: 8 },
+
+    // Leave Phase
+    { code: 'vacation', label: 'On Vacation', color: '#06B6D4', order: 9 },
+    { code: 'on_leave', label: 'On Leave', color: '#14B8A6', order: 10 },
+    { code: 'wcb', label: 'WCB', color: '#EC4899', order: 11 },
+
+    // Separation Phase
+    { code: 'terminated', label: 'Terminated', color: '#DC2626', order: 12 },
+    { code: 'suspended', label: 'Suspended', color: '#991B1B', order: 13 },
+  ];
+
+  const createdConfigs = {};
+  for (const config of statusConfigs) {
+    const statusConfig = await prisma.statusConfig.create({
+      data: {
+        entityType: 'employees',
+        statusCode: config.code,
+        statusLabel: config.label,
+        color: config.color,
+        sortOrder: config.order,
+      },
+    });
+    createdConfigs[config.code] = statusConfig.id;
+  }
+  console.log(`   ✓ Created ${statusConfigs.length} status configurations`);
+
+  // Create status transitions (example workflow)
+  console.log('🔄 Creating status transitions...');
+  const transitions = [
+    // Recruiting workflow
+    ['new', 'application_received'],
+    ['application_received', 'under_review'],
+    ['under_review', 'application_on_hold'],
+    ['under_review', 'rejected'],
+    ['under_review', 'trainee'],
+    ['application_on_hold', 'under_review'],
+    ['application_on_hold', 'rejected'],
+
+    // Employment workflow
+    ['trainee', 'active'],
+    ['trainee', 'terminated'],
+    ['active', 'vacation'],
+    ['active', 'on_leave'],
+    ['active', 'wcb'],
+    ['active', 'resigned'],
+    ['active', 'suspended'],
+    ['active', 'terminated'],
+
+    // Leave returns
+    ['vacation', 'active'],
+    ['on_leave', 'active'],
+    ['wcb', 'active'],
+    ['wcb', 'terminated'],
+    ['suspended', 'active'],
+    ['suspended', 'terminated'],
+  ];
+
+  for (const [from, to] of transitions) {
+    await prisma.statusTransition.create({
+      data: {
+        fromStatusId: createdConfigs[from],
+        toStatusId: createdConfigs[to],
+      },
+    });
+  }
+  console.log(`   ✓ Created ${transitions.length} status transitions`);
+
   console.log('');
   console.log('✅ Database seeding completed successfully!');
   console.log('');
@@ -160,6 +245,8 @@ async function main() {
   console.log(`   - Users: 1 (admin)`);
   console.log(`   - Employees: 3 (1 active, 1 trainee, 1 under_review)`);
   console.log(`   - Activity Logs: 3`);
+  console.log(`   - Status Configs: ${statusConfigs.length}`);
+  console.log(`   - Status Transitions: ${transitions.length}`);
   console.log('');
   console.log('🔍 View data in Prisma Studio: npm run db:studio');
   console.log('');

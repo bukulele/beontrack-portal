@@ -33,7 +33,7 @@ export async function GET() {
     // Fetch status configs with transitions
     const statusConfigs = await prisma.statusConfig.findMany({
       where: {
-        entityType: 'employee',
+        entityType: 'employees',
       },
       include: {
         transitionsFrom: {

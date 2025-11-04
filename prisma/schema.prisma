@@ -89,7 +89,7 @@ enum ReviewStatus {
 }
 
 enum EntityType {
-  employee
+  employees
 }
 
 enum ActivityType {
@@ -177,8 +177,6 @@ model OfficeEmployee {
   deletedAt               DateTime?       @map("deleted_at") @db.Timestamptz(6)
 
   // Relations
-  documents               Document[]         @relation("EmployeeDocuments")
-  activityLogs            ActivityLog[]      @relation("EmployeeActivityLogs")
   activityHistory         ActivityHistory[]  @relation("EmployeeActivityHistory")
 
   @@map("office_employees")
@@ -187,13 +185,9 @@ model OfficeEmployee {
 model Document {
   id                String        @id @default(uuid()) @db.Uuid
 
-  // Generic entity relation (replaces employeeId for scalability)
-  entityType        String        @map("entity_type") @db.VarChar(50) // 'employee', 'truck', 'driver', 'equipment', etc.
+  // Generic entity relation
+  entityType        String        @map("entity_type") @db.VarChar(50) // 'employees', 'trucks', 'drivers', 'equipment', etc.
   entityId          String        @map("entity_id") @db.Uuid
-
-  // Legacy employee relation (for profilePhoto backward compatibility)
-  employeeId        String?       @map("employee_id") @db.Uuid
-  employee          OfficeEmployee? @relation("EmployeeDocuments", fields: [employeeId], references: [id], onDelete: Cascade)
 
   // Document details
   documentType      DocumentType  @map("document_type")
@@ -269,10 +263,6 @@ model ActivityLog {
   // Generic entity relation
   entityType    String          @map("entity_type") @db.VarChar(50)
   entityId      String          @map("entity_id") @db.Uuid
-
-  // Legacy employee relation (for backward compatibility)
-  employeeId    String?         @map("employee_id") @db.Uuid
-  employee      OfficeEmployee? @relation("EmployeeActivityLogs", fields: [employeeId], references: [id], onDelete: Cascade)
 
   // Action details
   actionType    String          @map("action_type") @db.VarChar(50) // created, updated, status_changed, document_uploaded, etc.

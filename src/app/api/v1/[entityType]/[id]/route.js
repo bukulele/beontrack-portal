@@ -1,11 +1,11 @@
 /**
- * Employee Detail API - Next.js 16
+ * Universal Entity Detail API - Next.js 16
  *
- * GET /api/v1/employees/:id - Get single employee with relations
- * PATCH /api/v1/employees/:id - Update employee
- * DELETE /api/v1/employees/:id - Soft delete employee
+ * GET /api/v1/{entityType}/{id} - Get single entity with relations
+ * PATCH /api/v1/{entityType}/{id} - Update entity
+ * DELETE /api/v1/{entityType}/{id} - Soft delete entity
  *
- * Follows Prisma schema from PRISMA_MIGRATION_PLAN.md
+ * Supports: employees (extensible to trucks, drivers, equipment)
  */
 
 import { NextResponse } from 'next/server';
@@ -13,11 +13,22 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
+// Supported entity types
+const VALID_ENTITY_TYPES = ['employees'];
+
+// Map entity types to Prisma models
+const ENTITY_MODELS = {
+  employees: 'officeEmployee',
+};
+
 /**
- * GET /api/v1/employees/:id
- * Get single employee with all relations
+ * GET /api/v1/{entityType}/{id}
+ * Get single entity with all relations
  */
 export async function GET(request, { params }) {
+  // Next.js 16: params is now a Promise
+  const { entityType, id } = await params;
+
   try {
     // Authenticate user
     // TEMPORARILY DISABLED FOR TESTING
@@ -29,11 +40,18 @@ export async function GET(request, { params }) {
     //   );
     // }
 
-    // Next.js 16: params is now a Promise
-    const { id } = await params;
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}` },
+        { status: 400 }
+      );
+    }
 
-    // Fetch employee with relations
-    const employee = await prisma.officeEmployee.findUnique({
+    const modelName = ENTITY_MODELS[entityType];
+
+    // Fetch entity with relations
+    const entity = await prisma[modelName].findUnique({
       where: { id },
       include: {
         profilePhoto: {
@@ -42,11 +60,8 @@ export async function GET(request, { params }) {
             filePath: true,
             fileName: true,
             mimeType: true,
-          },
-        },
-        documents: {
-          where: { isDeleted: false },
-          include: {
+            fileSize: true,
+            createdAt: true,
             uploadedBy: {
               select: {
                 id: true,
@@ -55,34 +70,7 @@ export async function GET(request, { params }) {
                 lastName: true,
               },
             },
-            reviewedBy: {
-              select: {
-                id: true,
-                username: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        activityLogs: {
-          include: {
-            performedBy: {
-              select: {
-                id: true,
-                username: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 50, // Latest 50 activity logs
         },
         activityHistory: {
           where: { isDeleted: false },
@@ -110,42 +98,92 @@ export async function GET(request, { params }) {
       },
     });
 
-    // Check if employee exists and not soft-deleted
-    if (!employee || employee.isDeleted) {
+    // Check if entity exists and not soft-deleted
+    if (!entity || entity.isDeleted) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: `${entityType} not found` },
         { status: 404 }
       );
     }
 
-    // Group documents by documentType for checklist consumption
-    // Checklist expects: { resume: [...], government_id: [...], etc. }
-    const groupedDocuments = {};
-    if (employee.documents) {
-      employee.documents.forEach(doc => {
-        if (!groupedDocuments[doc.documentType]) {
-          groupedDocuments[doc.documentType] = [];
-        }
-        groupedDocuments[doc.documentType].push(doc);
-      });
-    }
+    // Fetch documents manually using entityType + entityId
+    const documents = await prisma.document.findMany({
+      where: {
+        entityType,
+        entityId: id,
+        isDeleted: false,
+      },
+      include: {
+        uploadedBy: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        reviewedBy: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-    // Replace flat documents array with grouped object
-    const employeeData = {
-      ...employee,
-      documents: undefined, // Remove flat array
-      ...groupedDocuments,  // Spread grouped documents at top level
+    // Fetch activity logs manually using entityType + entityId
+    const activityLogs = await prisma.activityLog.findMany({
+      where: {
+        entityType,
+        entityId: id,
+      },
+      include: {
+        performedBy: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 50, // Latest 50 activity logs
+    });
+
+    // Group documents by documentType for checklist consumption
+    const groupedDocuments = {};
+    documents.forEach(doc => {
+      if (!groupedDocuments[doc.documentType]) {
+        groupedDocuments[doc.documentType] = [];
+      }
+      groupedDocuments[doc.documentType].push(doc);
+    });
+
+    // Combine entity data with manually fetched relations
+    const entityData = {
+      ...entity,
+      documents: undefined, // Remove if exists
+      activityLogs,
+      ...groupedDocuments, // Spread grouped documents at top level
     };
 
     return NextResponse.json({
       success: true,
-      data: employeeData,
+      data: entityData,
     });
   } catch (error) {
-    console.error('Error fetching employee:', error);
+    console.error(`Error fetching ${entityType}:`, error);
     return NextResponse.json(
       {
-        error: 'Failed to fetch employee',
+        error: `Failed to fetch ${entityType}`,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
       { status: 500 }
@@ -154,10 +192,13 @@ export async function GET(request, { params }) {
 }
 
 /**
- * PATCH /api/v1/employees/:id
- * Update employee with field-level change tracking
+ * PATCH /api/v1/{entityType}/{id}
+ * Update entity with field-level change tracking
  */
 export async function PATCH(request, { params }) {
+  // Next.js 16: params is now a Promise
+  const { entityType, id } = await params;
+
   try {
     // Authenticate user
     // TEMPORARILY DISABLED FOR TESTING
@@ -169,31 +210,38 @@ export async function PATCH(request, { params }) {
     //   );
     // }
 
-    // Next.js 16: params is now a Promise
-    const { id } = await params;
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}` },
+        { status: 400 }
+      );
+    }
+
+    const modelName = ENTITY_MODELS[entityType];
 
     // Parse request body
     const body = await request.json();
 
-    // Fetch current employee data for change tracking
-    const currentEmployee = await prisma.officeEmployee.findUnique({
+    // Fetch current entity data for change tracking
+    const currentEntity = await prisma[modelName].findUnique({
       where: { id },
     });
 
-    if (!currentEmployee || currentEmployee.isDeleted) {
+    if (!currentEntity || currentEntity.isDeleted) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: `${entityType} not found` },
         { status: 404 }
       );
     }
 
-    // Check if employeeId is being changed and if it conflicts
-    if (body.employeeId && body.employeeId !== currentEmployee.employeeId) {
-      const existingEmployee = await prisma.officeEmployee.findUnique({
+    // Check if employeeId is being changed and if it conflicts (for employees)
+    if (entityType === 'employees' && body.employeeId && body.employeeId !== currentEntity.employeeId) {
+      const existingEntity = await prisma[modelName].findUnique({
         where: { employeeId: body.employeeId },
       });
 
-      if (existingEmployee) {
+      if (existingEntity) {
         return NextResponse.json(
           { error: 'Employee ID already exists' },
           { status: 400 }
@@ -204,16 +252,16 @@ export async function PATCH(request, { params }) {
     // Find or create user record for testing (normally from session)
     // TEMPORARILY USING HARDCODED EMAIL FOR TESTING
     let user = await prisma.user.findUnique({
-      where: { email: 'test@example.com' },
+      where: { email: 'admin@example.com' },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: 'test@example.com',
-          username: 'testuser',
+          email: 'admin@example.com',
+          username: 'admin',
           passwordHash: '',
-          firstName: 'Test',
+          firstName: 'Admin',
           lastName: 'User',
         },
       });
@@ -224,8 +272,8 @@ export async function PATCH(request, { params }) {
       updatedById: user.id,
     };
 
-    // Map of updatable fields (from Prisma schema)
-    const fieldMapping = {
+    // Map of updatable fields (specific to employees for now)
+    const fieldMapping = entityType === 'employees' ? {
       employeeId: 'employeeId',
       firstName: 'firstName',
       lastName: 'lastName',
@@ -248,7 +296,7 @@ export async function PATCH(request, { params }) {
       dateOfBirth: 'dateOfBirth',
       status: 'status',
       profilePhotoId: 'profilePhotoId',
-    };
+    } : {};
 
     // Track changes and build update data
     const activityLogs = [];
@@ -256,7 +304,7 @@ export async function PATCH(request, { params }) {
     for (const [bodyKey, dbKey] of Object.entries(fieldMapping)) {
       if (bodyKey in body) {
         let newValue = body[bodyKey];
-        let oldValue = currentEmployee[dbKey];
+        let oldValue = currentEntity[dbKey];
 
         // Handle date fields
         if (['hireDate', 'terminationDate', 'dateOfBirth'].includes(dbKey)) {
@@ -270,7 +318,8 @@ export async function PATCH(request, { params }) {
 
           // Create activity log entry
           activityLogs.push({
-            employeeId: id,
+            entityType,
+            entityId: id,
             actionType: 'updated',
             fieldName: dbKey,
             oldValue: oldValue ? String(oldValue) : null,
@@ -281,8 +330,8 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    // Update employee
-    const updatedEmployee = await prisma.officeEmployee.update({
+    // Update entity
+    const updatedEntity = await prisma[modelName].update({
       where: { id },
       data: updateData,
       include: {
@@ -321,15 +370,15 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      data: updatedEmployee,
-      message: 'Employee updated successfully',
+      data: updatedEntity,
+      message: `${entityType} updated successfully`,
       changesCount: activityLogs.length,
     });
   } catch (error) {
-    console.error('Error updating employee:', error);
+    console.error(`Error updating ${entityType}:`, error);
     return NextResponse.json(
       {
-        error: 'Failed to update employee',
+        error: `Failed to update ${entityType}`,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
       { status: 500 }
@@ -338,10 +387,13 @@ export async function PATCH(request, { params }) {
 }
 
 /**
- * DELETE /api/v1/employees/:id
- * Soft delete employee
+ * DELETE /api/v1/{entityType}/{id}
+ * Soft delete entity
  */
 export async function DELETE(request, { params }) {
+  // Next.js 16: params is now a Promise
+  const { entityType, id } = await params;
+
   try {
     // Authenticate user
     // TEMPORARILY DISABLED FOR TESTING
@@ -353,17 +405,24 @@ export async function DELETE(request, { params }) {
     //   );
     // }
 
-    // Next.js 16: params is now a Promise
-    const { id } = await params;
+    // Validate entity type
+    if (!VALID_ENTITY_TYPES.includes(entityType)) {
+      return NextResponse.json(
+        { error: `Invalid entity type: ${entityType}` },
+        { status: 400 }
+      );
+    }
 
-    // Check if employee exists
-    const employee = await prisma.officeEmployee.findUnique({
+    const modelName = ENTITY_MODELS[entityType];
+
+    // Check if entity exists
+    const entity = await prisma[modelName].findUnique({
       where: { id },
     });
 
-    if (!employee || employee.isDeleted) {
+    if (!entity || entity.isDeleted) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: `${entityType} not found` },
         { status: 404 }
       );
     }
@@ -371,23 +430,23 @@ export async function DELETE(request, { params }) {
     // Find or create user record for testing (normally from session)
     // TEMPORARILY USING HARDCODED EMAIL FOR TESTING
     let user = await prisma.user.findUnique({
-      where: { email: 'test@example.com' },
+      where: { email: 'admin@example.com' },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: 'test@example.com',
-          username: 'testuser',
+          email: 'admin@example.com',
+          username: 'admin',
           passwordHash: '',
-          firstName: 'Test',
+          firstName: 'Admin',
           lastName: 'User',
         },
       });
     }
 
-    // Soft delete employee
-    await prisma.officeEmployee.update({
+    // Soft delete entity
+    await prisma[modelName].update({
       where: { id },
       data: {
         isDeleted: true,
@@ -398,22 +457,23 @@ export async function DELETE(request, { params }) {
     // Create activity log
     await prisma.activityLog.create({
       data: {
-        employeeId: id,
+        entityType,
+        entityId: id,
         actionType: 'deleted',
-        newValue: `${employee.firstName} ${employee.lastName}`,
+        newValue: entityType === 'employees' ? `${entity.firstName} ${entity.lastName}` : entity.id,
         performedById: user.id,
       },
     });
 
     return NextResponse.json(
-      { success: true, message: 'Employee deleted successfully' },
-      { status: 204 }
+      { success: true, message: `${entityType} deleted successfully` },
+      { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting employee:', error);
+    console.error(`Error deleting ${entityType}:`, error);
     return NextResponse.json(
       {
-        error: 'Failed to delete employee',
+        error: `Failed to delete ${entityType}`,
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
       { status: 500 }
