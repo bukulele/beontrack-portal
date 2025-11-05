@@ -63,9 +63,11 @@ export function CompactFileRow({
     ? itemData.length > 0
     : Object.keys(latestItem).length > 0;
 
-  // Check if reviewed
-  const isReviewed = latestItem.was_reviewed || false;
-  const reviewedBy = latestItem.last_reviewed_by || "";
+  // Check if reviewed (new schema: wasReviewed boolean)
+  const isReviewed = latestItem.wasReviewed || false;
+  const reviewedBy = latestItem.reviewedBy
+    ? `${latestItem.reviewedBy.firstName} ${latestItem.reviewedBy.lastName}`.trim() || latestItem.reviewedBy.username
+    : "";
 
   // Role-based permissions
   // WORKAROUND: Auth system not implemented yet - allow all actions
@@ -79,15 +81,14 @@ export function CompactFileRow({
     try {
       startLoading();
 
+      // Build universal API endpoint: /api/v1/{entityType}/{entityId}/documents/{documentId}
+      const reviewEndpoint = `/api/v1/${entityType}/${entityId}/documents/${latestItem.id}`;
+
       const data = {
-        endpointIdentifier: item.key,
-        id: latestItem.id,
-        last_reviewed_by: session.user.name,
-        was_reviewed: checked,
-        changed_by: session.user.name,
+        wasReviewed: checked,
       };
 
-      const response = await fetch(apiRoute, {
+      const response = await fetch(reviewEndpoint, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -99,10 +100,10 @@ export function CompactFileRow({
         loadData();
       } else {
         stopLoading();
-        console.error("Failed to update checkmark");
+        console.error("Failed to update review status");
       }
     } catch (error) {
-      console.error("Error updating checkmark:", error);
+      console.error("Error updating review status:", error);
       stopLoading();
     }
   };
@@ -134,14 +135,18 @@ export function CompactFileRow({
         // Metadata fields - after file input
         ...(item.fileUpload.fields || []),
       ],
-      onSuccess: () => {
-        setFileUploaderOpen(false);
-        loadData();
-      },
-      onError: (error) => {
-        console.error("Upload failed:", error);
-      },
     };
+  };
+
+  // Handle upload success
+  const handleUploadSuccess = () => {
+    setFileUploaderOpen(false);
+    loadData();
+  };
+
+  // Handle upload error
+  const handleUploadError = (error) => {
+    console.error("Upload failed:", error);
   };
 
   // Render missing indicator
@@ -270,6 +275,8 @@ export function CompactFileRow({
           config={getFileUploaderConfig()}
           open={fileUploaderOpen}
           onClose={() => setFileUploaderOpen(false)}
+          onSuccess={handleUploadSuccess}
+          onError={handleUploadError}
         />
       )}
 

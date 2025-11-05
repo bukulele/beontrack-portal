@@ -14,7 +14,7 @@ import { employeeTimeCardConfig } from "@/config/tabs/timecard/timeCard.config";
 export const EMPLOYEE_CARD_CONFIG = {
   // Entity metadata
   entity: {
-    type: "employee",
+    type: "employees",
     contextProvider: "EmployeeProvider",
     dataKey: "userData",
     loadDataKey: "loadEmployeeData",

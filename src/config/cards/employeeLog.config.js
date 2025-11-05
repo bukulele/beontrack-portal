@@ -8,17 +8,27 @@ import formatDate from "@/app/functions/formatDate";
  * - Automatic change history tracking below
  */
 
-// Employee log columns (same structure as driver log)
+// Employee log columns (matches Prisma ActivityLog model fields)
 export const EMPLOYEE_LOG_COLUMNS = [
-  { field: "field_name", headerName: "Field Name", width: 140 },
-  { field: "old_value", headerName: "Old Value", width: 120 },
-  { field: "new_value", headerName: "New Value", width: 120 },
-  { field: "changed_by", headerName: "Changed By", flex: 1, minWidth: 160 },
+  { field: "fieldName", headerName: "Field Name", width: 140 },
+  { field: "oldValue", headerName: "Old Value", width: 120 },
+  { field: "newValue", headerName: "New Value", width: 120 },
   {
-    field: "timestamp",
+    field: "performedBy",
+    headerName: "Changed By",
+    flex: 1,
+    minWidth: 160,
+    valueGetter: (value, row) => {
+      const user = row?.performedBy;
+      if (!user) return "Unknown";
+      return `${user.firstName} ${user.lastName}`.trim() || user.username || user.email;
+    },
+  },
+  {
+    field: "createdAt",
     headerName: "Timestamp",
     width: 160,
-    valueGetter: (value) => formatDate(value),
+    valueGetter: (value, row) => formatDate(row?.createdAt),
   },
 ];
 
@@ -33,22 +43,22 @@ export const employeeLogConfig = {
   editableFieldsTitle: 'Notes',
   editableFields: [
     {
-      key: 'status_note',
+      key: 'statusNote',
       label: 'Status Note',
       type: 'textarea',
     },
     {
-      key: 'remarks_comments',
+      key: 'remarksComments',
       label: 'Remarks',
       type: 'textarea',
     },
     {
-      key: 'reason_for_leaving',
+      key: 'reasonForLeaving',
       label: 'Reason For Leaving',
       type: 'textarea',
     },
     {
-      key: 'date_of_leaving',
+      key: 'dateOfLeaving',
       label: 'Leaving Date',
       type: 'date',
     },
@@ -60,7 +70,7 @@ export const employeeLogConfig = {
 
   // API Configuration
   api: {
-    getLogEndpoint: '/api/get-employee-log',
-    updateEndpoint: '/api/upload-employee-data',
+    getLogEndpoint: '/api/v1/employees', // Will append /{id}/activity in LogTab
+    updateEndpoint: '/api/v1/employees',
   },
 };

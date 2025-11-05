@@ -82,12 +82,6 @@ enum DocumentType {
   other_documents
 }
 
-enum ReviewStatus {
-  pending
-  approved
-  rejected
-}
-
 enum EntityType {
   employees
 }
@@ -161,6 +155,12 @@ model OfficeEmployee {
 
   // Status
   status                  EmployeeStatus  @default(new)
+  statusNote              String?         @map("status_note") @db.Text
+
+  // Notes and leaving details
+  remarksComments         String?         @map("remarks_comments") @db.Text
+  reasonForLeaving        String?         @map("reason_for_leaving") @db.Text
+  dateOfLeaving           DateTime?       @map("date_of_leaving") @db.Date
 
   // Photo
   profilePhotoId          String?         @map("profile_photo_id") @db.Uuid
@@ -201,7 +201,7 @@ model Document {
   metadata          Json?         @db.JsonB
 
   // Review status
-  reviewStatus      ReviewStatus  @default(pending) @map("review_status")
+  wasReviewed       Boolean       @default(false) @map("was_reviewed")
   reviewedById      String?       @map("reviewed_by_id") @db.Uuid
   reviewedBy        User?         @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
   reviewedAt        DateTime?     @map("reviewed_at") @db.Timestamptz(6)

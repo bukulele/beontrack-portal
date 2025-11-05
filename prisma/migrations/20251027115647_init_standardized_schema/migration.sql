@@ -7,9 +7,6 @@ CREATE TYPE "EmploymentType" AS ENUM ('full_time', 'part_time', 'contract');
 -- CreateEnum
 CREATE TYPE "DocumentType" AS ENUM ('government_id', 'work_authorization', 'sin_ssn', 'direct_deposit', 'tax_forms', 'employment_application', 'resume', 'background_check_consent', 'emergency_contact', 'employment_contract', 'company_policies', 'confidentiality_agreement', 'benefits_enrollment', 'professional_certifications', 'education_verification', 'safety_training', 'immigration_documents', 'other_documents');
 
--- CreateEnum
-CREATE TYPE "ReviewStatus" AS ENUM ('pending', 'approved', 'rejected');
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
@@ -73,7 +70,7 @@ CREATE TABLE "documents" (
     "file_size" INTEGER NOT NULL,
     "version" INTEGER NOT NULL DEFAULT 1,
     "metadata" JSONB,
-    "review_status" "ReviewStatus" NOT NULL DEFAULT 'pending',
+    "was_reviewed" BOOLEAN NOT NULL DEFAULT false,
     "reviewed_by_id" UUID,
     "reviewed_at" TIMESTAMPTZ(6),
     "uploaded_by_id" UUID NOT NULL,

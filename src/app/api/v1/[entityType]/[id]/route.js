@@ -295,6 +295,10 @@ export async function PATCH(request, { params }) {
       officeLocation: 'officeLocation',
       dateOfBirth: 'dateOfBirth',
       status: 'status',
+      statusNote: 'statusNote',
+      remarksComments: 'remarksComments',
+      reasonForLeaving: 'reasonForLeaving',
+      dateOfLeaving: 'dateOfLeaving',
       profilePhotoId: 'profilePhotoId',
     } : {};
 
@@ -307,7 +311,7 @@ export async function PATCH(request, { params }) {
         let oldValue = currentEntity[dbKey];
 
         // Handle date fields
-        if (['hireDate', 'terminationDate', 'dateOfBirth'].includes(dbKey)) {
+        if (['hireDate', 'terminationDate', 'dateOfBirth', 'dateOfLeaving'].includes(dbKey)) {
           newValue = newValue ? new Date(newValue) : null;
           oldValue = oldValue ? oldValue.toISOString().split('T')[0] : null;
         }

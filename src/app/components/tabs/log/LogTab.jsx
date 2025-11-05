@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 import { Box } from "@mui/material";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TextareaInput from "../../textareaInput/TextareaInput";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import DateInput from "../../dateInput/DateInput";
 import Button from "../../button/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -47,7 +48,7 @@ function LogTab({ config, context }) {
   const loadChangeLog = () => {
     if (!userData?.id) return;
 
-    fetch(`${config.api.getLogEndpoint}/${userData.id}`, {
+    fetch(`${config.api.getLogEndpoint}/${userData.id}/activity`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -65,13 +66,14 @@ function LogTab({ config, context }) {
           throw new Error(response.statusText);
         }
       })
-      .then((data) => {
-        // Sort by ID desc (newest first)
-        const sortedData = data.sort((a, b) => b.id - a.id);
-        setChangeLog(sortedData);
+      .then((response) => {
+        // Handle new API response format: { success, data, pagination }
+        const logs = response.data || [];
+        setChangeLog(logs);
       })
       .catch((error) => {
         console.error("Error loading change log:", error);
+        setChangeLog([]); // Set empty array on error
       });
   };
 
@@ -83,17 +85,17 @@ function LogTab({ config, context }) {
 
     startLoading();
 
-    const formData = new FormData();
-    formData.append(fieldKey, editableFieldsData[fieldKey] || "");
-
-    // Add changed_by if session available
-    if (session?.user?.name) {
-      formData.append("changed_by", session.user.name);
-    }
+    // Prepare JSON payload for universal API
+    const updateData = {
+      [fieldKey]: editableFieldsData[fieldKey] || "",
+    };
 
     fetch(`${config.api.updateEndpoint}/${userData.id}`, {
       method: "PATCH",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updateData),
     })
       .then((response) => {
         stopLoading();
@@ -101,7 +103,9 @@ function LogTab({ config, context }) {
           loadData(); // Reload entity data
           loadChangeLog(); // Reload change log
         } else {
-          throw new Error("Failed to save field");
+          return response.json().then((data) => {
+            throw new Error(data.error || "Failed to save field");
+          });
         }
       })
       .catch((error) => {
@@ -116,7 +120,8 @@ function LogTab({ config, context }) {
 
     const initialData = {};
     config.editableFields.forEach((field) => {
-      initialData[field.key] = userData[field.key] || "";
+      // Use actual value from userData, including null, to prevent false "changed" state
+      initialData[field.key] = userData[field.key] ?? "";
     });
     setEditableFieldsData(initialData);
   }, [userData, config.editableFields]);
@@ -151,8 +156,10 @@ function LogTab({ config, context }) {
           <CardContent className="space-y-2">
             {config.editableFields.map((field, index) => {
               const isDateField = field.type === "date";
-              const hasChanged =
-                editableFieldsData[field.key] !== userData[field.key];
+              // Compare values, treating null and empty string as equivalent
+              const originalValue = userData[field.key] ?? "";
+              const currentValue = editableFieldsData[field.key] ?? "";
+              const hasChanged = currentValue !== originalValue;
 
               return (
                 <div
@@ -168,13 +175,20 @@ function LogTab({ config, context }) {
                       style="minimalistic"
                     />
                   ) : (
-                    <TextareaInput
-                      name={field.key}
-                      label={field.label}
-                      value={editableFieldsData[field.key]}
-                      updateState={setEditableFieldsData}
-                      style="compact"
-                    />
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <Label htmlFor={field.key}>{field.label}</Label>
+                      <Textarea
+                        id={field.key}
+                        name={field.key}
+                        value={editableFieldsData[field.key] || ""}
+                        onChange={(e) =>
+                          setEditableFieldsData((prev) => ({
+                            ...prev,
+                            [e.target.name]: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
                   )}
                   {hasChanged && (
                     <Button

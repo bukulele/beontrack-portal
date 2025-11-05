@@ -95,6 +95,12 @@ function DateInput({
               },
             },
           },
+          popper: {
+            placement: "bottom-start",
+            sx: {
+              zIndex: 9999, // Ensure calendar appears above all elements
+            },
+          },
         }}
       />
       {/* <input

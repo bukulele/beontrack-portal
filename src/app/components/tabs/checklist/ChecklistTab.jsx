@@ -64,10 +64,10 @@ function ChecklistTab({
       // Check if item is reviewed
       if (Array.isArray(itemData) && itemData.length > 0) {
         const latest = findHighestIdObject(itemData);
-        if (latest.was_reviewed) {
+        if (latest.wasReviewed) {
           checkedCount++;
         }
-      } else if (itemData && typeof itemData === 'object' && itemData.was_reviewed) {
+      } else if (itemData && typeof itemData === 'object' && itemData.wasReviewed) {
         checkedCount++;
       }
     });
