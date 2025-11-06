@@ -198,7 +198,7 @@ function TablePageContent() {
           <Box sx={{ flex: 1, position: "relative" }}>
             <Box sx={{ position: "absolute", inset: 0 }}>
               <DataGridPro
-                rows={data}
+                rows={data || []}
                 columns={columns}
                 loading={loading}
                 onRowClick={handleRowClick}

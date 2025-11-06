@@ -2,8 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { useSession, signOut } from "@/lib/auth-client";
 import Image from "next/image";
 import {
   Sidebar,
@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import useUserRoles from "@/app/functions/useUserRoles";
+import { useCurrentUser } from "@/lib/permissions/hooks";
 import { getVisibleMenuSections } from "@/config/menu.config";
 import * as LucideIcons from "lucide-react";
 
@@ -36,13 +36,14 @@ import * as LucideIcons from "lucide-react";
  */
 
 export function AppSidebar({ reportIsLoading, reportDataSet }) {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const userRoles = useUserRoles();
+  const { user, roles } = useCurrentUser();
 
   // Get visible menu sections based on user roles
-  const visibleSections = getVisibleMenuSections(userRoles);
+  const visibleSections = getVisibleMenuSections(roles);
 
   // Check if a menu item is active
   const isActive = (route) => {
@@ -118,12 +119,16 @@ export function AppSidebar({ reportIsLoading, reportDataSet }) {
           <SidebarMenuItem>
             <div className="flex items-center justify-between gap-2 px-2 py-2">
               <span className="text-xs text-muted-foreground truncate flex-1">
-                {session?.user?.name || "User"}
+                {user?.username || user?.email || "User"}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => signOut({ redirect: false })}
+                onClick={async () => {
+                  await signOut();
+                  router.push('/login');
+                  router.refresh();
+                }}
                 className="shrink-0 h-8 w-8"
                 title="Sign Out"
               >

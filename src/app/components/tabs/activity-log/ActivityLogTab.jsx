@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import moment from "moment-timezone";

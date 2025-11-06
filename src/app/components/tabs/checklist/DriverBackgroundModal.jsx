@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoader } from "@/app/context/LoaderContext";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 
 /**
  * DriverBackgroundModal - Modal for editing driver background information

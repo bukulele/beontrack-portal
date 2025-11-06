@@ -30,7 +30,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenToSquare, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import extractFileNameFromURL from "@/app/functions/extractFileNameFromURL";
 import sortObjectsByDateOrId from "@/app/functions/sortObjectsByDateOrId";

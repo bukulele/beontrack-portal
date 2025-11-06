@@ -15,9 +15,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/auth-client';
 import { useLoader } from '@/app/context/LoaderContext';
-import useUserRoles from '@/app/functions/useUserRoles';
 import TimeCardHeader from './TimeCardHeader';
 import TimeCardTable from './TimeCardTable';
 import RemoteCheckinToggle from './RemoteCheckinToggle';
@@ -39,7 +38,6 @@ export default function TimeCardTab({ config, entityData }) {
   // Hooks
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
-  const userRoles = useUserRoles();
 
   // State
   const [period, setPeriod] = useState(calculateCurrentPeriod());

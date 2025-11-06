@@ -16,12 +16,11 @@ import {
   faEye,
 } from "@fortawesome/free-solid-svg-icons";
 import { Circle } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import FileUploader from "@/app/components/file-uploader/FileUploader";
 import ViewFilesModal from "./ViewFilesModal";
-import useUserRoles from "@/app/functions/useUserRoles";
 import { UPLOAD_MODES } from "@/config/file-uploader/uploaderSchema";
 
 /**
@@ -50,7 +49,6 @@ export function CompactFileRow({
 
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
-  const userRoles = useUserRoles();
 
   // Get item data from entity
   const itemData = entityData[item.key];

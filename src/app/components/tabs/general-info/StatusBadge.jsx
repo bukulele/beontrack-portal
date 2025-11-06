@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import { SettingsContext } from "@/app/context/SettingsContext";
 

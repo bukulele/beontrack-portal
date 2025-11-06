@@ -1,75 +1,79 @@
-// middleware.js
+/**
+ * Next.js 16 Proxy - Route Protection
+ *
+ * Protects all routes from unauthorized access.
+ * Redirects unauthenticated users to /login page.
+ *
+ * Note: In Next.js 16, this file is called proxy.js (formerly middleware.js)
+ */
 
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-import { securedApiMapping } from "./apiMappingMiddleware";
+import { NextResponse } from 'next/server';
+import { auth } from './lib/auth';
 
-// Define the middleware function
-const authMiddleware = withAuth(
-  function middleware(req) {
-    const pathname = req.nextUrl.pathname; // Full pathname
-    const userRoles = req.nextauth.token?.userRoles || []; // Assume the user's roles are stored in the token under userRoles
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  '/login',
+  '/signup',
+  '/forgot-password',
+];
 
-    // Check if the request is for an API route
-    if (pathname.startsWith("/api/")) {
-      // Split the pathname into parts
-      const pathParts = pathname.split("/");
+// API routes that don't require authentication
+const PUBLIC_API_ROUTES = [
+  '/api/auth',  // Better Auth endpoints
+];
 
-      // Get the relevant part after /api/
-      const apiPath = pathParts[2]; // This will be the third part in the array (index 2)
+/**
+ * Proxy function - runs on every request (Next.js 16+)
+ */
+export default async function proxy(request) {
+  const { pathname } = request.nextUrl;
 
-      // Check if apiPath matches any key in securedApiMapping exactly
-      for (const key in securedApiMapping) {
-        const regex = new RegExp(`^${key}$`);
-        if (regex.test(apiPath)) {
-          const allowedRoles = securedApiMapping[key];
-          const userRoleIds = userRoles.map((role) => role.id);
-
-          // Check if any of the user's role IDs are in the allowedRoles array
-          const hasAccess = allowedRoles.some((roleId) =>
-            userRoleIds.includes(roleId)
-          );
-
-          if (!hasAccess) {
-            return new NextResponse(
-              JSON.stringify({ message: `No access to: ${pathname}` }),
-              {
-                status: 403,
-                headers: { "Content-Type": "application/json" },
-              }
-            );
-          }
-        }
-      }
-    }
-
-    // If no matched key is found, access is not restricted.
+  // Allow public routes
+  if (PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.next();
-  },
-  {
-    // Define custom sign-in and error pages
-    pages: {
-      signIn: "/", // Redirect to "/" if not authenticated
-      error: "/no-access", // Redirect to "/no-access" on authorization errors
-    },
   }
-);
 
-export default authMiddleware;
+  // Allow public API routes
+  if (PUBLIC_API_ROUTES.some(route => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
 
-// Configure the matcher to exclude /shop-dashboard and specific API routes
+  // Allow static files and Next.js internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('.') // Has file extension (images, fonts, etc.)
+  ) {
+    return NextResponse.next();
+  }
+
+  // Check for session cookie (lightweight check)
+  const sessionCookie = request.cookies.get('better-auth.session_token');
+
+  if (!sessionCookie) {
+    // No session - redirect to login
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Session exists - allow access
+  // Note: This is a fast cookie check. Actual authorization happens in API routes.
+  return NextResponse.next();
+}
+
+/**
+ * Configure which routes this middleware runs on
+ */
 export const config = {
   matcher: [
     /*
-     * Apply middleware to all paths except:
-     * - /shop-dashboard
-     * - /api/get-shop-jobs
-     * - /api/get-mechanics
-     * - /api/auth/*
-     * - /api/v1/* (new Prisma API routes - auth temporarily disabled for testing)
-     * - /_next/static/*
-     * - /favicon.ico
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, etc.)
      */
-    "/((?!shop-dashboard|api/get-shop-jobs|api/get-mechanics|api/auth|api/v1|_next/static|favicon.ico).*)",
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

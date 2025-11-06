@@ -25,12 +25,11 @@ import {
   faEye,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCircle as faCircleRegular } from "@fortawesome/free-regular-svg-icons";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import FileUploader from "@/app/components/file-uploader/FileUploader";
 import ViewFilesModal from "./ViewFilesModal";
-import useUserRoles from "@/app/functions/useUserRoles";
 import InlineDataField from "./InlineDataField";
 
 /**
@@ -59,7 +58,6 @@ function ChecklistItem({
   const [viewFilesOpen, setViewFilesOpen] = useState(false);
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
-  const userRoles = useUserRoles();
 
   // If this is a data field item (not file upload), use InlineDataField
   if (item.itemType === "data") {

@@ -8,9 +8,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import {
+  authorizeRequest,
+  applyRecordFiltering,
+  applyFieldFiltering,
+  createErrorResponse,
+  createSuccessResponse,
+} from '@/lib/api-auth';
 
 // Supported entity types
 const VALID_ENTITY_TYPES = ['employees'];
@@ -22,31 +27,25 @@ const ENTITY_MODELS = {
 
 /**
  * GET /api/v1/{entityType}
- * List entities with filtering, pagination, and sorting
+ * List entities with filtering, pagination, sorting, and ABAC record/field filtering
  */
 export async function GET(request, { params }) {
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Next.js 16: params is now a Promise
     const { entityType } = await params;
 
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {
-      return NextResponse.json(
-        { error: `Invalid entity type: ${entityType}` },
-        { status: 400 }
-      );
+      return createErrorResponse(400, 'Bad Request', `Invalid entity type: ${entityType}`);
     }
 
+    // Authorize request - check if user can 'read' this entity type
+    const authResult = await authorizeRequest(request, entityType, 'read');
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { checker, user } = authResult;
     const modelName = ENTITY_MODELS[entityType];
 
     // Get query parameters
@@ -60,15 +59,14 @@ export async function GET(request, { params }) {
 
     // Validate pagination
     if (page < 1 || limit < 1 || limit > 100) {
-      return NextResponse.json(
-        { error: 'Invalid pagination parameters' },
-        { status: 400 }
-      );
+      return createErrorResponse(400, 'Bad Request', 'Invalid pagination parameters');
     }
 
-    // Build where clause (entity-specific filters)
+    // Build base where clause
     const where = {
       isDeleted: false,
+      // Apply ABAC record-level filtering
+      ...applyRecordFiltering(checker, 'read', entityType),
     };
 
     // Entity-specific filters (for employees)
@@ -139,14 +137,15 @@ export async function GET(request, { params }) {
       prisma[modelName].count({ where }),
     ]);
 
+    // Apply field-level filtering to response data
+    const filteredEntities = applyFieldFiltering(checker, 'read', entityType, entities);
+
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limit);
     const hasNextPage = page < totalPages;
     const hasPreviousPage = page > 1;
 
-    return NextResponse.json({
-      success: true,
-      data: entities,
+    return createSuccessResponse(filteredEntities, {
       pagination: {
         page,
         limit,
@@ -158,43 +157,36 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error(`Error fetching ${entityType}:`, error);
-    return NextResponse.json(
-      {
-        error: `Failed to fetch ${entityType}`,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
+    return createErrorResponse(
+      500,
+      'Internal Server Error',
+      `Failed to fetch ${entityType}`,
+      { details: process.env.NODE_ENV === 'development' ? error.message : undefined }
     );
   }
 }
 
 /**
  * POST /api/v1/{entityType}
- * Create a new entity
+ * Create a new entity with authorization checks
  */
 export async function POST(request, { params }) {
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Next.js 16: params is now a Promise
     const { entityType } = await params;
 
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {
-      return NextResponse.json(
-        { error: `Invalid entity type: ${entityType}` },
-        { status: 400 }
-      );
+      return createErrorResponse(400, 'Bad Request', `Invalid entity type: ${entityType}`);
     }
 
+    // Authorize request - check if user can 'create' this entity type
+    const authResult = await authorizeRequest(request, entityType, 'create');
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { user } = authResult;
     const modelName = ENTITY_MODELS[entityType];
 
     // Parse request body
@@ -204,9 +196,10 @@ export async function POST(request, { params }) {
     if (entityType === 'employees') {
       const { employeeId, firstName, lastName } = body;
       if (!employeeId || !firstName || !lastName) {
-        return NextResponse.json(
-          { error: 'Missing required fields: employeeId, firstName, lastName' },
-          { status: 400 }
+        return createErrorResponse(
+          400,
+          'Validation Error',
+          'Missing required fields: employeeId, firstName, lastName'
         );
       }
 
@@ -216,29 +209,8 @@ export async function POST(request, { params }) {
       });
 
       if (existingEntity) {
-        return NextResponse.json(
-          { error: 'Employee ID already exists' },
-          { status: 400 }
-        );
+        return createErrorResponse(400, 'Validation Error', 'Employee ID already exists');
       }
-    }
-
-    // Find or create user record for testing (normally from session)
-    // TEMPORARILY USING HARDCODED EMAIL FOR TESTING
-    let user = await prisma.user.findUnique({
-      where: { email: 'admin@example.com' },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: 'admin@example.com',
-          username: 'admin',
-          passwordHash: '',
-          firstName: 'Admin',
-          lastName: 'User',
-        },
-      });
     }
 
     // Build entity data (entity-specific for employees)
@@ -306,19 +278,21 @@ export async function POST(request, { params }) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: entity,
-      message: `${entityType} created successfully`,
-    }, { status: 201 });
-  } catch (error) {
-    console.error(`Error creating ${entityType}:`, error);
     return NextResponse.json(
       {
-        error: `Failed to create ${entityType}`,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        success: true,
+        data: entity,
+        message: `${entityType} created successfully`,
       },
-      { status: 500 }
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error(`Error creating ${entityType}:`, error);
+    return createErrorResponse(
+      500,
+      'Internal Server Error',
+      `Failed to create ${entityType}`,
+      { details: process.env.NODE_ENV === 'development' ? error.message : undefined }
     );
   }
 }

@@ -11,7 +11,7 @@ import Button from "../../button/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useLoader } from "@/app/context/LoaderContext";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 
 /**
  * Universal Log Tab Component

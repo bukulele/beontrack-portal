@@ -7,8 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // Supported entity types
@@ -25,18 +24,17 @@ const ENTITY_MODELS = {
  */
 export async function GET(request, { params }) {
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;
+
+    // Authenticate user
+    const session = await getSession(request.headers);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {

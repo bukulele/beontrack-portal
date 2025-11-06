@@ -7,6 +7,7 @@
  */
 
 const { PrismaClient } = require('../src/generated/prisma');
+const { auth } = require('../src/lib/auth.js');
 
 const prisma = new PrismaClient();
 
@@ -23,18 +24,28 @@ async function main() {
     return;
   }
 
-  // Create admin user
+  // Create admin user using Better Auth API (handles password hashing and account creation)
   console.log('👤 Creating admin user...');
-  const adminUser = await prisma.user.create({
-    data: {
+  const signUpResult = await auth.api.signUpEmail({
+    body: {
+      name: 'admin',
       email: 'admin@example.com',
-      username: 'admin',
-      passwordHash: '', // Empty for OAuth users in development
+      password: 'admin123',
+    },
+  });
+
+  // Update the user with additional fields
+  const adminUser = await prisma.user.update({
+    where: { email: 'admin@example.com' },
+    data: {
       firstName: 'Admin',
       lastName: 'User',
       isActive: true,
       isStaff: true,
       isSuperuser: true,
+      emailVerified: true,
+      department: 'Administration',
+      location: 'Vancouver Office',
     },
   });
   console.log(`   ✓ Created admin user: ${adminUser.email}`);
@@ -238,6 +249,176 @@ async function main() {
   }
   console.log(`   ✓ Created ${transitions.length} status transitions`);
 
+  // Create roles and permissions
+  console.log('🔐 Creating authorization roles and permissions...');
+
+  const roles = [
+    {
+      name: 'admin',
+      description: 'Full system access - can manage all resources and settings',
+    },
+    {
+      name: 'payroll',
+      description: 'Payroll staff - can view and edit employee payroll information',
+    },
+    {
+      name: 'payrollManager',
+      description: 'Payroll manager - full payroll access including reports and approvals',
+    },
+    {
+      name: 'safety',
+      description: 'Safety department - manages incidents, violations, and safety records',
+    },
+    {
+      name: 'dispatch',
+      description: 'Dispatch team - manages schedules, assignments, and operations',
+    },
+    {
+      name: 'recruiting',
+      description: 'Recruiting team - manages applicants and hiring process',
+    },
+    {
+      name: 'planner',
+      description: 'Planning team - manages routes, schedules, and logistics',
+    },
+    {
+      name: 'shop',
+      description: 'Shop/maintenance team - manages equipment, repairs, and inventory',
+    },
+    {
+      name: 'hr',
+      description: 'HR department - manages employees, benefits, and policies',
+    },
+  ];
+
+  const createdRoles = {};
+  for (const roleData of roles) {
+    const role = await prisma.role.create({
+      data: roleData,
+    });
+    createdRoles[roleData.name] = role;
+    console.log(`   ✓ Created role: ${roleData.name}`);
+  }
+
+  // Define permissions for each role
+  const permissions = [
+    // Admin - Full access to everything
+    {
+      role: 'admin',
+      entityType: 'employees',
+      actions: ['create', 'read', 'update', 'delete'],
+      fields: null, // All fields
+      conditions: null, // All records
+    },
+
+    // Payroll - Can view/edit employee payroll info
+    {
+      role: 'payroll',
+      entityType: 'employees',
+      actions: ['read', 'update'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'hireDate', 'department', 'jobTitle', 'status'],
+        denied: ['terminationDate', 'reasonForLeaving', 'remarksComments'],
+      },
+      conditions: null,
+    },
+
+    // Payroll Manager - Full payroll access
+    {
+      role: 'payrollManager',
+      entityType: 'employees',
+      actions: ['read', 'update'],
+      fields: null,
+      conditions: null,
+    },
+
+    // Safety - Read-only employee info
+    {
+      role: 'safety',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
+      },
+      conditions: null,
+    },
+
+    // Dispatch - Read employee info
+    {
+      role: 'dispatch',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status', 'officeLocation'],
+      },
+      conditions: null,
+    },
+
+    // Recruiting - Manage applicants and recruiting phase
+    {
+      role: 'recruiting',
+      entityType: 'employees',
+      actions: ['create', 'read', 'update'],
+      fields: null,
+      conditions: {
+        status: { in: ['new', 'application_received', 'under_review', 'application_on_hold', 'rejected', 'trainee'] },
+      },
+    },
+
+    // Planner - Read employee info
+    {
+      role: 'planner',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
+      },
+      conditions: null,
+    },
+
+    // Shop - Limited employee info
+    {
+      role: 'shop',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'employeeId'],
+      },
+      conditions: null,
+    },
+
+    // HR - Full employee management
+    {
+      role: 'hr',
+      entityType: 'employees',
+      actions: ['create', 'read', 'update', 'delete'],
+      fields: null,
+      conditions: null,
+    },
+  ];
+
+  for (const permData of permissions) {
+    await prisma.permission.create({
+      data: {
+        roleId: createdRoles[permData.role].id,
+        entityType: permData.entityType,
+        actions: permData.actions,
+        fields: permData.fields,
+        conditions: permData.conditions,
+      },
+    });
+  }
+  console.log(`   ✓ Created ${permissions.length} permissions`);
+
+  // Assign admin role to admin user
+  await prisma.userRole.create({
+    data: {
+      userId: adminUser.id,
+      roleId: createdRoles.admin.id,
+    },
+  });
+  console.log(`   ✓ Assigned admin role to admin user`);
+
   console.log('');
   console.log('✅ Database seeding completed successfully!');
   console.log('');
@@ -247,6 +428,12 @@ async function main() {
   console.log(`   - Activity Logs: 3`);
   console.log(`   - Status Configs: ${statusConfigs.length}`);
   console.log(`   - Status Transitions: ${transitions.length}`);
+  console.log(`   - Roles: ${roles.length}`);
+  console.log(`   - Permissions: ${permissions.length}`);
+  console.log('');
+  console.log('🔑 Login Credentials:');
+  console.log(`   - Email: admin@example.com`);
+  console.log(`   - Password: admin123`);
   console.log('');
   console.log('🔍 View data in Prisma Studio: npm run db:studio');
   console.log('');

@@ -1,72 +1,50 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import ThreeDotsLoader from "./components/loader/ThreeDotsLoader";
-import { useLoader } from "./context/LoaderContext";
-import { signIn, useSession } from "next-auth/react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import Button from "./components/button/Button";
+import { useSession } from "@/lib/auth-client";
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const Home = () => {
-  const hasStartedLoading = useRef(false);
+/**
+ * Home Page / Dashboard
+ *
+ * Simple landing page for authenticated users.
+ * Content to be expanded based on requirements.
+ */
+export default function Home() {
+  const { data: session, isPending } = useSession();
 
-  const router = useRouter();
-
-  const { startLoading, stopLoading } = useLoader();
-  const { data: session, status } = useSession();
-
-  const handleSignIn = () => {
-    startLoading();
-    signIn("azure-ad");
-  };
-
-  useEffect(() => {
-    if (!hasStartedLoading.current) {
-      startLoading();
-      hasStartedLoading.current = true;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (status !== "loading" && hasStartedLoading.current) {
-      stopLoading();
-    }
-    if (status === "authenticated") {
-      router.push("/table");
-    }
-  }, [status]);
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <ThreeDotsLoader />
-      {status === "unauthenticated" && (
-        <div className="flex items-center justify-center min-h-screen max-h-screen w-screen">
-          <div className="w-96 w-max-full shadow rounded bg-white p-2">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              width={400}
-              height={92}
-              className="border-b border-gray-100"
-            />
-            <div className="w-full flex flex-col gap-2 items-center p-2">
-              <p className="text-center">
-                Please sign in with your Microsoft account to enter the
-                application.
-              </p>
-              <Button
-                content={"Sign In"}
-                style={"classicButton"}
-                fn={handleSignIn}
-                highlighted={true}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Welcome, {session?.user?.username || "User"}</h1>
+        <p className="text-muted-foreground">4Tracks Office Management System</p>
+      </div>
 
-export default Home;
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Employees</CardTitle>
+            <CardDescription>Manage office employees and production staff</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/table?entity=employees" className="text-sm text-primary hover:underline">
+              View Employees →
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Add more quick access cards here as needed */}
+      </div>
+    </div>
+  );
+}

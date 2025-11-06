@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/auth-client';
 import { useLoader } from '@/app/context/LoaderContext';
 import { FieldRenderer } from './FieldRenderer';
 import { FileInput } from './FileInput';

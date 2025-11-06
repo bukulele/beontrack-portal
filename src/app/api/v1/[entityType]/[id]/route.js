@@ -9,9 +9,15 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import {
+  authorizeRequest,
+  authorizeRecordAccess,
+  authorizeFieldAccess,
+  applyFieldFiltering,
+  createErrorResponse,
+  createSuccessResponse,
+} from '@/lib/api-auth';
 
 // Supported entity types
 const VALID_ENTITY_TYPES = ['employees'];
@@ -23,31 +29,25 @@ const ENTITY_MODELS = {
 
 /**
  * GET /api/v1/{entityType}/{id}
- * Get single entity with all relations
+ * Get single entity with all relations and ABAC field filtering
  */
 export async function GET(request, { params }) {
   // Next.js 16: params is now a Promise
   const { entityType, id } = await params;
 
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {
-      return NextResponse.json(
-        { error: `Invalid entity type: ${entityType}` },
-        { status: 400 }
-      );
+      return createErrorResponse(400, 'Bad Request', `Invalid entity type: ${entityType}`);
     }
 
+    // Authorize request - check if user can 'read' this entity type
+    const authResult = await authorizeRequest(request, entityType, 'read');
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { checker } = authResult;
     const modelName = ENTITY_MODELS[entityType];
 
     // Fetch entity with relations
@@ -100,10 +100,13 @@ export async function GET(request, { params }) {
 
     // Check if entity exists and not soft-deleted
     if (!entity || entity.isDeleted) {
-      return NextResponse.json(
-        { error: `${entityType} not found` },
-        { status: 404 }
-      );
+      return createErrorResponse(404, 'Not Found', `${entityType} not found`);
+    }
+
+    // Check if user can access this specific record (ABAC)
+    const recordAuth = await authorizeRecordAccess(checker, 'read', entityType, entity);
+    if (recordAuth.error) {
+      return recordAuth.response;
     }
 
     // Fetch documents manually using entityType + entityId
@@ -175,49 +178,42 @@ export async function GET(request, { params }) {
       ...groupedDocuments, // Spread grouped documents at top level
     };
 
-    return NextResponse.json({
-      success: true,
-      data: entityData,
-    });
+    // Apply field-level filtering
+    const filteredData = applyFieldFiltering(checker, 'read', entityType, entityData);
+
+    return createSuccessResponse(filteredData);
   } catch (error) {
     console.error(`Error fetching ${entityType}:`, error);
-    return NextResponse.json(
-      {
-        error: `Failed to fetch ${entityType}`,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
+    return createErrorResponse(
+      500,
+      'Internal Server Error',
+      `Failed to fetch ${entityType}`,
+      { details: process.env.NODE_ENV === 'development' ? error.message : undefined }
     );
   }
 }
 
 /**
  * PATCH /api/v1/{entityType}/{id}
- * Update entity with field-level change tracking
+ * Update entity with field-level change tracking and ABAC checks
  */
 export async function PATCH(request, { params }) {
   // Next.js 16: params is now a Promise
   const { entityType, id } = await params;
 
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {
-      return NextResponse.json(
-        { error: `Invalid entity type: ${entityType}` },
-        { status: 400 }
-      );
+      return createErrorResponse(400, 'Bad Request', `Invalid entity type: ${entityType}`);
     }
 
+    // Authorize request - check if user can 'update' this entity type
+    const authResult = await authorizeRequest(request, entityType, 'update');
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { checker, user } = authResult;
     const modelName = ENTITY_MODELS[entityType];
 
     // Parse request body
@@ -229,10 +225,20 @@ export async function PATCH(request, { params }) {
     });
 
     if (!currentEntity || currentEntity.isDeleted) {
-      return NextResponse.json(
-        { error: `${entityType} not found` },
-        { status: 404 }
-      );
+      return createErrorResponse(404, 'Not Found', `${entityType} not found`);
+    }
+
+    // Check if user can access this specific record (ABAC)
+    const recordAuth = await authorizeRecordAccess(checker, 'update', entityType, currentEntity);
+    if (recordAuth.error) {
+      return recordAuth.response;
+    }
+
+    // Check if user can update the specific fields being changed
+    const fieldsToUpdate = Object.keys(body);
+    const fieldAuth = await authorizeFieldAccess(checker, 'update', entityType, fieldsToUpdate);
+    if (fieldAuth.error) {
+      return fieldAuth.response;
     }
 
     // Check if employeeId is being changed and if it conflicts (for employees)
@@ -242,29 +248,8 @@ export async function PATCH(request, { params }) {
       });
 
       if (existingEntity) {
-        return NextResponse.json(
-          { error: 'Employee ID already exists' },
-          { status: 400 }
-        );
+        return createErrorResponse(400, 'Validation Error', 'Employee ID already exists');
       }
-    }
-
-    // Find or create user record for testing (normally from session)
-    // TEMPORARILY USING HARDCODED EMAIL FOR TESTING
-    let user = await prisma.user.findUnique({
-      where: { email: 'admin@example.com' },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: 'admin@example.com',
-          username: 'admin',
-          passwordHash: '',
-          firstName: 'Admin',
-          lastName: 'User',
-        },
-      });
     }
 
     // Prepare update data
@@ -372,51 +357,42 @@ export async function PATCH(request, { params }) {
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: updatedEntity,
+    return createSuccessResponse(updatedEntity, {
       message: `${entityType} updated successfully`,
       changesCount: activityLogs.length,
     });
   } catch (error) {
     console.error(`Error updating ${entityType}:`, error);
-    return NextResponse.json(
-      {
-        error: `Failed to update ${entityType}`,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
+    return createErrorResponse(
+      500,
+      'Internal Server Error',
+      `Failed to update ${entityType}`,
+      { details: process.env.NODE_ENV === 'development' ? error.message : undefined }
     );
   }
 }
 
 /**
  * DELETE /api/v1/{entityType}/{id}
- * Soft delete entity
+ * Soft delete entity with authorization
  */
 export async function DELETE(request, { params }) {
   // Next.js 16: params is now a Promise
   const { entityType, id } = await params;
 
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {
-      return NextResponse.json(
-        { error: `Invalid entity type: ${entityType}` },
-        { status: 400 }
-      );
+      return createErrorResponse(400, 'Bad Request', `Invalid entity type: ${entityType}`);
     }
 
+    // Authorize request - check if user can 'delete' this entity type
+    const authResult = await authorizeRequest(request, entityType, 'delete');
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { checker, user } = authResult;
     const modelName = ENTITY_MODELS[entityType];
 
     // Check if entity exists
@@ -425,28 +401,13 @@ export async function DELETE(request, { params }) {
     });
 
     if (!entity || entity.isDeleted) {
-      return NextResponse.json(
-        { error: `${entityType} not found` },
-        { status: 404 }
-      );
+      return createErrorResponse(404, 'Not Found', `${entityType} not found`);
     }
 
-    // Find or create user record for testing (normally from session)
-    // TEMPORARILY USING HARDCODED EMAIL FOR TESTING
-    let user = await prisma.user.findUnique({
-      where: { email: 'admin@example.com' },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: 'admin@example.com',
-          username: 'admin',
-          passwordHash: '',
-          firstName: 'Admin',
-          lastName: 'User',
-        },
-      });
+    // Check if user can access this specific record (ABAC)
+    const recordAuth = await authorizeRecordAccess(checker, 'delete', entityType, entity);
+    if (recordAuth.error) {
+      return recordAuth.response;
     }
 
     // Soft delete entity
@@ -469,18 +430,16 @@ export async function DELETE(request, { params }) {
       },
     });
 
-    return NextResponse.json(
-      { success: true, message: `${entityType} deleted successfully` },
-      { status: 200 }
-    );
+    return createSuccessResponse(null, {
+      message: `${entityType} deleted successfully`,
+    });
   } catch (error) {
     console.error(`Error deleting ${entityType}:`, error);
-    return NextResponse.json(
-      {
-        error: `Failed to delete ${entityType}`,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
+    return createErrorResponse(
+      500,
+      'Internal Server Error',
+      `Failed to delete ${entityType}`,
+      { details: process.env.NODE_ENV === 'development' ? error.message : undefined }
     );
   }
 }
