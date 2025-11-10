@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import moment from "moment-timezone";
+import { format, parseISO, isValid } from "date-fns";
 
 /**
  * ActivityLogTab - Universal tab for freeform text log entries
@@ -170,10 +170,24 @@ function ActivityLogTab({ config, contextData, loadData, entityId }) {
                       let value = entry[col.key];
 
                       // Format based on column format
-                      if (col.format === "datetime") {
-                        value = moment(value).format("DD MMM YYYY, hh:mm A");
-                      } else if (col.format === "date") {
-                        value = moment(value).format("DD MMM YYYY");
+                      if (col.format === "datetime" && value) {
+                        try {
+                          const date = parseISO(value);
+                          if (isValid(date)) {
+                            value = format(date, "dd MMM yyyy, hh:mm a");
+                          }
+                        } catch (e) {
+                          console.error("Error formatting datetime:", e);
+                        }
+                      } else if (col.format === "date" && value) {
+                        try {
+                          const date = parseISO(value);
+                          if (isValid(date)) {
+                            value = format(date, "dd MMM yyyy");
+                          }
+                        } catch (e) {
+                          console.error("Error formatting date:", e);
+                        }
                       }
 
                       return (

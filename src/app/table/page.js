@@ -18,18 +18,7 @@ import CustomToolbar from "@/app/components/table/CustomToolbar";
 
 // Context providers
 import { SettingsProvider } from "@/app/context/SettingsContext";
-import { InfoCardProvider } from "@/app/context/InfoCardContext";
-import { CreateObjectProvider } from "@/app/context/CreateObjectContext";
-import { DriverProvider } from "@/app/context/DriverContext";
-import { TruckProvider } from "@/app/context/TruckContext";
 import { EmployeeProvider } from "@/app/context/EmployeeContext";
-import { EquipmentProvider } from "@/app/context/EquipmentContext";
-import { IncidentProvider } from "@/app/context/IncidentContext";
-import { ViolationProvider } from "@/app/context/ViolationContext";
-import { WCBProvider } from "@/app/context/WCBContext";
-import { TrucksDriversProvider } from "@/app/context/TrucksDriversContext";
-import { IncidentsListProvider } from "@/app/context/IncidentsListContext";
-import { ViolationsListProvider } from "@/app/context/ViolationsListContext";
 
 /**
  * Unified Table Page
@@ -58,40 +47,16 @@ import { ViolationsListProvider } from "@/app/context/ViolationsListContext";
 function EntityContextWrapper({ entityType, entityId, children }) {
   // Determine which context provider(s) to use based on entity type
   const ContextProvider = {
-    drivers: DriverProvider,
-    trucks: TruckProvider,
     employees: EmployeeProvider,
-    equipment: EquipmentProvider,
-    incidents: IncidentProvider,
-    violations: ViolationProvider,
-    wcb: WCBProvider,
   }[entityType];
 
   if (!ContextProvider) {
     return <>{children}</>;
   }
 
-  // Special case: drivers need additional context providers
-  if (entityType === "drivers") {
-    return (
-      <IncidentsListProvider>
-        <ViolationsListProvider>
-          <TrucksDriversProvider>
-            <DriverProvider userId={entityId}>{children}</DriverProvider>
-          </TrucksDriversProvider>
-        </ViolationsListProvider>
-      </IncidentsListProvider>
-    );
-  }
-
   // Standard entity providers use the same prop name pattern
   const idProp = {
-    trucks: "truckId",
     employees: "employeeId",
-    equipment: "equipmentId",
-    incidents: "incidentId",
-    violations: "violationId",
-    wcb: "wcbId",
   }[entityType];
 
   return <ContextProvider {...{ [idProp]: entityId }}>{children}</ContextProvider>;
@@ -258,13 +223,9 @@ function TablePageContent() {
               <DialogTitle>{entityConfig.dialogTitle}</DialogTitle>
             </VisuallyHidden.Root>
             <SettingsProvider>
-              <InfoCardProvider>
-                <CreateObjectProvider>
-                  <EntityContextWrapper entityType={entityType} entityId={selectedId}>
-                    <UniversalCard config={entityConfig.cardConfig} />
-                  </EntityContextWrapper>
-                </CreateObjectProvider>
-              </InfoCardProvider>
+              <EntityContextWrapper entityType={entityType} entityId={selectedId}>
+                <UniversalCard config={entityConfig.cardConfig} />
+              </EntityContextWrapper>
             </SettingsProvider>
           </DialogContent>
         </Dialog>

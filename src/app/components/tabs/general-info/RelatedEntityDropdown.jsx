@@ -8,13 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useInfoCard } from "@/app/context/InfoCardContext";
 
 /**
  * RelatedEntityDropdown - Dropdown selector to navigate to related entities
  *
  * Displays a dropdown of related entities (incidents, violations, WCB claims, etc.)
- * and navigates to the selected entity card.
+ * and calls the provided callback when an entity is selected.
  *
  * @param {string} label - Dropdown label
  * @param {Array} relatedIds - Array of related entity IDs
@@ -22,6 +21,7 @@ import { useInfoCard } from "@/app/context/InfoCardContext";
  * @param {string} entityType - Type of entity (incident, violation, wcb)
  * @param {string} displayField - Field to display in dropdown (e.g., 'incident_number')
  * @param {string} defaultLabel - Default option label (e.g., 'Go to incident')
+ * @param {Function} onEntitySelect - Callback function when entity is selected (entityId, entityType)
  */
 function RelatedEntityDropdown({
   label,
@@ -30,11 +30,10 @@ function RelatedEntityDropdown({
   entityType,
   displayField = "id",
   defaultLabel = "Select...",
+  onEntitySelect,
 }) {
   const [value, setValue] = useState("0");
   const [filteredEntities, setFilteredEntities] = useState({});
-
-  const { handleCardDataSet } = useInfoCard();
 
   // Filter entities by related IDs
   useEffect(() => {
@@ -55,8 +54,8 @@ function RelatedEntityDropdown({
   const handleValueChange = (newValue) => {
     setValue(newValue);
 
-    if (newValue !== "0") {
-      handleCardDataSet(newValue, entityType);
+    if (newValue !== "0" && onEntitySelect) {
+      onEntitySelect(newValue, entityType);
     }
   };
 

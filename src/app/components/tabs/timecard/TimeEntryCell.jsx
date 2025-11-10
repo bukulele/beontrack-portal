@@ -17,7 +17,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Check, Globe, AlertTriangle } from 'lucide-react';
-import DateTimeInput from '../../dateInput/DateTimeInput';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { parse, format, isValid } from 'date-fns';
 import { formatDateTime, prepareForApi } from './utils';
 import ActionButtons from './ActionButtons';
 
@@ -69,22 +70,20 @@ export default function TimeEntryCell({
     return (
       <div className="flex items-center justify-center gap-1">
         <div className="flex-1">
-          <DateTimeInput
-            name={timeField}
-            value={editValue || ''}
-            updateState={(updater) => {
-              // DateTimeInput passes a function updater, not an object
-              // We need to call it with current state to get the new state
-              setEditValue(prevValue => {
-                // Create a fake state object with the current value
-                const currentState = { [timeField]: prevValue };
-                // Call the updater function to get the new state
-                const newState = typeof updater === 'function' ? updater(currentState) : updater;
-                // Extract just the field we care about
-                return newState[timeField];
-              });
+          <DateTimePicker
+            value={
+              editValue
+                ? parse(editValue.slice(0, 16), "yyyy-MM-dd'T'HH:mm", new Date())
+                : undefined
+            }
+            onChange={(date) => {
+              if (date && isValid(date)) {
+                // Format as YYYY-MM-DDTHH:mm (without timezone for local editing)
+                setEditValue(format(date, "yyyy-MM-dd'T'HH:mm"));
+              } else {
+                setEditValue('');
+              }
             }}
-            style="minimalistic"
           />
         </div>
 

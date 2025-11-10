@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { parse, format, isValid } from "date-fns";
 
 /**
  * Render appropriate input based on field type
@@ -41,7 +44,38 @@ function renderInput(field, formField) {
       return <Input type="email" {...formField} disabled={field.disabled} />;
 
     case "date":
-      return <Input type="date" {...formField} disabled={field.disabled} />;
+      return (
+        <DatePicker
+          value={
+            formField.value
+              ? parse(formField.value, "yyyy-MM-dd", new Date())
+              : undefined
+          }
+          onChange={(date) => {
+            formField.onChange(
+              date && isValid(date) ? format(date, "yyyy-MM-dd") : ""
+            );
+          }}
+          disabled={field.disabled}
+        />
+      );
+
+    case "datetime":
+      return (
+        <DateTimePicker
+          value={
+            formField.value
+              ? parse(formField.value.slice(0, 16), "yyyy-MM-dd'T'HH:mm", new Date())
+              : undefined
+          }
+          onChange={(date) => {
+            formField.onChange(
+              date && isValid(date) ? format(date, "yyyy-MM-dd'T'HH:mm") : ""
+            );
+          }}
+          disabled={field.disabled}
+        />
+      );
 
     case "textarea":
       return <Textarea {...formField} disabled={field.disabled} />;

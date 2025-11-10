@@ -10,35 +10,15 @@ import ListTab from "@/app/components/tabs/list/ListTab";
 import TimeCardTab from "@/app/components/tabs/timecard/TimeCardTab";
 import SubEntitiesTab from "@/app/components/tabs/sub-entities/SubEntitiesTab";
 import ActivityLogTab from "@/app/components/tabs/activity-log/ActivityLogTab";
-import { TruckContext } from "@/app/context/TruckContext";
-import { DriverContext } from "@/app/context/DriverContext";
-import { EquipmentContext } from "@/app/context/EquipmentContext";
 import { EmployeeContext } from "@/app/context/EmployeeContext";
-import { IncidentContext } from "@/app/context/IncidentContext";
-import { ViolationContext } from "@/app/context/ViolationContext";
-import { WCBContext } from "@/app/context/WCBContext";
-import { IncidentsListContext } from "@/app/context/IncidentsListContext";
-import { ViolationsListContext } from "@/app/context/ViolationsListContext";
-import { WCBListContext } from "@/app/context/WCBListContext";
-import { TrucksDriversContext } from "@/app/context/TrucksDriversContext";
 
 /**
  * Context mapping for dynamic context access
  * Maps provider names (from config) to Context objects
  */
 const CONTEXT_MAP = {
-  TruckProvider: TruckContext,
-  DriverProvider: DriverContext,
-  EquipmentProvider: EquipmentContext,
   EmployeeProvider: EmployeeContext,
-  IncidentProvider: IncidentContext,
-  ViolationProvider: ViolationContext,
-  WCBProvider: WCBContext,
   // List contexts for referenced data
-  IncidentsListProvider: IncidentsListContext,
-  ViolationsListProvider: ViolationsListContext,
-  WCBListProvider: WCBListContext,
-  TrucksDriversProvider: TrucksDriversContext,
 };
 
 /**
@@ -70,43 +50,17 @@ function UniversalCard({ config, onLightboxChange }) {
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
 
-  // Call all additional context hooks at top level (Rules of Hooks)
-  const incidentsListContext = useContext(IncidentsListContext);
-  const violationsListContext = useContext(ViolationsListContext);
-  const wcbListContext = useContext(WCBListContext);
-  const trucksDriversContext = useContext(TrucksDriversContext);
-
-  // Map context data based on config
+  // Additional contexts - currently empty as legacy contexts have been removed
+  // TODO: Re-implement when needed for the new architecture
   const additionalContexts = {};
-  if (config.additionalContexts) {
-    config.additionalContexts.forEach((contextConfig) => {
-      let contextData;
 
-      // Map provider name to actual context data
-      switch (contextConfig.provider) {
-        case 'IncidentsListProvider':
-          contextData = incidentsListContext;
-          break;
-        case 'ViolationsListProvider':
-          contextData = violationsListContext;
-          break;
-        case 'WCBListProvider':
-          contextData = wcbListContext;
-          break;
-        case 'TrucksDriversProvider':
-          contextData = trucksDriversContext;
-          break;
-        default:
-          contextData = null;
-      }
-
-      // Support multiple data keys (comma-separated)
-      const dataKeys = contextConfig.dataKey.split(',');
-      dataKeys.forEach((key) => {
-        additionalContexts[key.trim()] = contextData?.[key.trim()];
-      });
-    });
-  }
+  // Handle entity navigation from list tabs
+  const handleEntityClick = (entityId, entityType) => {
+    // For now, just log the click - this can be enhanced to open nested cards
+    // or navigate to a different page depending on requirements
+    console.log(`Entity clicked: ${entityType} - ${entityId}`);
+    // TODO: Implement navigation logic (e.g., open a nested dialog or navigate to entity page)
+  };
 
   // Render tab content based on type
   const renderTabContent = (tab) => {
@@ -157,6 +111,7 @@ function UniversalCard({ config, onLightboxChange }) {
             config={tab.config}
             context={context}
             additionalContexts={additionalContexts}
+            onEntityClick={handleEntityClick}
           />
         );
 

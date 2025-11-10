@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { useSession, signOut } from "@/lib/auth-client";
+import { signOut } from "@/lib/auth-client";
 import Image from "next/image";
 import {
   Sidebar,
@@ -39,7 +39,6 @@ export function AppSidebar({ reportIsLoading, reportDataSet }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
   const { user, roles } = useCurrentUser();
 
   // Get visible menu sections based on user roles

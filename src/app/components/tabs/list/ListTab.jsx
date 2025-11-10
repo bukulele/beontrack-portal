@@ -2,7 +2,6 @@
 
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useInfoCard } from "@/app/context/InfoCardContext";
 import ListRow from "./ListRow";
 
 /**
@@ -19,9 +18,9 @@ import ListRow from "./ListRow";
  * @param {Object} config - List tab configuration
  * @param {Object} context - Parent entity context (e.g., DriverContext)
  * @param {Object} additionalContexts - Additional contexts (e.g., IncidentsListContext)
+ * @param {Function} onEntityClick - Callback when a list item is clicked (entityId, entityType)
  */
-function ListTab({ config, context, additionalContexts = {} }) {
-  const { handleCardDataSet } = useInfoCard();
+function ListTab({ config, context, additionalContexts = {}, onEntityClick }) {
 
   // Get parent entity data
   const parentEntityData = context[config.parentDataKey];
@@ -80,7 +79,9 @@ function ListTab({ config, context, additionalContexts = {} }) {
 
   // Handle row click - open related card
   const handleRowClick = (entity) => {
-    handleCardDataSet(entity.id, config.relatedEntityType);
+    if (onEntityClick) {
+      onEntityClick(entity.id, config.relatedEntityType);
+    }
   };
 
   if (!parentEntityData) {

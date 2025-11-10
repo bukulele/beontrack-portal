@@ -6,7 +6,8 @@ import { Box } from "@mui/material";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import DateInput from "../../dateInput/DateInput";
+import { DatePicker } from "@/components/ui/date-picker";
+import { parse, format, isValid } from "date-fns";
 import Button from "../../button/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
@@ -167,13 +168,22 @@ function LogTab({ config, context }) {
                   className="flex gap-2 items-end"
                 >
                   {isDateField ? (
-                    <DateInput
-                      label={field.label}
-                      name={field.key}
-                      value={editableFieldsData[field.key]}
-                      updateState={setEditableFieldsData}
-                      style="minimalistic"
-                    />
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <Label htmlFor={field.key}>{field.label}</Label>
+                      <DatePicker
+                        value={
+                          editableFieldsData[field.key]
+                            ? parse(editableFieldsData[field.key], "yyyy-MM-dd", new Date())
+                            : undefined
+                        }
+                        onChange={(date) => {
+                          setEditableFieldsData((prev) => ({
+                            ...prev,
+                            [field.key]: date && isValid(date) ? format(date, "yyyy-MM-dd") : "",
+                          }));
+                        }}
+                      />
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-1.5 flex-1">
                       <Label htmlFor={field.key}>{field.label}</Label>

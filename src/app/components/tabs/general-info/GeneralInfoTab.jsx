@@ -205,7 +205,7 @@ function GeneralInfoTab({
 
 
             {/* Related Entities (for read-only mode) */}
-            {config.relatedEntities && config.relatedEntities.length > 0 && (
+            {/* {config.relatedEntities && config.relatedEntities.length > 0 && (
               <Card className="mt-4">
                 <CardHeader className="p-4 pb-3">
                   <CardTitle className="text-sm font-semibold text-muted-foreground uppercase">
@@ -226,7 +226,7 @@ function GeneralInfoTab({
                   ))}
                 </CardContent>
               </Card>
-            )}
+            )} */}
 
             {/* Custom Actions (for read-only mode) */}
             {config.customActions && config.customActions.length > 0 && (

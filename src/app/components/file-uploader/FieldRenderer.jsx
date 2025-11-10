@@ -6,10 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-import moment from 'moment';
+import { DatePicker } from '@/components/ui/date-picker';
+import { parse, format, isValid } from 'date-fns';
 import { getOptionList } from '@/config/clientData';
 import NumericInput from '../numericInput/NumericInput';
 
@@ -116,24 +114,18 @@ export function FieldRenderer({ field, value, onChange, error }) {
       return (
         <div className="space-y-1.5">
           <FieldLabel />
-          <LocalizationProvider dateAdapter={AdapterMoment}>
-            <DatePicker
-              value={value ? moment(value) : null}
-              onChange={(newValue) => {
-                onChange(newValue ? newValue.format('YYYY-MM-DD') : '');
-              }}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  size: 'small',
-                  error: !!error,
-                  className: 'w-full',
-                },
-              }}
-              format="DD/MM/YYYY"
-              {...props}
-            />
-          </LocalizationProvider>
+          <DatePicker
+            value={
+              value
+                ? parse(value, 'yyyy-MM-dd', new Date())
+                : undefined
+            }
+            onChange={(date) => {
+              onChange(date && isValid(date) ? format(date, 'yyyy-MM-dd') : '');
+            }}
+            className={error ? 'border-red-500' : ''}
+            {...props}
+          />
           {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
       );
