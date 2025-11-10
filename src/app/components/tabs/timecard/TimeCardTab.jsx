@@ -50,10 +50,9 @@ export default function TimeCardTab({ config, entityData }) {
   const [hoveredCell, setHoveredCell] = useState(null);
   const [showAdjustmentDialog, setShowAdjustmentDialog] = useState(false);
 
-  // Check if user has edit permissions
-  const canEdit =
-    userRoles.includes(process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PAYROLL_MANAGER) ||
-    userRoles.includes(process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_ADMIN);
+  // TODO: Implement proper permission checks using new permission system
+  // For now, allow all users to edit (will be restricted later)
+  const canEdit = true;
 
   // Hover handlers for precise button visibility control
   const handleHoverEntry = (entryId, field) => {
