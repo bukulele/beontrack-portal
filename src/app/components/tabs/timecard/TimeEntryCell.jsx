@@ -74,8 +74,11 @@ export default function TimeEntryCell({
   });
 
   // Sync editValue with timeValue when it changes (important for new entries)
+  // Don't override prefilled values with empty timeValue
   useEffect(() => {
-    setEditValue(timeValue);
+    if (timeValue) {
+      setEditValue(timeValue);
+    }
   }, [timeValue]);
 
   // Check if this entry's buttons should show
@@ -98,7 +101,7 @@ export default function TimeEntryCell({
           <DateTimePicker
             value={
               editValue
-                ? parse(editValue.slice(0, 16), "yyyy-MM-dd'T'HH:mm", new Date())
+                ? new Date(editValue)
                 : undefined
             }
             onChange={(date) => {
