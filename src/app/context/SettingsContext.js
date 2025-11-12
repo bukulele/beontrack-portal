@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useState, useEffect } from "react";
 
 export const SettingsContext = createContext();
@@ -6,12 +8,13 @@ export const SettingsProvider = ({ children }) => {
   const [statusSettings, setStatusSettings] = useState({});
 
   const loadData = () => {
-    // Entity types to load status settings for
-    // Add 'driver', 'truck', 'equipment' when their endpoints are ready
-    const entitiesToLoad = ['employee'];
+    // Map of entityType (plural, used in app) to API endpoint (may be singular)
+    const entityTypeMapping = {
+      'employees': 'employee', // App uses 'employees', API uses 'employee'
+    };
 
-    entitiesToLoad.forEach(entityType => {
-      fetch(`/api/v1/status-settings/${entityType}`, {
+    Object.entries(entityTypeMapping).forEach(([entityType, apiEndpoint]) => {
+      fetch(`/api/v1/status-settings/${apiEndpoint}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -26,7 +29,7 @@ export const SettingsProvider = ({ children }) => {
         .then((data) => {
           setStatusSettings((prevData) => ({
             ...prevData,
-            [entityType]: data,
+            [entityType]: data, // Store with plural key
           }));
         })
         .catch((error) => {

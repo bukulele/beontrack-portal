@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { LoaderProvider } from "./context/LoaderContext";
+import { SettingsProvider } from "./context/SettingsContext";
 import LocalizationWrapper from "./components/localizationWrapper/LocalizationWrapper";
 import MuiXLicense from "./MuiXLicense";
 
@@ -15,12 +16,14 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <LocalizationWrapper>
         <LoaderProvider>
-          <body className={`${inter.className} bg-slate-50 dark:bg-gray-900`}>
-            <main>
-              {children}
-              <MuiXLicense />
-            </main>
-          </body>
+          <SettingsProvider>
+            <body className={`${inter.className} bg-slate-50 dark:bg-gray-900`}>
+              <main>
+                {children}
+                <MuiXLicense />
+              </main>
+            </body>
+          </SettingsProvider>
         </LoaderProvider>
       </LocalizationWrapper>
     </html>
