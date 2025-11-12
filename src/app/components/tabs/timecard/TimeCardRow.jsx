@@ -32,7 +32,7 @@ export default function TimeCardRow({
   onClearHover,
 }) {
   const hasEntries = day.entries.length > 0;
-  const isMedical = day.entries[0]?.medical;
+  const isMedical = day.entries[0]?.entryType === 'sick_leave';
 
   // Check if user can mark this day as medical leave
   const canMarkMedical =
@@ -73,10 +73,10 @@ export default function TimeCardRow({
                       mode: 'editEntry',
                       entryId: entry.id,
                       field: 'in',
-                      value: entry.check_in_time,
+                      value: entry.clockInTime,
                     })
                   }
-                  onSave={(value) => onSave(entry.id, 'check_in_time', value)}
+                  onSave={(value) => onSave(entry.id, 'clockInTime', value)}
                   onCancel={() => onEditStateChange({ mode: 'view' })}
                   onAddEntry={() =>
                     onEditStateChange({
@@ -89,12 +89,12 @@ export default function TimeCardRow({
                   }
                   canEdit={canEdit}
                   showGps={
-                    config.features.gpsTracking.enabled && entry.in_coordinates
+                    config.features.gpsTracking.enabled && entry.clockInLocation
                   }
                   onViewGps={() =>
                     onEditStateChange({
                       mode: 'viewMap',
-                      coordinates: entry.in_coordinates,
+                      coordinates: entry.clockInLocation,
                     })
                   }
                   showWarning={
@@ -113,13 +113,13 @@ export default function TimeCardRow({
                 editState.day === day.date && (
                 <TimeEntryCell
                   key="new-check-in"
-                  entry={{ id: null, check_in_time: editState.value || '', check_out_time: '' }}
+                  entry={{ id: null, clockInTime: editState.value || '', clockOutTime: '' }}
                   field="checkIn"
                   day={day.date}
                   isLastEntry={false}
                   isEditing={true}
                   onEdit={() => {}}
-                  onSave={(value) => onSave(null, 'check_in_time', value)}
+                  onSave={(value) => onSave(null, 'clockInTime', value)}
                   onCancel={() => onEditStateChange({ mode: 'view' })}
                   onAddEntry={null}
                   canEdit={canEdit}
@@ -139,13 +139,13 @@ export default function TimeCardRow({
             // Editing empty check-in cell - show inline datetime input
             <TimeEntryCell
               key="new-check-in"
-              entry={{ id: null, check_in_time: editState.value || '', check_out_time: '' }}
+              entry={{ id: null, clockInTime: editState.value || '', clockOutTime: '' }}
               field="checkIn"
               day={day.date}
               isLastEntry={false}
               isEditing={true}
               onEdit={() => {}}
-              onSave={(value) => onSave(null, 'check_in_time', value)}
+              onSave={(value) => onSave(null, 'clockInTime', value)}
               onCancel={() => onEditStateChange({ mode: 'view' })}
               onAddEntry={null}
               canEdit={canEdit}
@@ -201,20 +201,20 @@ export default function TimeCardRow({
                       mode: 'editEntry',
                       entryId: entry.id,
                       field: 'out',
-                      value: entry.check_out_time,
+                      value: entry.clockOutTime,
                     })
                   }
-                  onSave={(value) => onSave(entry.id, 'check_out_time', value)}
+                  onSave={(value) => onSave(entry.id, 'clockOutTime', value)}
                   onCancel={() => onEditStateChange({ mode: 'view' })}
                   onAddEntry={null} // OUT column doesn't use add entry
                   canEdit={canEdit}
                   showGps={
-                    config.features.gpsTracking.enabled && entry.out_coordinates
+                    config.features.gpsTracking.enabled && entry.clockOutLocation
                   }
                   onViewGps={() =>
                     onEditStateChange({
                       mode: 'viewMap',
-                      coordinates: entry.out_coordinates,
+                      coordinates: entry.clockOutLocation,
                     })
                   }
                   showWarning={
@@ -233,13 +233,13 @@ export default function TimeCardRow({
                 editState.day === day.date && (
                 <TimeEntryCell
                   key="new-check-out"
-                  entry={{ id: null, check_in_time: '', check_out_time: editState.value || '' }}
+                  entry={{ id: null, clockInTime: '', clockOutTime: editState.value || '' }}
                   field="checkOut"
                   day={day.date}
                   isLastEntry={false}
                   isEditing={true}
                   onEdit={() => {}}
-                  onSave={(value) => onSave(null, 'check_out_time', value)}
+                  onSave={(value) => onSave(null, 'clockOutTime', value)}
                   onCancel={() => onEditStateChange({ mode: 'view' })}
                   onAddEntry={null}
                   canEdit={canEdit}
@@ -259,13 +259,13 @@ export default function TimeCardRow({
             // Editing empty check-out cell - show inline datetime input
             <TimeEntryCell
               key="new-check-out"
-              entry={{ id: null, check_in_time: '', check_out_time: editState.value || '' }}
+              entry={{ id: null, clockInTime: '', clockOutTime: editState.value || '' }}
               field="checkOut"
               day={day.date}
               isLastEntry={false}
               isEditing={true}
               onEdit={() => {}}
-              onSave={(value) => onSave(null, 'check_out_time', value)}
+              onSave={(value) => onSave(null, 'clockOutTime', value)}
               onCancel={() => onEditStateChange({ mode: 'view' })}
               onAddEntry={null}
               canEdit={canEdit}

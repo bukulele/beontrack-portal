@@ -25,9 +25,9 @@ export function transformToDayEntries(attendanceData, period) {
     const entries = attendanceData
       .filter(entry => isSameDay(entry, day, period))
       .sort((a, b) => {
-        // Sort by check_in_time, fallback to check_out_time
-        const timeA = new Date(a.check_in_time || a.check_out_time || 0);
-        const timeB = new Date(b.check_in_time || b.check_out_time || 0);
+        // Sort by clockInTime, fallback to clockOutTime
+        const timeA = new Date(a.clockInTime || a.clockOutTime || 0);
+        const timeB = new Date(b.clockInTime || b.clockOutTime || 0);
         return timeA - timeB;
       });
 
@@ -54,7 +54,7 @@ export function generateDays(period) {
  * @returns {boolean}
  */
 function isSameDay(entry, day, period) {
-  const checkTime = entry.check_in_time || entry.check_out_time;
+  const checkTime = entry.clockInTime || entry.clockOutTime;
   if (!checkTime) return false;
 
   const date = new Date(checkTime);
@@ -106,7 +106,7 @@ export function calculateDayHours(entries, config) {
 
   const total = entries.reduce((sum, entry) => {
     const hours = parseFloat(
-      calculateWorkingHours(entry.check_in_time, entry.check_out_time, false)
+      calculateWorkingHours(entry.clockInTime, entry.clockOutTime, false)
     );
     return sum + (isNaN(hours) ? 0 : hours);
   }, 0);

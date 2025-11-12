@@ -31,7 +31,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("employment_contract"),
+        fields: getMetadataFields("employment_contract", "employees"),
       },
 
       actions: {
@@ -59,7 +59,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("company_policies"),
+        fields: getMetadataFields("company_policies", "employees"),
       },
 
       actions: {
@@ -87,7 +87,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("confidentiality_agreement"),
+        fields: getMetadataFields("confidentiality_agreement", "employees"),
       },
 
       actions: {
@@ -115,7 +115,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("sin_ssn"),
+        fields: getMetadataFields("sin_ssn", "employees"),
       },
 
       actions: {
@@ -143,7 +143,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("direct_deposit"),
+        fields: getMetadataFields("direct_deposit", "employees"),
       },
 
       actions: {
@@ -171,7 +171,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("tax_forms"),
+        fields: getMetadataFields("tax_forms", "employees"),
       },
 
       actions: {
@@ -199,7 +199,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("benefits_enrollment"),
+        fields: getMetadataFields("benefits_enrollment", "employees"),
       },
 
       actions: {
@@ -227,7 +227,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("safety_training"),
+        fields: getMetadataFields("safety_training", "employees"),
       },
 
       actions: {
@@ -255,7 +255,7 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
         mode: UPLOAD_MODES.IMMEDIATE,
         apiEndpoint: "/api/v1/employees/:id/documents",
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("other_documents"),
+        fields: getMetadataFields("other_documents", "employees"),
       },
 
       actions: {

@@ -84,6 +84,8 @@ enum DocumentType {
 
 enum EntityType {
   employees
+  time_entries
+  adjustments
 }
 
 enum ActivityType {
@@ -92,6 +94,70 @@ enum ActivityType {
   unemployment
   self_employed
   military_service
+  other
+}
+
+enum TimeEntryType {
+  regular_work
+  overtime
+  sick_leave
+  vacation
+  personal_leave
+  unpaid_leave
+  holiday
+  bereavement
+  jury_duty
+  training
+  other
+}
+
+enum EntrySource {
+  mobile_app
+  web_portal
+  time_clock_kiosk
+  admin_manual
+  system_import
+  api
+}
+
+enum TimeEntryStatus {
+  draft
+  submitted
+  approved
+  rejected
+  locked
+  disputed
+}
+
+enum BreakType {
+  meal_break
+  rest_break
+  coffee_break
+  other
+}
+
+enum AmendmentType {
+  time_correction
+  type_change
+  break_adjustment
+  admin_override
+  system_correction
+}
+
+enum ApprovalDecision {
+  approved
+  rejected
+  needs_correction
+  escalated
+}
+
+enum AdjustmentType {
+  manual_correction
+  comp_time
+  pto_adjustment
+  holiday_pay
+  bonus_hours
+  penalty_deduction
   other
 }
 
@@ -127,6 +193,15 @@ model User {
   documentsUploaded       Document[]       @relation("DocumentUploadedBy")
   documentsReviewed       Document[]       @relation("DocumentReviewedBy")
   activityLogsPerformed   ActivityLog[]    @relation("ActivityLogPerformedBy")
+
+  // Time tracking relations
+  timeEntriesCreated      TimeEntry[]      @relation("TimeEntryCreatedBy")
+  timeBreaksCreated       TimeBreak[]      @relation("TimeBreakCreatedBy")
+  timeAmendmentsCreated   TimeAmendment[]  @relation("TimeAmendmentCreatedBy")
+  timeAmendmentsApproved  TimeAmendment[]  @relation("TimeAmendmentApprovedBy")
+  timeApprovalsDecided    TimeApproval[]   @relation("TimeApprovalDecidedBy")
+  adjustmentsCreated      HoursAdjustment[] @relation("AdjustmentCreatedBy")
+  adjustmentsApproved     HoursAdjustment[] @relation("AdjustmentApprovedBy")
 
   // Authorization relations
   roles                   UserRole[]
@@ -166,6 +241,9 @@ model OfficeEmployee {
   employmentType          EmploymentType? @map("employment_type")
   officeLocation          String?         @map("office_location") @db.VarChar(100)
   dateOfBirth             DateTime?       @map("date_of_birth") @db.Date
+
+  // Time tracking preferences
+  canCheckinRemotely      Boolean         @default(false) @map("can_checkin_remotely")
 
   // Status
   status                  EmployeeStatus  @default(new)
@@ -488,4 +566,227 @@ model Verification {
   @@index([identifier])
   @@index([expiresAt])
   @@map("verifications")
+}
+
+// ============================================================================
+// TIME TRACKING MODELS
+// ============================================================================
+
+/// Time Entry - Core time tracking record (immutable original)
+/// Stores clock in/out times with timezone and location data
+model TimeEntry {
+  id              String          @id @default(uuid()) @db.Uuid
+
+  // Universal entity relation (employees, drivers, contractors)
+  entityType      String          @map("entity_type") @db.VarChar(50)
+  entityId        String          @map("entity_id") @db.Uuid
+
+  // Time tracking (immutable original values)
+  clockInTime     DateTime        @map("clock_in_time") @db.Timestamptz(6)
+  clockOutTime    DateTime?       @map("clock_out_time") @db.Timestamptz(6)
+
+  // Timezone capture (store what timezone user was in)
+  timezone        String          @db.VarChar(50) // e.g., "America/Winnipeg"
+
+  // Location tracking (optional, for remote work compliance)
+  // Structure: { lat, lon, address, ipAddress, deviceId }
+  clockInLocation  Json?          @map("clock_in_location") @db.JsonB
+  clockOutLocation Json?          @map("clock_out_location") @db.JsonB
+
+  // Entry metadata
+  entryType       TimeEntryType   @map("entry_type")
+  entrySource     EntrySource     @map("entry_source")
+
+  // Work classification (optional)
+  workType        String?         @map("work_type") @db.VarChar(50) // regular, overtime, training, meeting
+  projectId       String?         @map("project_id") @db.Uuid
+  departmentCode  String?         @map("department_code") @db.VarChar(50)
+  costCenter      String?         @map("cost_center") @db.VarChar(50)
+
+  // Status and approval
+  status          TimeEntryStatus @default(draft)
+
+  // Calculated hours (denormalized for performance)
+  totalMinutes    Int?            @map("total_minutes") // Calculated on clock-out
+
+  // Audit (immutable - who created the ORIGINAL entry)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById     String          @map("created_by_id") @db.Uuid
+  createdBy       User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id])
+
+  // Soft delete (legal retention requirement)
+  isDeleted       Boolean         @default(false) @map("is_deleted")
+  deletedAt       DateTime?       @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations
+  breaks          TimeBreak[]
+  amendments      TimeAmendment[]
+  approvals       TimeApproval[]
+
+  @@index([entityType, entityId, clockInTime])
+  @@index([status, clockInTime])
+  @@index([clockInTime])
+  @@map("time_entries")
+}
+
+/// Time Break - Break tracking (meal, rest, etc.)
+model TimeBreak {
+  id              String    @id @default(uuid()) @db.Uuid
+
+  timeEntryId     String    @map("time_entry_id") @db.Uuid
+  timeEntry       TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  // Break timing
+  startTime       DateTime  @map("start_time") @db.Timestamptz(6)
+  endTime         DateTime? @map("end_time") @db.Timestamptz(6)
+
+  // Break classification
+  breakType       BreakType @map("break_type")
+  isPaid          Boolean   @default(false) @map("is_paid")
+  isAutoDeducted  Boolean   @default(false) @map("is_auto_deducted") // Was this auto-calculated?
+
+  // Audit
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById     String    @map("created_by_id") @db.Uuid
+  createdBy       User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id])
+
+  // Soft delete (labor law compliance)
+  isDeleted       Boolean   @default(false) @map("is_deleted")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([timeEntryId])
+  @@map("time_breaks")
+}
+
+/// Time Amendment - Audit trail for all changes to time entries
+/// Append-only, immutable record of modifications
+model TimeAmendment {
+  id              String        @id @default(uuid()) @db.Uuid
+
+  timeEntryId     String        @map("time_entry_id") @db.Uuid
+  timeEntry       TimeEntry     @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  // What changed?
+  amendmentType   AmendmentType @map("amendment_type")
+  fieldChanged    String?       @map("field_changed") @db.VarChar(50) // Which field was amended
+
+  // Values
+  oldValue        String?       @map("old_value") @db.Text
+  newValue        String?       @map("new_value") @db.Text
+
+  // Why?
+  reason          String        @db.Text // Required reason for change
+
+  // Approval
+  requiresApproval Boolean      @default(true) @map("requires_approval")
+  isApproved      Boolean?      @map("is_approved") // null = pending, true = approved, false = rejected
+  approvedById    String?       @map("approved_by_id") @db.Uuid
+  approvedBy      User?         @relation("TimeAmendmentApprovedBy", fields: [approvedById], references: [id])
+  approvedAt      DateTime?     @map("approved_at") @db.Timestamptz(6)
+
+  // Audit (immutable, no soft delete)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     String        @map("created_by_id") @db.Uuid
+  createdBy       User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id])
+
+  @@index([timeEntryId, createdAt])
+  @@index([isApproved, createdAt])
+  @@map("time_amendments")
+}
+
+/// Time Approval - Multi-level approval workflow
+/// Append-only, immutable approval records
+model TimeApproval {
+  id              String           @id @default(uuid()) @db.Uuid
+
+  timeEntryId     String           @map("time_entry_id") @db.Uuid
+  timeEntry       TimeEntry        @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  // Approval flow
+  approvalLevel   Int              // 1, 2, 3 for multi-level approval
+  approverRole    String           @map("approver_role") @db.VarChar(50) // supervisor, manager, payroll, hr
+
+  // Decision
+  decision        ApprovalDecision
+  comments        String?          @db.Text
+
+  // Audit (immutable, no soft delete)
+  decidedAt       DateTime         @map("decided_at") @db.Timestamptz(6)
+  decidedById     String           @map("decided_by_id") @db.Uuid
+  decidedBy       User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id])
+
+  @@index([timeEntryId])
+  @@index([decidedById])
+  @@index([decision])
+  @@map("time_approvals")
+}
+
+/// Hours Adjustment - Manual adjustments to hours (comp time, corrections, etc.)
+model HoursAdjustment {
+  id              String         @id @default(uuid()) @db.Uuid
+
+  // Universal entity relation
+  entityType      String         @map("entity_type") @db.VarChar(50)
+  entityId        String         @map("entity_id") @db.Uuid
+
+  // Pay period
+  payPeriodStart  DateTime       @map("pay_period_start") @db.Date
+  payPeriodEnd    DateTime       @map("pay_period_end") @db.Date
+
+  // Adjustment
+  adjustmentType  AdjustmentType @map("adjustment_type")
+  hours           Float          // Can be positive or negative
+  reason          String         @db.Text
+  referenceNumber String?        @map("reference_number") @db.VarChar(100) // For reconciliation
+
+  // Approval
+  isApproved      Boolean        @default(false) @map("is_approved")
+  approvedById    String?        @map("approved_by_id") @db.Uuid
+  approvedBy      User?          @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id])
+  approvedAt      DateTime?      @map("approved_at") @db.Timestamptz(6)
+
+  // Audit
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById     String         @map("created_by_id") @db.Uuid
+  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id])
+
+  // Soft delete (may need to reverse erroneous adjustments)
+  isDeleted       Boolean        @default(false) @map("is_deleted")
+  deletedAt       DateTime?      @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([entityType, entityId, payPeriodStart])
+  @@index([payPeriodStart])
+  @@map("hours_adjustments")
+}
+
+/// Work Rule - Jurisdiction-specific labor law compliance rules
+/// Defines overtime thresholds, break requirements, hour limits per jurisdiction
+model WorkRule {
+  id                  String    @id @default(uuid()) @db.Uuid
+
+  // Applicability
+  name                String    @db.VarChar(200)
+  jurisdiction        String    @db.VarChar(100) // "CA-ON", "US-CA", "US-NY", etc.
+  effectiveDate       DateTime  @map("effective_date") @db.Date
+  expiryDate          DateTime? @map("expiry_date") @db.Date
+
+  // Rules (stored as JSON for flexibility)
+  // Example overtime: { "dailyThreshold": 8, "weeklyThreshold": 40, "rate": 1.5 }
+  overtimeRules       Json      @map("overtime_rules") @db.JsonB
+
+  // Example breaks: { "mealAfterHours": 5, "mealDuration": 30, "restBreaks": [{"afterHours": 4, "duration": 15}] }
+  breakRules          Json      @map("break_rules") @db.JsonB
+
+  // Example limits: { "maxDailyHours": 13, "maxWeeklyHours": 60, "minRestBetweenShifts": 8 }
+  weeklyHourLimits    Json?     @map("weekly_hour_limits") @db.JsonB
+
+  // Audit
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([jurisdiction, effectiveDate])
+  @@map("work_rules")
 }

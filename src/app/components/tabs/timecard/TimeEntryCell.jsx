@@ -42,7 +42,7 @@ export default function TimeEntryCell({
 }) {
   // Determine which time field to work with
   const fieldType = field === 'checkIn' ? 'in' : 'out';
-  const timeField = field === 'checkIn' ? 'check_in_time' : 'check_out_time';
+  const timeField = field === 'checkIn' ? 'clockInTime' : 'clockOutTime';
   const timeValue = entry[timeField];
 
   // Local state for edit value

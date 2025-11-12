@@ -13,9 +13,9 @@
  * @returns {Array} Array of field definitions for file upload forms
  */
 export function getMetadataFields(documentType, entityType) {
-  // For now, only employee schemas exist
-  // Future: Add schemas.truck, schemas.driver, schemas.equipment
-  if (entityType !== 'employee') {
+  // For now, only employees schemas exist
+  // Future: Add schemas.trucks, schemas.drivers, schemas.equipment
+  if (entityType !== 'employees') {
     console.warn(`No metadata schemas defined for entityType: ${entityType}`);
     return [];
   }

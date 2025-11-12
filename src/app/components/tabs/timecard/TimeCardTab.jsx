@@ -95,12 +95,11 @@ export default function TimeCardTab({ config, entityData }) {
   const loadAttendanceData = async () => {
     startLoading();
     try {
-      const response = await fetch(
-        `${config.api.attendance}/${entityData.id}/${period.year}`
-      );
+      const url = config.api.getTimeEntries(entityData.id);
+      const response = await fetch(`${url}?year=${period.year}`);
       if (!response.ok) throw new Error('Failed to fetch attendance data');
-      const data = await response.json();
-      setAttendanceData(data || []);
+      const result = await response.json();
+      setAttendanceData(result.data || []);
     } catch (error) {
       console.error('Failed to fetch attendance data:', error);
     } finally {
@@ -108,19 +107,29 @@ export default function TimeCardTab({ config, entityData }) {
     }
   };
 
-  // Load medical leave data
+  // Load medical leave data (calculate from time entries)
   const loadMedicalData = async () => {
     if (!config.features.medicalLeave.enabled) return;
 
     startLoading();
     try {
-      const response = await fetch(
-        `${config.api.medicalLeave}/${entityData.id}/${period.year}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch medical leave data');
-      const data = await response.json();
+      // Fetch all time entries for the year and count medical days
+      const url = config.api.getTimeEntries(entityData.id);
+      const response = await fetch(`${url}?year=${period.year}`);
+      if (!response.ok) throw new Error('Failed to fetch time entries for medical leave');
+      const result = await response.json();
+
+      // Count unique days marked as medical leave
+      const medicalDays = new Set();
+      (result.data || []).forEach(entry => {
+        if (entry.entryType === 'sick_leave') {
+          const date = new Date(entry.clockInTime).toDateString();
+          medicalDays.add(date);
+        }
+      });
+
       setMedicalDaysLeft(
-        config.features.medicalLeave.totalDaysPerYear - data.medical_shifts
+        config.features.medicalLeave.totalDaysPerYear - medicalDays.size
       );
     } catch (error) {
       console.error('Failed to fetch medical leave data:', error);
@@ -136,12 +145,11 @@ export default function TimeCardTab({ config, entityData }) {
     const payDay = getPayDayString(period);
     startLoading();
     try {
-      const response = await fetch(
-        `${config.api.adjustments}/${entityData.id}/${payDay}`
-      );
+      const url = config.api.getAdjustments(entityData.id);
+      const response = await fetch(`${url}?payPeriodStart=${payDay}`);
       if (!response.ok) throw new Error('Failed to fetch adjustments');
-      const data = await response.json();
-      setAdjustments(data || []);
+      const result = await response.json();
+      setAdjustments(result.data || []);
     } catch (error) {
       console.error('Failed to fetch adjustments:', error);
     } finally {
@@ -156,51 +164,59 @@ export default function TimeCardTab({ config, entityData }) {
       // Prepare value with timezone
       const valueWithTimezone = prepareForApi(value);
 
-      let apiUrl = config.api.saveAttendance;
+      let apiUrl;
       let method = 'POST';
-
-      const formData = new FormData();
-      formData.append(config.entityType, entityData.id);
+      let body;
 
       if (entryId) {
         // Update or delete existing entry
-        apiUrl += `/${entryId}`;
+        apiUrl = config.api.updateTimeEntry(entityData.id, entryId);
         method = 'PATCH';
 
         // Find the entry to preserve other field
         const entry = attendanceData.find(e => e.id === entryId);
         if (entry) {
-          const checkInValue = field === 'check_in_time' ? valueWithTimezone : entry.check_in_time;
-          const checkOutValue = field === 'check_out_time' ? valueWithTimezone : entry.check_out_time;
+          const clockInTime = field === 'clockInTime' ? valueWithTimezone : entry.clockInTime;
+          const clockOutTime = field === 'clockOutTime' ? valueWithTimezone : entry.clockOutTime;
 
           // If both are empty, delete the entry
-          if ((!checkInValue || checkInValue === '') && (!checkOutValue || checkOutValue === '')) {
+          if ((!clockInTime || clockInTime === '') && (!clockOutTime || clockOutTime === '')) {
             method = 'DELETE';
+            apiUrl = config.api.deleteTimeEntry(entityData.id, entryId);
           } else {
-            formData.append('check_in_time', checkInValue || '');
-            formData.append('check_out_time', checkOutValue || '');
+            body = JSON.stringify({
+              clockInTime: clockInTime || null,
+              clockOutTime: clockOutTime || null,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              amendmentReason: 'Updated via time card',
+            });
           }
         }
       } else {
-        // Create new entry - send both fields, one will be empty
-        if (field === 'check_in_time') {
-          formData.append('check_in_time', valueWithTimezone || '');
-          formData.append('check_out_time', '');
-        } else {
-          formData.append('check_in_time', '');
-          formData.append('check_out_time', valueWithTimezone || '');
-        }
+        // Create new entry
+        apiUrl = config.api.createTimeEntry(entityData.id);
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        body = JSON.stringify({
+          clockInTime: field === 'clockInTime' ? valueWithTimezone : null,
+          clockOutTime: field === 'clockOutTime' ? valueWithTimezone : null,
+          timezone,
+          entryType: 'regular_work',
+          entrySource: 'web_portal',
+        });
       }
 
       const response = await fetch(apiUrl, {
         method,
-        body: formData,
+        headers: method !== 'DELETE' ? { 'Content-Type': 'application/json' } : {},
+        body: method !== 'DELETE' ? body : undefined,
       });
 
       if (!response.ok) throw new Error('Failed to save attendance');
 
       // Reload data
       await loadAttendanceData();
+      await loadMedicalData(); // Recalculate medical leave days
       setEditState({ mode: 'view' });
     } catch (error) {
       console.error('Failed to save attendance:', error);
@@ -221,41 +237,42 @@ export default function TimeCardTab({ config, entityData }) {
       if (dayData && dayData.entries.length > 0) {
         await Promise.all(
           dayData.entries.map(entry =>
-            fetch(`${config.api.saveAttendance}/${entry.id}`, { method: 'DELETE' })
+            fetch(config.api.deleteTimeEntry(entityData.id, entry.id), { method: 'DELETE' })
           )
         );
       }
 
       // 2. Create medical leave entry with default times
-      const medicalEntry = {
-        check_in_time: formatDateForInput(
-          period.year,
-          period.month,
-          day,
-          parseInt(config.features.medicalLeave.defaultTimes.checkIn.split(':')[0]),
-          parseInt(config.features.medicalLeave.defaultTimes.checkIn.split(':')[1]),
-          parseInt(config.features.medicalLeave.defaultTimes.checkIn.split(':')[2] || 0)
-        ),
-        check_out_time: formatDateForInput(
-          period.year,
-          period.month,
-          day,
-          parseInt(config.features.medicalLeave.defaultTimes.checkOut.split(':')[0]),
-          parseInt(config.features.medicalLeave.defaultTimes.checkOut.split(':')[1]),
-          parseInt(config.features.medicalLeave.defaultTimes.checkOut.split(':')[2] || 0)
-        ),
-        medical: true,
-      };
+      const clockInTime = formatDateForInput(
+        period.year,
+        period.month,
+        day,
+        parseInt(config.features.medicalLeave.defaultTimes.checkIn.split(':')[0]),
+        parseInt(config.features.medicalLeave.defaultTimes.checkIn.split(':')[1]),
+        parseInt(config.features.medicalLeave.defaultTimes.checkIn.split(':')[2] || 0)
+      );
 
-      const formData = new FormData();
-      formData.append(config.entityType, entityData.id);
-      formData.append('check_in_time', prepareForApi(medicalEntry.check_in_time));
-      formData.append('check_out_time', prepareForApi(medicalEntry.check_out_time));
-      formData.append('medical', true);
+      const clockOutTime = formatDateForInput(
+        period.year,
+        period.month,
+        day,
+        parseInt(config.features.medicalLeave.defaultTimes.checkOut.split(':')[0]),
+        parseInt(config.features.medicalLeave.defaultTimes.checkOut.split(':')[1]),
+        parseInt(config.features.medicalLeave.defaultTimes.checkOut.split(':')[2] || 0)
+      );
 
-      await fetch(config.api.saveAttendance, {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      await fetch(config.api.createTimeEntry(entityData.id), {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clockInTime: prepareForApi(clockInTime),
+          clockOutTime: prepareForApi(clockOutTime),
+          timezone,
+          entryType: 'sick_leave', // Use sick_leave type for medical leave
+          entrySource: 'web_portal',
+        }),
       });
 
       // Reload data
@@ -275,13 +292,12 @@ export default function TimeCardTab({ config, entityData }) {
 
     startLoading();
     try {
-      const response = await fetch(config.api.updateEntity, {
+      const url = config.api.updateEntity(entityData.id);
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: entityData.id,
           [config.features.remoteCheckin.fieldName]: value,
-          changed_by: session?.user?.name,
         }),
       });
 
@@ -300,10 +316,15 @@ export default function TimeCardTab({ config, entityData }) {
   const handleDeleteAdjustment = async (adjustmentId) => {
     startLoading();
     try {
-      await fetch(`${config.api.deleteAdjustment}/${adjustmentId}`, {
+      const url = config.api.deleteAdjustment(adjustmentId);
+      const response = await fetch(url, {
         method: 'DELETE',
       });
-      setAdjustments(prev => prev.filter(a => a.id !== adjustmentId));
+
+      if (!response.ok) throw new Error('Failed to delete adjustment');
+
+      // Reload adjustments to reflect the change
+      await loadAdjustments();
     } catch (error) {
       console.error('Failed to delete adjustment:', error);
     } finally {
@@ -321,17 +342,21 @@ export default function TimeCardTab({ config, entityData }) {
     startLoading();
     try {
       const periodStartDay = period.half === 1 ? 1 : 16;
-      const firstPayDay = `${period.year}-${String(period.month + 1).padStart(2, '0')}-${String(periodStartDay).padStart(2, '0')}`;
+      const periodEndDay = period.half === 1 ? 15 : new Date(period.year, period.month + 1, 0).getDate();
+
+      const payPeriodStart = `${period.year}-${String(period.month + 1).padStart(2, '0')}-${String(periodStartDay).padStart(2, '0')}`;
+      const payPeriodEnd = `${period.year}-${String(period.month + 1).padStart(2, '0')}-${String(periodEndDay).padStart(2, '0')}`;
 
       const requestBody = {
-        first_pay_day: firstPayDay,
-        [config.entityType]: entityData.id,
-        username: session?.user?.name,
-        hours: hours,
-        comment: comment,
+        payPeriodStart,
+        payPeriodEnd,
+        hours: parseFloat(hours),
+        reason: comment,
+        adjustmentType: 'manual_correction',
       };
 
-      const response = await fetch(config.api.adjustments, {
+      const url = config.api.createAdjustment(entityData.id);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

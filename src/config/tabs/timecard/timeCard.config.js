@@ -14,36 +14,41 @@ export const createTimeCardConfig = (entityType) => ({
   type: "timecard",
   entityType,
 
-  // API endpoints (entity-specific)
+  // API endpoints (universal pattern)
   api: {
-    // Get all attendance data for a year
-    attendance:
-      entityType === "employee"
-        ? "/api/get-attendance-data"
-        : `/api/get-attendance-data-${entityType}`,
+    // Time entries CRUD (universal pattern)
+    // GET/POST: /api/v1/{entityType}/{id}/time-entries
+    // PATCH/DELETE: /api/v1/{entityType}/{id}/time-entries/{entryId}
+    getTimeEntries: (entityId) =>
+      `/api/v1/${entityType}/${entityId}/time-entries`,
 
-    // Save/update attendance entry
-    saveAttendance:
-      entityType === "employee"
-        ? "/api/save-attendance-data"
-        : `/api/save-attendance-data-${entityType}`,
+    createTimeEntry: (entityId) =>
+      `/api/v1/${entityType}/${entityId}/time-entries`,
 
-    // Medical leave tracking (employee only)
-    medicalLeave: "/api/get-medical-leave-data",
+    updateTimeEntry: (entityId, entryId) =>
+      `/api/v1/${entityType}/${entityId}/time-entries/${entryId}`,
 
-    // Hours adjustments (employee only)
-    adjustments: "/api/get-adjustments-data",
-    deleteAdjustment: "/api/get-adjustments-data/delete",
+    deleteTimeEntry: (entityId, entryId) =>
+      `/api/v1/${entityType}/${entityId}/time-entries/${entryId}`,
 
-    // Update entity settings
-    updateEntity: `/api/update-${entityType}`,
+    // Hours adjustments
+    // GET/POST: /api/v1/{entityType}/{id}/adjustments
+    // DELETE: /api/v1/adjustments/{adjustmentId}
+    getAdjustments: (entityId) => `/api/v1/${entityType}/${entityId}/adjustments`,
+
+    createAdjustment: (entityId) => `/api/v1/${entityType}/${entityId}/adjustments`,
+
+    deleteAdjustment: (adjustmentId) => `/api/v1/adjustments/${adjustmentId}`,
+
+    // Update entity settings (e.g., can_checkin_remotely)
+    updateEntity: (entityId) => `/api/v1/${entityType}/${entityId}`,
   },
 
   // Feature flags - what functionality is enabled for this entity type
   features: {
     // Medical leave tracking
     medicalLeave: {
-      enabled: entityType === "employee",
+      enabled: entityType === "employees",
       totalDaysPerYear: 10,
       defaultTimes: {
         checkIn: "08:00:00",
@@ -53,43 +58,43 @@ export const createTimeCardConfig = (entityType) => ({
 
     // Hours adjustments for pay period
     adjustments: {
-      enabled: entityType === "employee",
+      enabled: entityType === "employees",
       createObjectType: `${entityType}_adjustment`,
     },
 
     // GPS tracking for check-in/check-out
     gpsTracking: {
-      enabled: entityType === "employee",
+      enabled: entityType === "employees",
       showCoordinates: true,
     },
 
     // Remote check-in permission toggle
     remoteCheckin: {
-      enabled: entityType === "employee",
+      enabled: entityType === "employees",
       fieldName: "can_checkin_remotely",
     },
 
     // Truck assignments (driver only - future support)
     truckAssignments: {
-      enabled: entityType === "driver",
+      enabled: entityType === "drivers",
       showModal: true,
     },
 
     // Schedule integration (driver only - future support)
     schedule: {
-      enabled: entityType === "driver",
+      enabled: entityType === "drivers",
     },
   },
 
   // Hours calculation rules
   calculations: {
     // Automatic lunch deduction
-    lunchDeduction: entityType === "employee",
+    lunchDeduction: entityType === "employees",
     lunchDeductionMinutes: 30,
     lunchDeductionThreshold: 5, // Apply deduction if total >= 5 hours
 
     // Round to nearest quarter hour (driver only)
-    roundToQuarter: entityType === "driver",
+    roundToQuarter: entityType === "drivers",
   },
 
   // Display preferences
@@ -97,7 +102,7 @@ export const createTimeCardConfig = (entityType) => ({
     // Timezone display mode
     // 'dynamic' = shows user's local timezone
     // 'static' = shows fixed timezone
-    timezoneMode: entityType === "employee" ? "dynamic" : "static",
+    timezoneMode: entityType === "employees" ? "dynamic" : "static",
     staticTimezone: "Winnipeg",
 
     // View mode (currently only half-month is implemented)
@@ -117,11 +122,11 @@ export const createTimeCardConfig = (entityType) => ({
 /**
  * Pre-configured time card for employees
  */
-export const employeeTimeCardConfig = createTimeCardConfig("employee");
+export const employeeTimeCardConfig = createTimeCardConfig("employees");
 
 /**
  * Pre-configured time card for drivers (future support)
  */
-export const driverTimeCardConfig = createTimeCardConfig("driver");
+export const driverTimeCardConfig = createTimeCardConfig("drivers");
 
 export default employeeTimeCardConfig;

@@ -53,28 +53,35 @@ export default function AdjustmentsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {adjustments.map((adj) => (
-              <TableRow key={adj.id} className="group/adj">
-                <TableCell>{adj.hours}</TableCell>
-                <TableCell>{adj.comment}</TableCell>
-                <TableCell>{adj.username}</TableCell>
-                {canEdit && (
-                  <TableCell>
-                    {/* Delete button - visible on hover */}
-                    <div className="opacity-0 group-hover/adj:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => onDelete(adj.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+            {adjustments.map((adj) => {
+              // Format user display name
+              const userName = adj.createdBy
+                ? `${adj.createdBy.firstName || ''} ${adj.createdBy.lastName || ''}`.trim() || adj.createdBy.username
+                : 'Unknown';
+
+              return (
+                <TableRow key={adj.id} className="group/adj">
+                  <TableCell>{adj.hours}</TableCell>
+                  <TableCell>{adj.reason}</TableCell>
+                  <TableCell>{userName}</TableCell>
+                  {canEdit && (
+                    <TableCell>
+                      {/* Delete button - visible on hover */}
+                      <div className="opacity-0 group-hover/adj:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => onDelete(adj.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

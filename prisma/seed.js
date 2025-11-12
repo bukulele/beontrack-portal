@@ -419,6 +419,185 @@ async function main() {
   });
   console.log(`   ✓ Assigned admin role to admin user`);
 
+  // Create work rules for common jurisdictions
+  console.log('⚖️  Creating work rules for labor law compliance...');
+
+  const workRules = [
+    {
+      name: 'Ontario Labor Standards',
+      jurisdiction: 'CA-ON',
+      effectiveDate: new Date('2024-01-01'),
+      overtimeRules: {
+        dailyThreshold: 8,
+        weeklyThreshold: 44,
+        dailyRate: 1.5,
+        weeklyRate: 1.5,
+        description: 'Overtime after 44 hours per week',
+      },
+      breakRules: {
+        mealAfterHours: 5,
+        mealDuration: 30,
+        mealPaid: false,
+        restBreaks: [],
+        description: '30-minute meal break after 5 consecutive hours',
+      },
+      weeklyHourLimits: {
+        maxDailyHours: 13,
+        maxWeeklyHours: 48,
+        minRestBetweenShifts: 11,
+        description: 'Maximum 13 hours per day, 48 hours per week',
+      },
+    },
+    {
+      name: 'British Columbia Employment Standards',
+      jurisdiction: 'CA-BC',
+      effectiveDate: new Date('2024-01-01'),
+      overtimeRules: {
+        dailyThreshold: 8,
+        weeklyThreshold: 40,
+        dailyRate: 1.5,
+        weeklyRate: 1.5,
+        doubleTimeAfter: 12,
+        description: 'Overtime after 8 hours/day or 40 hours/week, double time after 12 hours/day',
+      },
+      breakRules: {
+        mealAfterHours: 5,
+        mealDuration: 30,
+        mealPaid: false,
+        restBreaks: [{ afterHours: 4, duration: 15, paid: false }],
+        description: '30-minute meal break after 5 hours',
+      },
+      weeklyHourLimits: null,
+    },
+    {
+      name: 'California Labor Code',
+      jurisdiction: 'US-CA',
+      effectiveDate: new Date('2024-01-01'),
+      overtimeRules: {
+        dailyThreshold: 8,
+        weeklyThreshold: 40,
+        dailyRate: 1.5,
+        weeklyRate: 1.5,
+        doubleTimeAfter: 12,
+        description: 'Overtime after 8 hours/day or 40 hours/week, double time after 12 hours/day',
+      },
+      breakRules: {
+        mealAfterHours: 5,
+        mealDuration: 30,
+        mealPaid: false,
+        restBreaks: [
+          { afterHours: 4, duration: 10, paid: true },
+          { afterHours: 6, duration: 10, paid: true },
+        ],
+        description: '30-minute meal break after 5 hours, 10-minute paid rest breaks',
+      },
+      weeklyHourLimits: null,
+    },
+    {
+      name: 'New York Labor Law',
+      jurisdiction: 'US-NY',
+      effectiveDate: new Date('2024-01-01'),
+      overtimeRules: {
+        dailyThreshold: null,
+        weeklyThreshold: 40,
+        dailyRate: null,
+        weeklyRate: 1.5,
+        description: 'Overtime after 40 hours per week',
+      },
+      breakRules: {
+        mealAfterHours: 6,
+        mealDuration: 30,
+        mealPaid: false,
+        restBreaks: [],
+        description: '30-minute meal break for shifts over 6 hours',
+      },
+      weeklyHourLimits: null,
+    },
+  ];
+
+  for (const ruleData of workRules) {
+    await prisma.workRule.create({
+      data: ruleData,
+    });
+    console.log(`   ✓ Created work rule: ${ruleData.name} (${ruleData.jurisdiction})`);
+  }
+
+  // Create sample time entries for employee1
+  console.log('⏰ Creating sample time tracking data...');
+
+  const today = new Date();
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setDate(today.getDate() - today.getDay()); // Sunday
+
+  // Create time entries for the past 5 days
+  const timeEntries = [];
+  for (let i = 1; i <= 5; i++) {
+    const entryDate = new Date(thisWeekStart);
+    entryDate.setDate(thisWeekStart.getDate() + i); // Monday-Friday
+
+    const clockIn = new Date(entryDate);
+    clockIn.setHours(9, 0, 0, 0);
+
+    const clockOut = new Date(entryDate);
+    clockOut.setHours(17, 30, 0, 0); // 8.5 hours
+
+    const totalMinutes = Math.round((clockOut - clockIn) / 60000);
+
+    const timeEntry = await prisma.timeEntry.create({
+      data: {
+        entityType: 'employees',
+        entityId: employee1.id,
+        clockInTime: clockIn,
+        clockOutTime: clockOut,
+        timezone: 'America/Vancouver',
+        entryType: 'regular_work',
+        entrySource: 'web_portal',
+        status: i < 3 ? 'approved' : 'submitted', // First 2 approved, rest submitted
+        totalMinutes,
+        createdById: adminUser.id,
+      },
+    });
+
+    // Auto-create meal break (30 min) for each day
+    await prisma.timeBreak.create({
+      data: {
+        timeEntryId: timeEntry.id,
+        startTime: new Date(clockIn.getTime() + 4 * 60 * 60 * 1000), // 4 hours after clock-in
+        endTime: new Date(clockIn.getTime() + 4.5 * 60 * 60 * 1000), // 30 min later
+        breakType: 'meal_break',
+        isPaid: false,
+        isAutoDeducted: true,
+        createdById: adminUser.id,
+      },
+    });
+
+    timeEntries.push(timeEntry);
+  }
+  console.log(`   ✓ Created ${timeEntries.length} time entries with breaks for ${employee1.firstName}`);
+
+  // Create a sample hours adjustment
+  const payPeriodStart = new Date(thisWeekStart);
+  payPeriodStart.setDate(1); // First of month
+  const payPeriodEnd = new Date(payPeriodStart);
+  payPeriodEnd.setDate(15); // 15th of month
+
+  await prisma.hoursAdjustment.create({
+    data: {
+      entityType: 'employees',
+      entityId: employee1.id,
+      payPeriodStart,
+      payPeriodEnd,
+      hours: 2.0,
+      reason: 'Compensatory time off for weekend work',
+      adjustmentType: 'comp_time',
+      isApproved: true,
+      approvedById: adminUser.id,
+      approvedAt: new Date(),
+      createdById: adminUser.id,
+    },
+  });
+  console.log(`   ✓ Created sample hours adjustment for ${employee1.firstName}`);
+
   console.log('');
   console.log('✅ Database seeding completed successfully!');
   console.log('');
@@ -430,6 +609,9 @@ async function main() {
   console.log(`   - Status Transitions: ${transitions.length}`);
   console.log(`   - Roles: ${roles.length}`);
   console.log(`   - Permissions: ${permissions.length}`);
+  console.log(`   - Work Rules: ${workRules.length} (CA-ON, CA-BC, US-CA, US-NY)`);
+  console.log(`   - Time Entries: ${timeEntries.length} with breaks`);
+  console.log(`   - Hours Adjustments: 1`);
   console.log('');
   console.log('🔑 Login Credentials:');
   console.log(`   - Email: admin@example.com`);

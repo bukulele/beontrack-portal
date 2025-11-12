@@ -31,7 +31,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf,.doc,.docx",
-        fields: getMetadataFields("resume", "employee"),
+        fields: getMetadataFields("resume", "employees"),
       },
 
       actions: {
@@ -58,7 +58,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("government_id", "employee"),
+        fields: getMetadataFields("government_id", "employees"),
       },
 
       actions: {
@@ -85,7 +85,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("work_authorization", "employee"),
+        fields: getMetadataFields("work_authorization", "employees"),
       },
 
       actions: {
@@ -112,7 +112,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("immigration_documents", "employee"),
+        fields: getMetadataFields("immigration_documents", "employees"),
       },
 
       actions: {
@@ -139,7 +139,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("education_verification", "employee"),
+        fields: getMetadataFields("education_verification", "employees"),
       },
 
       actions: {
@@ -166,7 +166,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("professional_certifications", "employee"),
+        fields: getMetadataFields("professional_certifications", "employees"),
       },
 
       actions: {
@@ -193,7 +193,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       fileUpload: {
         mode: UPLOAD_MODES.IMMEDIATE,
         accept: "image/*,application/pdf",
-        fields: getMetadataFields("background_check_consent", "employee"),
+        fields: getMetadataFields("background_check_consent", "employees"),
       },
 
       actions: {
