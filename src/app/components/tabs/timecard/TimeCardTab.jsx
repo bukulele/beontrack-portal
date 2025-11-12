@@ -425,6 +425,7 @@ export default function TimeCardTab({ config, entityData }) {
       {/* Time card table */}
       <TimeCardTable
         dayEntries={dayEntries}
+        period={period}
         editState={editState}
         onEditStateChange={setEditState}
         onSave={handleSave}

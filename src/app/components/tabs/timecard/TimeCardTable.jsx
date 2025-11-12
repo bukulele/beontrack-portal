@@ -22,6 +22,7 @@ import { calculatePeriodTotal, formatHours } from './utils';
 
 export default function TimeCardTable({
   dayEntries,
+  period,
   editState,
   onEditStateChange,
   onSave,
@@ -67,6 +68,7 @@ export default function TimeCardTable({
             <TimeCardRow
               key={day.date}
               day={day}
+              period={period}
               editState={editState}
               onEditStateChange={onEditStateChange}
               onSave={onSave}

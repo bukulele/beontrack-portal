@@ -17,6 +17,7 @@ import EmptyCell from './EmptyCell';
 
 export default function TimeCardRow({
   day,
+  period,
   editState,
   onEditStateChange,
   onSave,
@@ -62,6 +63,7 @@ export default function TimeCardRow({
                   entry={entry}
                   field="checkIn"
                   day={day.date}
+                  period={period}
                   isLastEntry={idx === day.entries.length - 1}
                   isEditing={
                     editState.mode === 'editEntry' &&
@@ -116,6 +118,7 @@ export default function TimeCardRow({
                   entry={{ id: null, clockInTime: editState.value || '', clockOutTime: '' }}
                   field="checkIn"
                   day={day.date}
+                  period={period}
                   isLastEntry={false}
                   isEditing={true}
                   onEdit={() => {}}
@@ -142,6 +145,7 @@ export default function TimeCardRow({
               entry={{ id: null, clockInTime: editState.value || '', clockOutTime: '' }}
               field="checkIn"
               day={day.date}
+              period={period}
               isLastEntry={false}
               isEditing={true}
               onEdit={() => {}}
@@ -161,6 +165,7 @@ export default function TimeCardRow({
               <EmptyCell
                 type="in"
                 day={day.date}
+                period={period}
                 hoveredCell={hoveredCell}
                 onHover={onHoverEmptyIn}
                 onClearHover={onClearHover}
@@ -190,6 +195,7 @@ export default function TimeCardRow({
                   entry={entry}
                   field="checkOut"
                   day={day.date}
+                  period={period}
                   isLastEntry={false} // OUT column never shows plus button
                   isEditing={
                     editState.mode === 'editEntry' &&
@@ -236,6 +242,7 @@ export default function TimeCardRow({
                   entry={{ id: null, clockInTime: '', clockOutTime: editState.value || '' }}
                   field="checkOut"
                   day={day.date}
+                  period={period}
                   isLastEntry={false}
                   isEditing={true}
                   onEdit={() => {}}
@@ -262,6 +269,7 @@ export default function TimeCardRow({
               entry={{ id: null, clockInTime: '', clockOutTime: editState.value || '' }}
               field="checkOut"
               day={day.date}
+              period={period}
               isLastEntry={false}
               isEditing={true}
               onEdit={() => {}}
@@ -281,6 +289,7 @@ export default function TimeCardRow({
               <EmptyCell
                 type="out"
                 day={day.date}
+                period={period}
                 hoveredCell={hoveredCell}
                 onHover={onHoverEmptyOut}
                 onClearHover={onClearHover}
@@ -306,6 +315,7 @@ export default function TimeCardRow({
           entries={day.entries}
           config={config}
           day={day.date}
+          period={period}
           canMarkMedical={canMarkMedical}
           isMedical={isMedical}
           onMarkMedical={() =>

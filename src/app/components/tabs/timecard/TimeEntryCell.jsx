@@ -25,7 +25,8 @@ import ActionButtons from './ActionButtons';
 export default function TimeEntryCell({
   entry,
   field, // 'checkIn' | 'checkOut'
-  day,
+  day, // Day number (1-31)
+  period, // {year, month, half} - for prefilling dates
   isLastEntry,
   isEditing,
   onEdit,
@@ -45,8 +46,32 @@ export default function TimeEntryCell({
   const timeField = field === 'checkIn' ? 'clockInTime' : 'clockOutTime';
   const timeValue = entry[timeField];
 
-  // Local state for edit value
-  const [editValue, setEditValue] = useState(timeValue);
+  // Generate default datetime for new entries
+  const getDefaultDateTime = () => {
+    if (!period || !day) return '';
+
+    if (field === 'checkIn') {
+      // Check-in: Default to row date at 8:00 AM
+      const defaultDate = new Date(period.year, period.month, day, 8, 0);
+      return format(defaultDate, "yyyy-MM-dd'T'HH:mm");
+    } else {
+      // Check-out: Default to 8 hours after check-in (or row date at 5:00 PM if no check-in)
+      if (entry.clockInTime) {
+        const checkInDate = new Date(entry.clockInTime);
+        const defaultDate = new Date(checkInDate.getTime() + 8 * 60 * 60 * 1000); // +8 hours
+        return format(defaultDate, "yyyy-MM-dd'T'HH:mm");
+      } else {
+        const defaultDate = new Date(period.year, period.month, day, 17, 0); // 5:00 PM
+        return format(defaultDate, "yyyy-MM-dd'T'HH:mm");
+      }
+    }
+  };
+
+  // Local state for edit value - prefill if empty
+  const [editValue, setEditValue] = useState(() => {
+    if (timeValue) return timeValue;
+    return getDefaultDateTime();
+  });
 
   // Sync editValue with timeValue when it changes (important for new entries)
   useEffect(() => {
