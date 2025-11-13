@@ -86,13 +86,14 @@ function StatusBadge({
     try {
       startLoading();
 
-      const data = new FormData();
-      data.append("status", newStatus);
-      data.append("changed_by", session.user.name);
-
-      const response = await fetch(`/api/upload-${entityType}-data/${entityId}`, {
+      const response = await fetch(`/api/v1/${entityType}/${entityId}`, {
         method: "PATCH",
-        body: data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
       });
 
       if (response.ok) {
@@ -100,7 +101,8 @@ function StatusBadge({
         if (onStatusChange) onStatusChange(newStatus);
       } else {
         stopLoading();
-        console.error("Failed to update status");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to update status:", errorData);
       }
     } catch (error) {
       console.error("Error updating status:", error);
