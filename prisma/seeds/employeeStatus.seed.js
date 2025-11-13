@@ -90,7 +90,7 @@ async function seedEmployeeStatuses() {
     for (const status of EMPLOYEE_STATUSES) {
       const created = await prisma.statusConfig.create({
         data: {
-          entityType: 'employee',
+          entityType: 'employees',
           statusCode: status.code,
           statusLabel: status.label,
           color: status.color,
