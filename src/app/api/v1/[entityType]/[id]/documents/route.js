@@ -107,14 +107,8 @@ export async function GET(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
-    // Authenticate user
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    // TODO: Add permission checking using Better Auth + ABAC
+    // For now, authentication is handled by middleware
 
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;

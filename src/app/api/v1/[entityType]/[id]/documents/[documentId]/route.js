@@ -8,8 +8,6 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
 const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
@@ -20,14 +18,8 @@ const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
  */
 export async function PATCH(request, { params }) {
   try {
-    // Authenticate user (TEMPORARILY DISABLED FOR TESTING)
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
+    // TODO: Add permission checking using Better Auth + ABAC
+    // For now, authentication is handled by middleware
 
     // Next.js 16: params is now a Promise
     const { entityType, id, documentId } = await params;
@@ -144,14 +136,8 @@ export async function PATCH(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
-    // Authenticate user
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    // TODO: Add permission checking using Better Auth + ABAC
+    // For now, authentication is handled by middleware
 
     // Next.js 16: params is now a Promise
     const { entityType, id, documentId } = await params;
