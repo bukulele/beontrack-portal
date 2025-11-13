@@ -55,9 +55,17 @@ export default function useEntityForm({
 
   const schema = generateSchema(formConfig);
 
+  // Sanitize entityData: convert null to empty string for form inputs
+  const sanitizedDefaults = Object.fromEntries(
+    Object.entries(entityData).map(([key, value]) => [
+      key,
+      value === null ? "" : value
+    ])
+  );
+
   const form = useForm({
     resolver: zodResolver(schema),
-    defaultValues: entityData,
+    defaultValues: sanitizedDefaults,
   });
 
   const handleSubmit = form.handleSubmit(async (data) => {
@@ -96,5 +104,6 @@ export default function useEntityForm({
     handleSubmit,
     isLoading,
     error,
+    sanitizedDefaults, // Return sanitized defaults for reset
   };
 }

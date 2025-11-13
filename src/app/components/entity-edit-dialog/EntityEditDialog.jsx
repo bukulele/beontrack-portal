@@ -31,7 +31,7 @@ export function EntityEditDialog({
   formConfig,
   onSuccess,
 }) {
-  const { form, handleSubmit, isLoading, error } = useEntityForm({
+  const { form, handleSubmit, isLoading, error, sanitizedDefaults } = useEntityForm({
     entityType,
     entityData,
     formConfig,
@@ -44,7 +44,7 @@ export function EntityEditDialog({
 
   // Handle dialog close - reset form state when closing without saving
   const handleClose = () => {
-    form.reset(entityData); // Reset form to original server data
+    form.reset(sanitizedDefaults); // Reset form to sanitized data (null -> "")
     onClose();
   };
 
