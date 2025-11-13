@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/components/sidebar/AppSidebar";
 import UniversalCard from "@/app/components/universal-card/UniversalCard";
+import { EntityCreateDialog } from "@/app/components/entity-create-dialog/EntityCreateDialog";
 import { getEntityConfig, isValidEntityType } from "@/config/entities";
 import CustomToolbar from "@/app/components/table/CustomToolbar";
 
@@ -76,6 +77,7 @@ function TablePageContent() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Handle redirect on mount if no entity param
   useEffect(() => {
@@ -119,6 +121,19 @@ function TablePageContent() {
     setCardOpen(false);
     setSelectedId(null);
     // Removed auto-refresh - user can manually refresh via toolbar
+  };
+
+  const handleOpenCreateDialog = () => {
+    setCreateDialogOpen(true);
+  };
+
+  const handleCloseCreateDialog = () => {
+    setCreateDialogOpen(false);
+  };
+
+  const handleCreateSuccess = () => {
+    // Refresh the table after successful creation
+    fetchData();
   };
 
   // Map table columns to DataGrid format
@@ -181,7 +196,7 @@ function TablePageContent() {
                 slotProps={{
                   toolbar: {
                     onRefresh: fetchData,
-                    onAdd: null, // TODO: Add create functionality per entity type
+                    onAdd: entityConfig.createFormConfig ? handleOpenCreateDialog : null,
                   },
                   headerFilterCell: {
                     InputComponentProps: {
@@ -229,6 +244,17 @@ function TablePageContent() {
             </SettingsProvider>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Entity Create Dialog */}
+      {entityConfig.createFormConfig && (
+        <EntityCreateDialog
+          open={createDialogOpen}
+          onClose={handleCloseCreateDialog}
+          entityType={entityType}
+          formConfig={entityConfig.createFormConfig}
+          onSuccess={handleCreateSuccess}
+        />
       )}
     </>
   );

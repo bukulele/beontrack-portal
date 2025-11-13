@@ -28,6 +28,9 @@ import { INCIDENT_CARD_CONFIG } from "@/config/cards/incidentCard.config";
 import { VIOLATION_CARD_CONFIG } from "@/config/cards/violationCard.config";
 import { WCB_CARD_CONFIG } from "@/config/cards/wcbCard.config";
 
+// Form configurations
+import { EMPLOYEE_CREATE_FORM_CONFIG } from "@/config/forms/employeeCreateForm.config";
+
 /**
  * Entity type configurations
  * Each key represents an entity type accessible via URL param: /table?entity={key}
@@ -55,6 +58,7 @@ export const ENTITY_CONFIGS = {
     name: "Office Employees",
     columns: OFFICE_TABLE_FIELDS_SAFETY,
     cardConfig: EMPLOYEE_CARD_CONFIG,
+    createFormConfig: EMPLOYEE_CREATE_FORM_CONFIG,
     apiEndpoint: "/api/v1/employees",
     idField: "id",
     dialogTitle: "Employee Details",
