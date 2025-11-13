@@ -4,7 +4,7 @@
  * Modern configuration-driven menu system for sidebar navigation.
  * Each menu item supports:
  * - URL-based navigation (integrates with unified table page)
- * - Role-based visibility
+ * - Role-based visibility (uses Better Auth database roles)
  * - Icons (Lucide React)
  * - Grouping into sections
  */
@@ -15,6 +15,9 @@
  * Route patterns:
  * - Entity tables: /table?entity={entityType}
  * - Special pages: Direct routes
+ *
+ * Role names match database roles from Better Auth:
+ * - admin, payroll, payrollManager, safety, dispatch, recruiting, planner, shop, hr
  */
 export const MENU_SECTIONS = [
   // ============================================
@@ -30,10 +33,10 @@ export const MENU_SECTIONS = [
         icon: "UserTie",
         route: "/table?entity=employees",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL",
-          "PORTAL_PAYROLL_MANAGER",
-          "PORTAL_HR"
+          "admin",
+          "payroll",
+          "payrollManager",
+          "hr"
         ]
       },
       {
@@ -42,14 +45,14 @@ export const MENU_SECTIONS = [
         icon: "IdCard",
         route: "/table?entity=drivers",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_DISPATCH",
-          "PORTAL_PLANNER",
-          "PORTAL_PAYROLL",
-          "PORTAL_RECRUITING",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP",
-          "PORTAL_HR"
+          "admin",
+          "dispatch",
+          "planner",
+          "payroll",
+          "recruiting",
+          "safety",
+          "shop",
+          "hr"
         ]
       },
       {
@@ -58,11 +61,11 @@ export const MENU_SECTIONS = [
         icon: "FileText",
         route: "/all-drivers-data",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL",
-          "PORTAL_RECRUITING",
-          "PORTAL_SAFETY",
-          "PORTAL_HR"
+          "admin",
+          "payroll",
+          "recruiting",
+          "safety",
+          "hr"
         ],
         hasIndicator: true,
       },
@@ -72,8 +75,8 @@ export const MENU_SECTIONS = [
         icon: "CalendarX",
         route: "/expiring-driver-docs",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -82,8 +85,8 @@ export const MENU_SECTIONS = [
         icon: "FileWarning",
         route: "/table?entity=wcb",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -92,8 +95,8 @@ export const MENU_SECTIONS = [
         icon: "AlertTriangle",
         route: "/table?entity=incidents",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
     ]
@@ -112,10 +115,10 @@ export const MENU_SECTIONS = [
         icon: "Truck",
         route: "/equipment-production", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP",
-          "PORTAL_PLANNER"
+          "admin",
+          "safety",
+          "shop",
+          "planner"
         ]
       },
       {
@@ -124,8 +127,8 @@ export const MENU_SECTIONS = [
         icon: "FileText",
         route: "/equipment-reports", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
       {
@@ -134,9 +137,9 @@ export const MENU_SECTIONS = [
         icon: "CarCrash",
         route: "/equipment-accidents", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP"
+          "admin",
+          "safety",
+          "shop"
         ]
       },
       {
@@ -145,8 +148,8 @@ export const MENU_SECTIONS = [
         icon: "AlertCircle",
         route: "/equipment-issues", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
       {
@@ -155,8 +158,8 @@ export const MENU_SECTIONS = [
         icon: "Wrench",
         route: "/equipment-service-orders", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
     ]
@@ -175,8 +178,8 @@ export const MENU_SECTIONS = [
         icon: "Building2",
         route: "/suppliers", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
       {
@@ -185,8 +188,8 @@ export const MENU_SECTIONS = [
         icon: "ShoppingCart",
         route: "/suppliers/purchase-orders", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
       {
@@ -195,8 +198,8 @@ export const MENU_SECTIONS = [
         icon: "PackageCheck",
         route: "/suppliers/deliveries", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
       {
@@ -205,8 +208,8 @@ export const MENU_SECTIONS = [
         icon: "Receipt",
         route: "/suppliers/invoices", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL"
+          "admin",
+          "payroll"
         ]
       },
       {
@@ -215,8 +218,8 @@ export const MENU_SECTIONS = [
         icon: "DollarSign",
         route: "/suppliers/payments", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL"
+          "admin",
+          "payroll"
         ]
       },
       {
@@ -225,7 +228,7 @@ export const MENU_SECTIONS = [
         icon: "TrendingUp",
         route: "/suppliers/performance", // Placeholder route
         roles: [
-          "PORTAL_ADMIN"
+          "admin"
         ]
       },
       {
@@ -234,7 +237,7 @@ export const MENU_SECTIONS = [
         icon: "FileSignature",
         route: "/suppliers/contracts", // Placeholder route
         roles: [
-          "PORTAL_ADMIN"
+          "admin"
         ]
       },
       {
@@ -243,8 +246,8 @@ export const MENU_SECTIONS = [
         icon: "AlertOctagon",
         route: "/suppliers/quality-issues", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SHOP"
+          "admin",
+          "shop"
         ]
       },
       {
@@ -253,7 +256,7 @@ export const MENU_SECTIONS = [
         icon: "CalendarX",
         route: "/suppliers/expiring-docs", // Placeholder route
         roles: [
-          "PORTAL_ADMIN"
+          "admin"
         ]
       },
     ]
@@ -272,8 +275,8 @@ export const MENU_SECTIONS = [
         icon: "Users",
         route: "/customers", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PLANNER"
+          "admin",
+          "planner"
         ]
       },
       {
@@ -282,9 +285,9 @@ export const MENU_SECTIONS = [
         icon: "Package",
         route: "/customers/orders", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PLANNER",
-          "PORTAL_DISPATCH"
+          "admin",
+          "planner",
+          "dispatch"
         ]
       },
       {
@@ -293,8 +296,8 @@ export const MENU_SECTIONS = [
         icon: "ShieldAlert",
         route: "/customers/claims", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -303,8 +306,8 @@ export const MENU_SECTIONS = [
         icon: "Calculator",
         route: "/customers/quotes", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PLANNER"
+          "admin",
+          "planner"
         ]
       },
       {
@@ -313,8 +316,8 @@ export const MENU_SECTIONS = [
         icon: "Receipt",
         route: "/customers/invoices", // Placeholder route
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL"
+          "admin",
+          "payroll"
         ]
       },
     ]
@@ -333,11 +336,11 @@ export const MENU_SECTIONS = [
         icon: "Paperclip",
         route: "/table?entity=recruiting",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL",
-          "PORTAL_RECRUITING",
-          "PORTAL_SAFETY",
-          "PORTAL_HR"
+          "admin",
+          "payroll",
+          "recruiting",
+          "safety",
+          "hr"
         ]
       },
       {
@@ -346,14 +349,14 @@ export const MENU_SECTIONS = [
         icon: "IdCard",
         route: "/table?entity=drivers",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_DISPATCH",
-          "PORTAL_PLANNER",
-          "PORTAL_PAYROLL",
-          "PORTAL_RECRUITING",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP",
-          "PORTAL_HR"
+          "admin",
+          "dispatch",
+          "planner",
+          "payroll",
+          "recruiting",
+          "safety",
+          "shop",
+          "hr"
         ]
       },
       {
@@ -362,10 +365,10 @@ export const MENU_SECTIONS = [
         icon: "Truck",
         route: "/table?entity=trucks",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP",
-          "PORTAL_PLANNER"
+          "admin",
+          "safety",
+          "shop",
+          "planner"
         ]
       },
       {
@@ -374,9 +377,9 @@ export const MENU_SECTIONS = [
         icon: "Container",
         route: "/table?entity=equipment",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP"
+          "admin",
+          "safety",
+          "shop"
         ]
       },
       {
@@ -385,10 +388,10 @@ export const MENU_SECTIONS = [
         icon: "UserTie",
         route: "/table?entity=employees",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL",
-          "PORTAL_PAYROLL_MANAGER",
-          "PORTAL_HR"
+          "admin",
+          "payroll",
+          "payrollManager",
+          "hr"
         ]
       },
       {
@@ -397,9 +400,9 @@ export const MENU_SECTIONS = [
         icon: "Flag",
         route: "/table?entity=driver-reports",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY",
-          "PORTAL_SHOP"
+          "admin",
+          "safety",
+          "shop"
         ]
       },
       {
@@ -408,8 +411,8 @@ export const MENU_SECTIONS = [
         icon: "CarBurst",
         route: "/table?entity=incidents",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -418,8 +421,8 @@ export const MENU_SECTIONS = [
         icon: "ClipboardList",
         route: "/table?entity=violations",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -428,8 +431,8 @@ export const MENU_SECTIONS = [
         icon: "FileWarning",
         route: "/table?entity=wcb",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -438,8 +441,8 @@ export const MENU_SECTIONS = [
         icon: "CalendarX",
         route: "/expiring-driver-docs",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -448,11 +451,11 @@ export const MENU_SECTIONS = [
         icon: "Microscope",
         route: "/all-drivers-data",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PAYROLL",
-          "PORTAL_RECRUITING",
-          "PORTAL_SAFETY",
-          "PORTAL_HR"
+          "admin",
+          "payroll",
+          "recruiting",
+          "safety",
+          "hr"
         ],
         hasIndicator: true,
       },
@@ -462,9 +465,9 @@ export const MENU_SECTIONS = [
         icon: "Tag",
         route: "/seals-report",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PLANNER",
-          "PORTAL_SAFETY"
+          "admin",
+          "planner",
+          "safety"
         ]
       },
       {
@@ -473,8 +476,8 @@ export const MENU_SECTIONS = [
         icon: "Fuel",
         route: "/fuel-report",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_SAFETY"
+          "admin",
+          "safety"
         ]
       },
       {
@@ -483,9 +486,9 @@ export const MENU_SECTIONS = [
         icon: "Users",
         route: "/dispatch-availability",
         roles: [
-          "PORTAL_ADMIN",
-          "PORTAL_PLANNER",
-          "PORTAL_SAFETY"
+          "admin",
+          "planner",
+          "safety"
         ]
       },
     ]
@@ -493,24 +496,8 @@ export const MENU_SECTIONS = [
 ];
 
 /**
- * Role ID mapping - maps role names to actual Azure AD role IDs from environment
- * This needs to be a static object because Next.js replaces process.env at build time
- */
-const ROLE_IDS = {
-  PORTAL_DISPATCH: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_DISPATCH,
-  PORTAL_SAFETY: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_SAFETY,
-  PORTAL_RECRUITING: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_RECRUITING,
-  PORTAL_PAYROLL: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PAYROLL,
-  PORTAL_PAYROLL_MANAGER: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PAYROLL_MANAGER,
-  PORTAL_PLANNER: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_PLANNER,
-  PORTAL_SHOP: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_SHOP,
-  PORTAL_ADMIN: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_ADMIN,
-  PORTAL_HR: process.env.NEXT_PUBLIC_AZURE_ROLE_PORTAL_HR,
-};
-
-/**
  * Get menu items visible to user based on their roles
- * @param {string[]} userRoles - Array of user role IDs (from Azure AD)
+ * @param {string[]} userRoles - Array of user role names from Better Auth (e.g., ['admin', 'payroll'])
  * @returns {object[]} Filtered menu sections with visible items
  */
 export const getVisibleMenuSections = (userRoles) => {
@@ -522,10 +509,8 @@ export const getVisibleMenuSections = (userRoles) => {
     ...section,
     items: section.items.filter(item => {
       // Check if user has any of the required roles
-      return item.roles.some(requiredRole => {
-        const roleId = ROLE_IDS[requiredRole];
-        return roleId && userRoles.includes(roleId);
-      });
+      // Direct role name matching (no Azure AD lookup needed)
+      return item.roles.some(requiredRole => userRoles.includes(requiredRole));
     })
   })).filter(section => section.items.length > 0); // Remove empty sections
 };

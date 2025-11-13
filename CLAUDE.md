@@ -18,7 +18,8 @@ This is a Next.js 16 application serving as an office management system for 4Tra
 - **Backend**: Prisma ORM with PostgreSQL database
 - **Database**: PostgreSQL 16 (local via Homebrew)
 - **Styling**: Tailwind CSS with dark mode support
-- **Authentication**: NextAuth.js with Azure AD integration (currently disabled for testing)
+- **Authentication**: Better Auth with email/password authentication
+- **Authorization**: ABAC (Attribute-Based Access Control) with RBAC foundation
 - **UI Components**: shadcn/ui (Radix UI primitives), Material-UI (MUI) for legacy components
 - **Data Tables**: MUI DataGrid and custom table components
 - **Maps**: Leaflet with React Leaflet
@@ -27,9 +28,61 @@ This is a Next.js 16 application serving as an office management system for 4Tra
 ### Application Structure
 
 #### Authentication & Authorization
-- Role-based access control with 8 distinct roles: dispatch, safety, recruiting, payroll, payrollManager, planner, shop, admin, portalHr
-- API routes are secured via middleware (`src/middleware.js`) using role mappings defined in `src/apiMappingMiddleware.js`
-- Azure AD integration for SSO
+
+**Authentication System: Better Auth**
+- Email/password authentication (no Azure AD)
+- Session management with 7-day sessions
+- Custom session plugin enriches user object with roles and permissions
+- Session includes: user info, roles array, permissions array, ABAC attributes (department, location)
+
+**Authorization System: ABAC (Attribute-Based Access Control)**
+
+The app uses a sophisticated 4-level permission system:
+
+1. **Entity-level**: Control access to resource types (employees, trucks, drivers, etc.)
+2. **Action-level**: Define allowed operations (create, read, update, delete)
+3. **Field-level**: Restrict specific fields via JSON (allowed/denied lists)
+4. **Record-level**: Filter records using ABAC conditions based on user attributes
+
+**9 Roles with Different Permission Levels:**
+- `admin` - Full system access (superuser)
+- `payroll` - View/edit employee payroll info (limited fields)
+- `payrollManager` - Full payroll access
+- `safety` - Read-only employee info (limited fields)
+- `dispatch` - Read employee info (limited fields)
+- `recruiting` - Manage applicants (status-based conditions)
+- `planner` - Read employee info (limited fields)
+- `shop` - Very limited employee info (name, ID only)
+- `hr` - Full employee management
+
+**Database Schema (ABAC Models):**
+- `User` - Users with ABAC attributes (department, location, isSuperuser)
+- `Role` - Role definitions (name, description, isActive)
+- `UserRole` - Many-to-many junction table (User ↔ Role)
+- `Permission` - Role permissions with entityType, actions[], fields (JSON), conditions (JSON)
+
+**Permission Checking:**
+- Server-side: `PermissionChecker` class in `src/lib/permissions/permission-checker.js`
+- Client-side: React hooks in `src/lib/permissions/hooks.js`
+  - `usePermission(entityType, action)` - Check single permission
+  - `usePermissions(entityType)` - Get all CRUD permissions
+  - `useFieldPermission(entityType, fieldName)` - Check field access
+  - `useCurrentUser()` - Get current user with roles/permissions
+  - `useRole(roles)` - Check if user has role(s)
+
+**ABAC Condition Examples:**
+```javascript
+// Only records where department matches user's department
+{ "department": { "eq": "${user.department}" } }
+
+// Only applicants in recruiting statuses
+{ "status": { "in": ["new", "application_received", "under_review"] } }
+
+// Only own records
+{ "createdById": { "eq": "${user.id}" } }
+```
+
+**Supported ABAC Operators:** eq, ne, in, notIn, gt, lt, gte, lte, contains
 
 #### Core Entities
 - **Drivers**: Full lifecycle management from recruiting to active employment
@@ -90,13 +143,14 @@ This is a Next.js 16 application serving as an office management system for 4Tra
   - `src/config/forms/`: Form configurations
   - `src/config/menu.config.js`: Sidebar navigation menu configuration with role-based visibility
 - `src/components/ui/`: shadcn/ui components
-- `src/middleware.js`: Authentication and authorization middleware
-- `src/apiMappingMiddleware.js`: Role-based API access control
+- `src/lib/auth.js`: Better Auth server configuration with custom session plugin
+- `src/lib/auth-client.js`: Better Auth client configuration for React components
+- `src/lib/permissions/`: Permission system (policy-engine, permission-checker, hooks)
 
 #### State Management
-- React Context for global state (LoaderContext, NextAuthProvider)
+- React Context for global state (LoaderContext, SettingsContext, EmployeeContext)
 - MUI LocalizationProvider for date/time handling
-- Session management via NextAuth
+- Session management via Better Auth with custom session enrichment
 
 #### API Architecture
 - **Universal API Pattern**: Dynamic entity-type routing using `[entityType]` parameters
@@ -106,20 +160,22 @@ This is a Next.js 16 application serving as an office management system for 4Tra
   - Activity logs: `/api/v1/[entityType]/[id]/activity`
   - Activity history: `/api/v1/[entityType]/[id]/activity-history`
   - File serving: `/api/v1/files/[...path]`
+  - Auth endpoints: `/api/auth/[...all]` (Better Auth handles all auth routes)
 - **Entity Type Naming**: Plural form (e.g., `employees`, `trucks`, `drivers`)
 - **Database Pattern**: Generic `entityType + entityId` fields instead of specific foreign keys
 - **RESTful Design**: Standard HTTP methods (GET, POST, PATCH, DELETE)
-- **Authentication**: Currently disabled for testing (will be re-enabled in production)
+- **Authentication**: Better Auth with email/password, session-based
+- **Authorization**: Server-side permission checking via `PermissionChecker` class
 - **File Uploads**: Real files saved to `uploads/{entityType}/{uuid}/{documentType}/{filename}`
 - **Activity Tracking**: Automatic field-level change logging on updates
 - **Status Management**: Database-driven status configurations with state transitions
 
 #### Development Notes
-- The application uses environment variables for Azure role IDs in the API mapping
 - Supports both light and dark themes
 - Responsive design with special 4K display support for shop dashboards
 - Extensive logging and activity history tracking
 - Multi-language date/time support with timezone handling
+- Default admin user: `admin@example.com` / `admin123` (created via seed script)
 
 #### UI Component Guidelines
 - **shadcn/ui components**: Primary UI library for new components

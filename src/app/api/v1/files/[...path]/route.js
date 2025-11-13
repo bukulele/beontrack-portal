@@ -7,8 +7,6 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getAbsolutePath, fileExists, getMimeTypeFromExtension } from '@/lib/fileUpload';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -16,18 +14,14 @@ import path from 'path';
 /**
  * GET /api/v1/files/[...path]
  * Stream a file from the uploads directory
+ *
+ * Note: Authentication is handled by Better Auth middleware
+ * File-level permissions should be checked based on user roles
  */
 export async function GET(request, { params }) {
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
+    // TODO: Add file-level permission checking using Better Auth session
+    // For now, files are accessible if user is authenticated (handled by middleware)
 
     // Next.js 16: params is now a Promise
     const { path: pathSegments } = await params;

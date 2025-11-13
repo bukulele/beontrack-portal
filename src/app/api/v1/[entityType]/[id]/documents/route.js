@@ -9,10 +9,9 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { saveUploadedFile } from '@/lib/fileUpload';
+import { auth } from '@/lib/auth';
 
 // Supported entity types
 const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
@@ -31,15 +30,8 @@ const ENTITY_MODELS = {
  */
 export async function GET(request, { params }) {
   try {
-    // Authenticate user
-    // TEMPORARILY DISABLED FOR TESTING
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
+    // TODO: Add permission checking using Better Auth + ABAC
+    // For now, authentication is handled by middleware
 
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;
