@@ -273,8 +273,16 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
     },
   ],
 
-  // No completion action
-  completionAction: null,
+  // Completion action - What happens when checklist is 100% complete
+  completionAction: {
+    checklistName: 'Onboarding Checklist',
+    nextStatuses: [
+      { value: 'trainee', label: 'Start as Trainee' },
+      { value: 'active', label: 'Activate Employee' }
+    ],
+    // What status transitions require this checklist to be complete?
+    gates: ['offer_accepted → trainee', 'offer_accepted → active']
+  },
 };
 
 export default EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG;

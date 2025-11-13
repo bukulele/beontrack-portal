@@ -21,10 +21,12 @@ datasource db {
 enum EmployeeStatus {
   // Recruiting Phase
   new
-  application_received
   under_review
   application_on_hold
   rejected
+
+  // Transition Phase
+  offer_accepted
 
   // Employment Phase
   trainee

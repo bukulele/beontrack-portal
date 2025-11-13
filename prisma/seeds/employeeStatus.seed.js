@@ -15,10 +15,12 @@ const prisma = new PrismaClient();
 const EMPLOYEE_STATUSES = [
   // Recruiting Phase
   { code: 'new', label: 'New', color: '#94A3B8', order: 1 },
-  { code: 'application_received', label: 'Application Received', color: '#60A5FA', order: 2 },
-  { code: 'under_review', label: 'Under Review', color: '#FBBF24', order: 3 },
-  { code: 'application_on_hold', label: 'Application On Hold', color: '#F59E0B', order: 4 },
-  { code: 'rejected', label: 'Rejected', color: '#EF4444', order: 5 },
+  { code: 'under_review', label: 'Under Review', color: '#FBBF24', order: 2 },
+  { code: 'application_on_hold', label: 'Application On Hold', color: '#F59E0B', order: 3 },
+  { code: 'rejected', label: 'Rejected', color: '#EF4444', order: 4 },
+
+  // Transition Phase
+  { code: 'offer_accepted', label: 'Offer Accepted', color: '#10B981', order: 5 },
 
   // Employment Phase
   { code: 'trainee', label: 'Trainee', color: '#3B82F6', order: 6 },
@@ -38,15 +40,18 @@ const EMPLOYEE_STATUSES = [
 // Employee status transitions (from -> to)
 const EMPLOYEE_TRANSITIONS = [
   // Recruiting phase transitions
-  ['new', 'application_received'],
+  ['new', 'under_review'],
   ['new', 'rejected'],
-  ['application_received', 'under_review'],
-  ['application_received', 'rejected'],
   ['under_review', 'application_on_hold'],
   ['under_review', 'rejected'],
-  ['under_review', 'trainee'],
+  ['under_review', 'offer_accepted'],
   ['application_on_hold', 'under_review'],
   ['application_on_hold', 'rejected'],
+
+  // Transition phase
+  ['offer_accepted', 'trainee'],
+  ['offer_accepted', 'active'],
+  ['offer_accepted', 'rejected'],
 
   // Employment phase transitions
   ['trainee', 'active'],

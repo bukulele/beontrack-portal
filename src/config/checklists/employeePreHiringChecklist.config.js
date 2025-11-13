@@ -231,8 +231,15 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
     },
   ],
 
-  // No completion action
-  completionAction: null,
+  // Completion action - What happens when checklist is 100% complete
+  completionAction: {
+    checklistName: 'Pre-Hiring Checklist',
+    nextStatuses: [
+      { value: 'offer_accepted', label: 'Move to Offer Accepted' }
+    ],
+    // What status transitions require this checklist to be complete?
+    gates: ['under_review → offer_accepted']
+  },
 };
 
 export default EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG;

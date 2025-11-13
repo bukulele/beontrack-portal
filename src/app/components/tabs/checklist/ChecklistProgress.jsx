@@ -24,11 +24,11 @@ function ChecklistProgress({ checked, total, allChecked }) {
           {allChecked ? (
             <span className="flex items-center gap-2 text-green-600">
               <FontAwesomeIcon icon={faCheckCircle} />
-              All items reviewed
+              All required items reviewed
             </span>
           ) : (
             <span>
-              Progress: {checked} / {total} reviewed
+              Progress: {checked} / {total} required items reviewed
             </span>
           )}
         </div>

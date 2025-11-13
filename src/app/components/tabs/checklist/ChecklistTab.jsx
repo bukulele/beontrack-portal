@@ -15,6 +15,7 @@ import CompactDataRow from "./CompactDataRow";
 import CompactFileRow from "./CompactFileRow";
 import CompactModalRow from "./CompactModalRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
+import { useLoader } from "@/app/context/LoaderContext";
 
 /**
  * ChecklistTab - Universal checklist tab component
@@ -41,7 +42,7 @@ function ChecklistTab({
 }) {
   const [allChecked, setAllChecked] = useState(false);
   const [progress, setProgress] = useState({ checked: 0, total: 0 });
-  const [validationError, setValidationError] = useState(null);
+  const { startLoading, stopLoading } = useLoader();
 
   // Calculate progress whenever entity data changes
   useEffect(() => {
@@ -75,17 +76,6 @@ function ChecklistTab({
     setProgress({ checked: checkedCount, total: totalCount });
     setAllChecked(checkedCount === totalCount && totalCount > 0);
   }, [entityData, config]);
-
-  // Run validation when allChecked or entityData changes
-  useEffect(() => {
-    if (!config?.completionAction?.validation) {
-      setValidationError(null);
-      return;
-    }
-
-    const error = config.completionAction.validation(entityData, allChecked);
-    setValidationError(error);
-  }, [entityData, allChecked, config]);
 
   if (!entityData || !config?.items) {
     return (
@@ -197,56 +187,23 @@ function ChecklistTab({
       </ScrollArea>
 
       {/* Action buttons footer */}
-      {(config.statusActions || config.completionAction) && (
+      {config.completionAction && (
         <div className="p-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex gap-3 justify-between items-center flex-wrap">
-                {/* Validation error alert */}
-                {validationError && (
-                  <Alert variant="destructive" className="flex-1 py-2">
-                    <AlertDescription>{validationError}</AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex gap-3 items-center flex-wrap">
-                  {/* Status action buttons */}
-                  {config.statusActions?.map((action) => {
-                    // Check if action should be available
-                    if (action.availableWhen && !action.availableWhen(entityData)) {
-                      return null;
-                    }
-
-                    // Get validation error if any
-                    const actionError = action.validation
-                      ? action.validation(entityData, allChecked)
-                      : null;
-
-                    return (
-                      <Button
-                        key={action.label}
-                        variant="outline"
-                        disabled={!!actionError}
-                        title={actionError || ""}
-                        onClick={() => handleStatusAction(action)}
-                      >
-                        {action.label}
-                      </Button>
-                    );
-                  })}
-
-                  {/* Completion action button */}
-                  {config.completionAction && (
-                    <Button
-                      variant="default"
-                      disabled={!allChecked || !!validationError}
-                      title={validationError || ""}
-                      onClick={() => handleCompletionAction(config.completionAction)}
-                    >
-                      {config.completionAction.label}
-                    </Button>
-                  )}
-                </div>
+              <div className="flex gap-3 justify-end items-center flex-wrap">
+                {/* Completion action buttons - Support multiple status transitions */}
+                {config.completionAction?.nextStatuses?.map((statusOption) => (
+                  <Button
+                    key={statusOption.value}
+                    variant="outline"
+                    disabled={!allChecked}
+                    title={!allChecked ? "Complete all required items first" : ""}
+                    onClick={() => handleStatusChange(statusOption.value)}
+                  >
+                    {statusOption.label}
+                  </Button>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -255,16 +212,35 @@ function ChecklistTab({
     </div>
   );
 
-  // Handler for status action buttons
-  async function handleStatusAction(action) {
-    // TODO: Implement status change logic
-    console.log("Status action:", action);
-  }
+  // Handler for status change from completion action buttons
+  async function handleStatusChange(newStatus) {
+    try {
+      startLoading();
 
-  // Handler for completion action
-  async function handleCompletionAction(action) {
-    // TODO: Implement completion action logic
-    console.log("Completion action:", action);
+      const response = await fetch(`/api/v1/${entityType}/${entityId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
+
+      if (response.ok) {
+        // Reload entity data to reflect new status
+        await loadData();
+      } else {
+        stopLoading();
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to update status:", errorData);
+        alert(`Failed to update status: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      stopLoading();
+      alert('Error updating status. Please try again.');
+    }
   }
 }
 
