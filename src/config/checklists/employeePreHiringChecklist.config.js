@@ -219,7 +219,7 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
       modalComponent: ActivityHistoryModal,
 
       actions: {
-        checkable: false,
+        checkable: true,
         uploadable: false,
         editable: false,
         deletable: false,

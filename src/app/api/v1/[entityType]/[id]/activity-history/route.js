@@ -58,6 +58,16 @@ export async function GET(request, { params }) {
         employeeId: id,
         isDeleted: false,
       },
+      include: {
+        reviewedBy: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
       orderBy: [
         { startDate: 'desc' },
         { createdAt: 'desc' },

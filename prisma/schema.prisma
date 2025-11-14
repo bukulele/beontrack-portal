@@ -194,6 +194,7 @@ model User {
   employeesUpdated        OfficeEmployee[] @relation("EmployeeUpdatedBy")
   documentsUploaded       Document[]       @relation("DocumentUploadedBy")
   documentsReviewed       Document[]       @relation("DocumentReviewedBy")
+  activityHistoryReviewed ActivityHistory[] @relation("ActivityHistoryReviewedBy")
   activityLogsPerformed   ActivityLog[]    @relation("ActivityLogPerformedBy")
 
   // Time tracking relations
@@ -339,6 +340,12 @@ model ActivityHistory {
   roleOrPosition     String?         @map("role_or_position") @db.VarChar(255)
   location           String?         @db.VarChar(255)
   emailAddress       String?         @map("email_address") @db.VarChar(254)
+
+  // Review tracking (for checklists)
+  wasReviewed        Boolean         @default(false) @map("was_reviewed")
+  reviewedBy         User?           @relation("ActivityHistoryReviewedBy", fields: [reviewedById], references: [id])
+  reviewedById       String?         @map("reviewed_by_id") @db.Uuid
+  reviewedAt         DateTime?       @map("reviewed_at") @db.Timestamptz(6)
 
   // Audit
   createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)

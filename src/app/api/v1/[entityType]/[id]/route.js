@@ -74,6 +74,16 @@ export async function GET(request, { params }) {
         },
         activityHistory: {
           where: { isDeleted: false },
+          include: {
+            reviewedBy: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
           orderBy: [
             { startDate: 'desc' },
             { createdAt: 'desc' },
