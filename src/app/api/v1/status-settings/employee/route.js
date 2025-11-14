@@ -10,11 +10,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Simple in-memory cache (5 minute TTL)
-let cache = null;
-let cacheTime = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -24,13 +19,7 @@ export const revalidate = 0;
  */
 export async function GET() {
   try {
-    // Check cache
-    const now = Date.now();
-    if (cache && cacheTime && (now - cacheTime) < CACHE_TTL) {
-      return NextResponse.json(cache);
-    }
-
-    // Fetch status configs with transitions
+    // Fetch status configs with transitions (no caching to avoid stale data)
     const statusConfigs = await prisma.statusConfig.findMany({
       where: {
         entityType: 'employees',
@@ -71,10 +60,6 @@ export async function GET() {
       status_colors,
       status_transitions,
     };
-
-    // Update cache
-    cache = response;
-    cacheTime = now;
 
     return NextResponse.json(response);
 

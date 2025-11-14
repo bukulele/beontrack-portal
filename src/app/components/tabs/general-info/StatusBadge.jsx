@@ -18,16 +18,16 @@ import { SettingsContext } from "@/app/context/SettingsContext";
  * Displays entity status as a colored badge. Can be clicked to change status
  * (filtered by allowed transitions from settings).
  *
+ * Gets status choices dynamically from statusSettings context (database-driven).
+ *
  * @param {string} currentStatus - Current status code
- * @param {Object} statusChoices - All status options {code: label}
- * @param {string} entityType - Entity type (truck, driver, etc.)
- * @param {number} entityId - Entity ID
+ * @param {string} entityType - Entity type (employees, trucks, drivers, etc.)
+ * @param {string} entityId - Entity ID
  * @param {Function} onStatusChange - Callback after successful change
  * @param {boolean} editable - Can change status (default true)
  */
 function StatusBadge({
   currentStatus,
-  statusChoices,
   entityType,
   entityId,
   onStatusChange,
@@ -36,6 +36,7 @@ function StatusBadge({
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [allowedStatuses, setAllowedStatuses] = useState({});
   const [statusColor, setStatusColor] = useState("");
+  const [statusLabel, setStatusLabel] = useState("");
 
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
@@ -46,12 +47,23 @@ function StatusBadge({
     setSelectedStatus(currentStatus);
   }, [currentStatus]);
 
-  // Calculate allowed statuses and color
+  // Calculate allowed statuses, labels, and color from statusSettings (database-driven)
   useEffect(() => {
     if (!statusSettings || !currentStatus) return;
 
     const entitySettings = statusSettings[entityType];
     if (!entitySettings) return;
+
+    // Build statusChoices map from status_colors (database)
+    const allStatusChoices = {};
+    entitySettings.status_colors?.forEach((item) => {
+      // Convert status code to readable label (capitalize and replace underscores)
+      const label = item.status
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      allStatusChoices[item.status] = label;
+    });
 
     // Get allowed status transitions
     const allowedList = [];
@@ -61,21 +73,24 @@ function StatusBadge({
       }
     });
 
-    // Filter status choices
+    // Filter to only allowed transitions (plus current status)
     const filtered = {};
-    for (const [key, label] of Object.entries(statusChoices)) {
+    for (const [key, label] of Object.entries(allStatusChoices)) {
       if (allowedList.includes(key) || key === currentStatus) {
         filtered[key] = label;
       }
     }
     setAllowedStatuses(filtered);
 
+    // Set current status label
+    setStatusLabel(allStatusChoices[currentStatus] || currentStatus);
+
     // Get status color
     const colorConfig = entitySettings.status_colors?.find(
       (item) => item.status === currentStatus
     );
     setStatusColor(colorConfig?.color || "#6B7280"); // Default gray
-  }, [statusSettings, currentStatus, entityType, statusChoices]);
+  }, [statusSettings, currentStatus, entityType]);
 
   // Handle status change
   const handleStatusChange = async (newStatus) => {
@@ -117,7 +132,7 @@ function StatusBadge({
           className="text-white hover:opacity-80 cursor-pointer"
           style={{ backgroundColor: statusColor }}
         >
-          {statusChoices[currentStatus] || currentStatus}
+          {statusLabel || currentStatus}
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent>

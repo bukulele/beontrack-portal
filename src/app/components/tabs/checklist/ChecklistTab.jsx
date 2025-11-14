@@ -191,19 +191,28 @@ function ChecklistTab({
         <div className="p-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex gap-3 justify-end items-center flex-wrap">
+              <div className="flex gap-4 justify-between items-center flex-wrap">
+                {/* Helper message when buttons are disabled */}
+                {!allChecked && (
+                  <div className="text-sm text-red-600 dark:text-red-400">
+                    Complete and review all required documents to enable status transitions
+                  </div>
+                )}
+
                 {/* Completion action buttons - Support multiple status transitions */}
-                {config.completionAction?.nextStatuses?.map((statusOption) => (
-                  <Button
-                    key={statusOption.value}
-                    variant="outline"
-                    disabled={!allChecked}
-                    title={!allChecked ? "Complete all required items first" : ""}
-                    onClick={() => handleStatusChange(statusOption.value)}
-                  >
-                    {statusOption.label}
-                  </Button>
-                ))}
+                <div className="flex gap-3 items-center flex-wrap ml-auto">
+                  {config.completionAction?.nextStatuses?.map((statusOption) => (
+                    <Button
+                      key={statusOption.value}
+                      variant="outline"
+                      disabled={!allChecked}
+                      title={!allChecked ? "Complete all required items first" : ""}
+                      onClick={() => handleStatusChange(statusOption.value)}
+                    >
+                      {statusOption.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>

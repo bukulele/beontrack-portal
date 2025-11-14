@@ -3,28 +3,27 @@ import {
   STATUS_CHOICES,
 } from "@/app/assets/tableData";
 
-// Employee Status Enum mapping (from Prisma schema)
-const EMPLOYEE_STATUS_CHOICES = {
-  new: "New",
-  application_received: "Application Received",
-  under_review: "Under Review",
-  application_on_hold: "On Hold",
-  rejected: "Rejected",
-  trainee: "Trainee",
-  active: "Active",
-  resigned: "Resigned",
-  vacation: "Vacation",
-  on_leave: "On Leave",
-  wcb: "WCB",
-  terminated: "Terminated",
-  suspended: "Suspended",
+/**
+ * Format status code to readable label
+ * Capitalizes words and replaces underscores with spaces
+ */
+const formatStatusLabel = (statusCode) => {
+  if (!statusCode) return "N/A";
+  return statusCode
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
-// Employment Type Enum mapping
-const EMPLOYMENT_TYPE_CHOICES = {
-  full_time: "Full Time",
-  part_time: "Part Time",
-  contract: "Contract",
+/**
+ * Format employment type code to readable label
+ */
+const formatEmploymentType = (typeCode) => {
+  if (!typeCode) return "N/A";
+  return typeCode
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 export const OFFICE_TABLE_FIELDS_SAFETY = [
@@ -52,7 +51,7 @@ export const OFFICE_TABLE_FIELDS_SAFETY = [
     field: "status",
     headerName: "Status",
     width: 150,
-    valueGetter: (value) => EMPLOYEE_STATUS_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => formatStatusLabel(value),
   },
   {
     field: "phoneNumber",
@@ -90,7 +89,7 @@ export const OFFICE_TABLE_FIELDS_SAFETY = [
     field: "employmentType",
     headerName: "Employment Type",
     width: 150,
-    valueGetter: (value) => EMPLOYMENT_TYPE_CHOICES[value] || value || "N/A",
+    valueGetter: (value) => formatEmploymentType(value),
   },
   {
     field: "officeLocation",

@@ -197,27 +197,26 @@ export async function POST(request, { params }) {
       }
     }
 
-    // WORKAROUND: Find or create user for document ownership
-    // TODO: Proper fix needed:
-    //   1. Add user.id to session in auth callback
-    //   2. OR make uploadedById optional in schema
-    //   3. OR fail if user not found (proper production approach)
-    // Current: Auto-create user for development (NOT production-ready)
+    // Get current user session
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Find user by email
     let user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
 
     if (!user) {
-      console.warn('[DEV WORKAROUND] Auto-creating user for:', session.user.email);
-      user = await prisma.user.create({
-        data: {
-          email: session.user.email,
-          username: session.user.email.split('@')[0],
-          passwordHash: '', // Empty for OAuth users
-          firstName: session.user.name?.split(' ')[0] || '',
-          lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
-        },
-      });
+      return NextResponse.json(
+        { error: 'User not found in database' },
+        { status: 404 }
+      );
     }
 
     // Create document record

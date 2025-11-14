@@ -172,20 +172,22 @@ async function main() {
 
   const statusConfigs = [
     // Recruiting Phase
-    { code: 'new', label: 'New Application', color: '#3B82F6', order: 1 },
-    { code: 'application_received', label: 'Application Received', color: '#8B5CF6', order: 2 },
-    { code: 'under_review', label: 'Under Review', color: '#F59E0B', order: 3 },
-    { code: 'application_on_hold', label: 'On Hold', color: '#6B7280', order: 4 },
-    { code: 'rejected', label: 'Rejected', color: '#EF4444', order: 5 },
+    { code: 'new', label: 'New', color: '#94A3B8', order: 1 },
+    { code: 'under_review', label: 'Under Review', color: '#FBBF24', order: 2 },
+    { code: 'application_on_hold', label: 'Application On Hold', color: '#F59E0B', order: 3 },
+    { code: 'rejected', label: 'Rejected', color: '#EF4444', order: 4 },
+
+    // Transition Phase
+    { code: 'offer_accepted', label: 'Offer Accepted', color: '#10B981', order: 5 },
 
     // Employment Phase
-    { code: 'trainee', label: 'Trainee', color: '#10B981', order: 6 },
+    { code: 'trainee', label: 'Trainee', color: '#3B82F6', order: 6 },
     { code: 'active', label: 'Active', color: '#22C55E', order: 7 },
-    { code: 'resigned', label: 'Resigned', color: '#F97316', order: 8 },
+    { code: 'resigned', label: 'Resigned', color: '#64748B', order: 8 },
 
     // Leave Phase
-    { code: 'vacation', label: 'On Vacation', color: '#06B6D4', order: 9 },
-    { code: 'on_leave', label: 'On Leave', color: '#14B8A6', order: 10 },
+    { code: 'vacation', label: 'Vacation', color: '#06B6D4', order: 9 },
+    { code: 'on_leave', label: 'On Leave', color: '#8B5CF6', order: 10 },
     { code: 'wcb', label: 'WCB', color: '#EC4899', order: 11 },
 
     // Separation Phase
@@ -211,16 +213,21 @@ async function main() {
   // Create status transitions (example workflow)
   console.log('🔄 Creating status transitions...');
   const transitions = [
-    // Recruiting workflow
-    ['new', 'application_received'],
-    ['application_received', 'under_review'],
+    // Recruiting phase transitions
+    ['new', 'under_review'],
+    ['new', 'rejected'],
     ['under_review', 'application_on_hold'],
     ['under_review', 'rejected'],
-    ['under_review', 'trainee'],
+    ['under_review', 'offer_accepted'],
     ['application_on_hold', 'under_review'],
     ['application_on_hold', 'rejected'],
 
-    // Employment workflow
+    // Transition phase
+    ['offer_accepted', 'trainee'],
+    ['offer_accepted', 'active'],
+    ['offer_accepted', 'rejected'],
+
+    // Employment phase transitions
     ['trainee', 'active'],
     ['trainee', 'terminated'],
     ['active', 'vacation'],
@@ -230,9 +237,10 @@ async function main() {
     ['active', 'suspended'],
     ['active', 'terminated'],
 
-    // Leave returns
+    // Leave phase transitions
     ['vacation', 'active'],
     ['on_leave', 'active'],
+    ['on_leave', 'terminated'],
     ['wcb', 'active'],
     ['wcb', 'terminated'],
     ['suspended', 'active'],
@@ -361,7 +369,7 @@ async function main() {
       actions: ['create', 'read', 'update'],
       fields: null,
       conditions: {
-        status: { in: ['new', 'application_received', 'under_review', 'application_on_hold', 'rejected', 'trainee'] },
+        status: { in: ['new', 'under_review', 'application_on_hold', 'rejected', 'offer_accepted', 'trainee'] },
       },
     },
 

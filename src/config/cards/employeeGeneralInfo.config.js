@@ -7,24 +7,9 @@ import { EMPLOYMENT_TYPE_CHOICES } from "@/config/clientData";
  * Updated for Prisma schema - PRISMA_MIGRATION_PLAN.md Phase 4
  * Uses standardized OfficeEmployee fields (26 fields)
  * Removed legacy 4Tracks-specific fields (terminal, card_number, immigration_status)
+ *
+ * Status choices are now dynamically loaded from database via statusSettings context
  */
-
-// Prisma EmployeeStatus enum (13 values)
-const EMPLOYEE_STATUS_CHOICES = {
-  new: "New Application",
-  application_received: "Application Received",
-  under_review: "Under Review",
-  application_on_hold: "On Hold",
-  rejected: "Rejected",
-  trainee: "Trainee",
-  active: "Active",
-  resigned: "Resigned",
-  vacation: "On Vacation",
-  on_leave: "On Leave",
-  wcb: "WCB",
-  terminated: "Terminated",
-  suspended: "Suspended",
-};
 
 export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   // Edit form configuration
@@ -57,9 +42,8 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
     ],
   },
 
-  // Status badge configuration
+  // Status badge configuration (gets choices dynamically from statusSettings)
   statusConfig: {
-    statusChoices: EMPLOYEE_STATUS_CHOICES,
     editable: true,
   },
 
