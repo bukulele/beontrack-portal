@@ -42,6 +42,7 @@ function ChecklistTab({
 }) {
   const [allChecked, setAllChecked] = useState(false);
   const [progress, setProgress] = useState({ checked: 0, total: 0 });
+  const [missingItems, setMissingItems] = useState([]);
   const { startLoading, stopLoading } = useLoader();
 
   // Calculate progress whenever entity data changes
@@ -50,6 +51,7 @@ function ChecklistTab({
 
     let checkedCount = 0;
     let totalCount = 0;
+    const missing = [];
 
     config.items.forEach((item) => {
       // Skip items that should not be displayed
@@ -67,14 +69,24 @@ function ChecklistTab({
         const latest = findHighestIdObject(itemData);
         if (latest.wasReviewed) {
           checkedCount++;
+        } else {
+          // File uploaded but not reviewed
+          missing.push({ label: item.label, reason: 'not reviewed' });
         }
       } else if (itemData && typeof itemData === 'object' && itemData.wasReviewed) {
         checkedCount++;
+      } else if (itemData && typeof itemData === 'object' && !itemData.wasReviewed) {
+        // Data exists but not reviewed
+        missing.push({ label: item.label, reason: 'not reviewed' });
+      } else {
+        // No data uploaded
+        missing.push({ label: item.label, reason: 'not uploaded' });
       }
     });
 
     setProgress({ checked: checkedCount, total: totalCount });
     setAllChecked(checkedCount === totalCount && totalCount > 0);
+    setMissingItems(missing);
   }, [entityData, config]);
 
   if (!entityData || !config?.items) {
@@ -193,9 +205,14 @@ function ChecklistTab({
             <CardContent className="pt-6">
               <div className="flex gap-4 justify-between items-center flex-wrap">
                 {/* Helper message when buttons are disabled */}
-                {!allChecked && (
+                {!allChecked && missingItems.length > 0 && (
                   <div className="text-sm text-red-600 dark:text-red-400">
-                    Complete and review all required documents to enable status transitions
+                    Missing: {missingItems.map((item, index) => (
+                      <span key={index}>
+                        {item.label} ({item.reason})
+                        {index < missingItems.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
                   </div>
                 )}
 
