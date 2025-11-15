@@ -1,101 +1,68 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faTimes, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
-import { useSession } from "@/lib/auth-client";
-import { useLoader } from "@/app/context/LoaderContext";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Copy, Mail, Phone, MessageCircle } from "lucide-react";
+import copy from "copy-to-clipboard";
+import callPhoneNumber from "@/app/functions/callPhoneNumber";
 import formatDate from "@/app/functions/formatDate";
 
 /**
- * InfoField - Inline editable field component
+ * InfoField - Read-only field display with action buttons
  *
- * Displays a field with label and value. Can switch to edit mode for inline editing.
+ * Displays a field with label and value. Shows action buttons (copy, email, call, whatsapp)
+ * based on fieldConfig.actions array. No inline editing - use form-level edit dialog instead.
  *
  * @param {Object} fieldConfig - Field configuration
  * @param {string} fieldConfig.key - Field key in entity data
  * @param {string} fieldConfig.label - Field label
- * @param {string} fieldConfig.type - Field type (text, number, textarea, select, date)
- * @param {boolean} fieldConfig.editable - Can be edited
- * @param {Object} fieldConfig.selectOptions - Options for select type
+ * @param {string} fieldConfig.type - Field type (text, number, date, etc.)
+ * @param {Array} fieldConfig.actions - Array of action names (copy, email, call, whatsapp)
  * @param {Function} fieldConfig.formatter - Optional value formatter for display
  * @param {any} value - Current value
  * @param {Object} entityData - Full entity data
- * @param {string} entityType - Entity type (truck, driver, etc.)
- * @param {number} entityId - Entity ID
- * @param {Function} onSave - Callback after successful save
  * @param {React.ReactNode} sideContent - Optional content to render on the right side
  */
 function InfoField({
   fieldConfig,
   value,
   entityData,
-  entityType,
-  entityId,
-  onSave,
   sideContent,
   additionalContexts,
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value || "");
-  const [hasChanges, setHasChanges] = useState(false);
-
-  const { data: session } = useSession();
-  const { startLoading, stopLoading } = useLoader();
-
-  // Update editValue when value prop changes
-  useEffect(() => {
-    setEditValue(value || "");
-    setHasChanges(false);
-  }, [value]);
-
-  // Check if value changed
-  useEffect(() => {
-    setHasChanges(editValue !== (value || ""));
-  }, [editValue, value]);
-
-  // Handle save
-  const handleSave = async () => {
-    if (!hasChanges) {
-      setIsEditing(false);
-      return;
-    }
-
-    try {
-      startLoading();
-
-      const data = new FormData();
-      data.append(fieldConfig.key, editValue);
-      data.append("changed_by", session.user.name);
-
-      const response = await fetch(`/api/upload-${entityType}-data/${entityId}`, {
-        method: "PATCH",
-        body: data,
-      });
-
-      if (response.ok) {
-        setIsEditing(false);
-        if (onSave) onSave();
-      } else {
-        stopLoading();
-        console.error("Failed to save field");
-      }
-    } catch (error) {
-      console.error("Error saving field:", error);
-      stopLoading();
+  // Action handlers
+  const handleCopy = () => {
+    if (value) {
+      copy(String(value));
     }
   };
 
-  // Handle cancel
-  const handleCancel = () => {
-    setEditValue(value || "");
-    setIsEditing(false);
-    setHasChanges(false);
+  const handleEmail = () => {
+    if (value) {
+      window.location.href = `mailto:${value}`;
+    }
+  };
+
+  const handleCall = () => {
+    if (value) {
+      callPhoneNumber(value);
+    }
+  };
+
+  const handleWhatsApp = () => {
+    if (value) {
+      // Remove formatting, keep only digits
+      const cleanNumber = String(value).replace(/\D/g, '');
+      window.open(`https://wa.me/1${cleanNumber}`, '_blank');
+    }
   };
 
   // Format display value
@@ -122,54 +89,68 @@ function InfoField({
     return null;
   }
 
-  // Render edit mode
-  const renderEditMode = () => {
-    switch (fieldConfig.type) {
-      case "textarea":
-        return (
-          <Textarea
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className="min-h-[80px]"
-          />
-        );
+  // Action button configuration
+  const actionConfig = {
+    copy: {
+      icon: Copy,
+      handler: handleCopy,
+      tooltip: "Copy to clipboard",
+      color: "text-slate-600",
+    },
+    email: {
+      icon: Mail,
+      handler: handleEmail,
+      tooltip: "Send email",
+      color: "text-blue-600",
+    },
+    call: {
+      icon: Phone,
+      handler: handleCall,
+      tooltip: "Call",
+      color: "text-green-600",
+    },
+    whatsapp: {
+      icon: MessageCircle,
+      handler: handleWhatsApp,
+      tooltip: "Open WhatsApp",
+      color: "text-green-600",
+    },
+  };
 
-      case "select":
-        const trimmedValue = editValue ? String(editValue).trim() : undefined;
-        return (
-          <Select value={trimmedValue} onValueChange={setEditValue}>
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${fieldConfig.label}...`} />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(fieldConfig.selectOptions || {}).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-
-      case "number":
-        return (
-          <Input
-            type="number"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-          />
-        );
-
-      case "text":
-      default:
-        return (
-          <Input
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-          />
-        );
+  // Render action buttons
+  const renderActionButtons = () => {
+    if (!fieldConfig.actions || fieldConfig.actions.length === 0) {
+      return null;
     }
+
+    return (
+      <ButtonGroup>
+        {fieldConfig.actions.map((actionName) => {
+          const action = actionConfig[actionName];
+          if (!action) return null;
+
+          const IconComponent = action.icon;
+
+          return (
+            <TooltipProvider key={actionName}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={action.handler}
+                    className="h-6 w-6"
+                  >
+                    <IconComponent className={`h-3 w-3 ${action.color}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{action.tooltip}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        })}
+      </ButtonGroup>
+    );
   };
 
   return (
@@ -180,54 +161,14 @@ function InfoField({
           {fieldConfig.label}
         </FieldLabel>
 
-        {/* Value / Edit Input */}
+        {/* Value */}
         <div className="flex-1">
-          {isEditing ? (
-            renderEditMode()
-          ) : (
-            <div className="text-sm">{displayValue}</div>
-          )}
+          <div className="text-sm">{displayValue}</div>
         </div>
 
         {/* Side Content or Action Buttons */}
         <div className="flex items-center gap-1 min-w-[80px] justify-end">
-          {sideContent ? (
-            sideContent
-          ) : isEditing ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSave}
-                disabled={!hasChanges}
-                className="h-6 w-6"
-                title="Save"
-              >
-                <FontAwesomeIcon icon={faCheck} className="text-green-600 text-xs" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCancel}
-                className="h-6 w-6"
-                title="Cancel"
-              >
-                <FontAwesomeIcon icon={faTimes} className="text-red-600 text-xs" />
-              </Button>
-            </>
-          ) : (
-            fieldConfig.editable && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditing(true)}
-                className="h-6 w-6"
-                title="Edit"
-              >
-                <FontAwesomeIcon icon={faPenToSquare} className="text-blue-600 text-xs" />
-              </Button>
-            )
-          )}
+          {sideContent || renderActionButtons()}
         </div>
       </div>
     </Field>
