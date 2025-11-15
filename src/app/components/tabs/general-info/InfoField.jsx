@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faTimes, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
+import formatDate from "@/app/functions/formatDate";
 
 /**
  * InfoField - Inline editable field component
@@ -105,6 +106,11 @@ function InfoField({
 
     if (fieldConfig.type === "select" && fieldConfig.selectOptions) {
       return fieldConfig.selectOptions[value] || value || "N/A";
+    }
+
+    // Auto-format date fields
+    if (fieldConfig.type === "date" && value) {
+      return formatDate(value);
     }
 
     return value || "N/A";
