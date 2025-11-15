@@ -74,7 +74,7 @@ export default function useEntityForm({
       setError(null);
 
       const response = await fetch(
-        `/api/upload-${entityType}-data/${entityData.id}`,
+        `/api/v1/${entityType}/${entityData.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

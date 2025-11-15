@@ -39,7 +39,7 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
     additionalInfo: [
       {
         // Employment Type
-        value: (entityData) => EMPLOYMENT_TYPE_CHOICES[entityData.employmentType] || "N/A",
+        value: (entityData) => EMPLOYMENT_TYPE_CHOICES[entityData.employmentType] || "Employment Type not set",
         bold: true,
       },
     ],
