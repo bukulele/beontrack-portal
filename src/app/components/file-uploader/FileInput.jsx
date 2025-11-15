@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React from 'react';
+import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
 /**
  * FileInput Component
  *
- * Custom file input with drag & drop support
+ * File input with drag & drop support powered by react-dropzone
  * Supports both single and multiple file selection
  *
  * @param {Object} field - Field configuration
@@ -21,27 +21,26 @@ import { Label } from '@/components/ui/label';
 export function FileInput({ field, onChange, disabled = false, error }) {
   const { name, label, required, validation = {}, props = {} } = field;
   const { multiple = false } = props;
-  const inputRef = useRef(null);
 
-  const handleFileSelect = (e) => {
-    if (multiple) {
-      // Handle multiple files - return array
-      const files = Array.from(e.target.files || []);
-      if (files.length > 0) {
-        onChange(files);
-      }
-    } else {
-      // Handle single file - return file
-      const file = e.target.files?.[0];
-      if (file) {
-        onChange(file);
+  const onDrop = React.useCallback((acceptedFiles) => {
+    if (acceptedFiles.length > 0) {
+      if (multiple) {
+        // Handle multiple files - return array
+        onChange(acceptedFiles);
+      } else {
+        // Handle single file - return first file only
+        onChange(acceptedFiles[0]);
       }
     }
-  };
+  }, [multiple, onChange]);
 
-  const handleClick = () => {
-    inputRef.current?.click();
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple,
+    disabled,
+    accept: validation.accept,
+    maxSize: validation.maxSize,
+  });
 
   return (
     <div className="space-y-1.5">
@@ -51,29 +50,25 @@ export function FileInput({ field, onChange, disabled = false, error }) {
       </Label>
 
       <div
+        {...getRootProps()}
         className={`
           border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
-          transition-colors hover:border-slate-400 hover:bg-slate-50
-          ${error ? 'border-red-500' : 'border-slate-300'}
+          transition-colors
+          ${isDragActive ? 'border-blue-500 bg-blue-50' : error ? 'border-red-500' : 'border-slate-300'}
+          ${!disabled && !isDragActive ? 'hover:border-slate-400 hover:bg-slate-50' : ''}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
-        onClick={!disabled ? handleClick : undefined}
       >
-        <input
-          ref={inputRef}
-          id={name}
-          type="file"
-          className="hidden"
-          accept={validation.accept || '*/*'}
-          onChange={handleFileSelect}
-          disabled={disabled}
-          multiple={multiple}
-        />
+        <input {...getInputProps()} id={name} />
 
-        <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+        <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragActive ? 'text-blue-500' : 'text-slate-400'}`} />
 
         <p className="text-sm text-slate-600 mb-1">
-          {multiple ? 'Click to upload multiple files or drag and drop' : 'Click to upload or drag and drop'}
+          {isDragActive
+            ? 'Drop files here...'
+            : multiple
+              ? 'Click to upload multiple files or drag and drop'
+              : 'Click to upload or drag and drop'}
         </p>
 
         {validation.accept && (
