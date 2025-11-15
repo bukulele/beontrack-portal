@@ -15,20 +15,18 @@ function defineDateBlock(data) {
 
   return (
     <div className="w-fit ml-auto">
-      <p className="text-right text-xs font-light text-slate-300">
-        {expiryDate && expiryDate.length > 0
-          ? "Expiry date"
-          : issueDate && issueDate.length > 0
-          ? "Issue date"
-          : ""}
-      </p>
-      <p className="text-right">
-        {expiryDate && expiryDate.length > 0
-          ? expiryDate
-          : issueDate && issueDate.length > 0
-          ? issueDate
-          : ""}
-      </p>
+      {issueDate && issueDate.length > 0 && (
+        <>
+          <p className="text-right text-xs font-light text-slate-300">Issue date</p>
+          <p className="text-right">{issueDate}</p>
+        </>
+      )}
+      {expiryDate && expiryDate.length > 0 && (
+        <>
+          <p className="text-right text-xs font-light text-slate-300">Expiry date</p>
+          <p className="text-right">{expiryDate}</p>
+        </>
+      )}
     </div>
   );
 }

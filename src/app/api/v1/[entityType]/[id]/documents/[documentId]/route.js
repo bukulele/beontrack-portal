@@ -71,15 +71,26 @@ export async function PATCH(request, { params }) {
       });
     }
 
-    // Track old value for activity log
+    // Track old values for activity log
     const oldWasReviewed = document.wasReviewed;
+    const oldMetadata = document.metadata || {};
 
     // Update document
     const updateData = {};
+
+    // Update review status
     if ('wasReviewed' in body) {
       updateData.wasReviewed = body.wasReviewed;
       updateData.reviewedById = user.id;
       updateData.reviewedAt = new Date();
+    }
+
+    // Update metadata (merge with existing)
+    if ('metadata' in body) {
+      updateData.metadata = {
+        ...oldMetadata,
+        ...body.metadata,
+      };
     }
 
     const updatedDocument = await prisma.document.update({
@@ -97,18 +108,35 @@ export async function PATCH(request, { params }) {
       },
     });
 
-    // Create activity log
-    await prisma.activityLog.create({
-      data: {
-        entityType,
-        entityId: id,
-        actionType: 'document_reviewed',
-        fieldName: document.documentType,
-        oldValue: oldWasReviewed ? 'true' : 'false',
-        newValue: updatedDocument.wasReviewed ? 'true' : 'false',
-        performedById: user.id,
-      },
-    });
+    // Create activity log for review status change
+    if ('wasReviewed' in body) {
+      await prisma.activityLog.create({
+        data: {
+          entityType,
+          entityId: id,
+          actionType: 'document_reviewed',
+          fieldName: document.documentType,
+          oldValue: oldWasReviewed ? 'true' : 'false',
+          newValue: updatedDocument.wasReviewed ? 'true' : 'false',
+          performedById: user.id,
+        },
+      });
+    }
+
+    // Create activity log for metadata changes
+    if ('metadata' in body) {
+      await prisma.activityLog.create({
+        data: {
+          entityType,
+          entityId: id,
+          actionType: 'document_metadata_updated',
+          fieldName: document.documentType,
+          oldValue: JSON.stringify(oldMetadata),
+          newValue: JSON.stringify(updatedDocument.metadata),
+          performedById: user.id,
+        },
+      });
+    }
 
     return NextResponse.json(
       {

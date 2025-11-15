@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Card,
@@ -16,6 +16,7 @@ import CompactFileRow from "./CompactFileRow";
 import CompactModalRow from "./CompactModalRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import { useLoader } from "@/app/context/LoaderContext";
+import { SettingsContext } from "@/app/context/SettingsContext";
 
 /**
  * ChecklistTab - Universal checklist tab component
@@ -43,7 +44,9 @@ function ChecklistTab({
   const [allChecked, setAllChecked] = useState(false);
   const [progress, setProgress] = useState({ checked: 0, total: 0 });
   const [missingItems, setMissingItems] = useState([]);
+  const [allowedNextStatuses, setAllowedNextStatuses] = useState([]);
   const { startLoading, stopLoading } = useLoader();
+  const { statusSettings } = useContext(SettingsContext);
 
   // Calculate progress whenever entity data changes
   useEffect(() => {
@@ -88,6 +91,32 @@ function ChecklistTab({
     setAllChecked(checkedCount === totalCount && totalCount > 0);
     setMissingItems(missing);
   }, [entityData, config]);
+
+  // Filter allowed next statuses based on status transitions
+  useEffect(() => {
+    if (!config?.completionAction?.nextStatuses || !entityData?.status || !statusSettings) {
+      setAllowedNextStatuses([]);
+      return;
+    }
+
+    const entitySettings = statusSettings[entityType];
+    if (!entitySettings?.status_transitions) {
+      setAllowedNextStatuses([]);
+      return;
+    }
+
+    // Get allowed transitions from current status
+    const allowedTransitions = entitySettings.status_transitions
+      .filter((transition) => transition.status_from === entityData.status)
+      .map((transition) => transition.status_to);
+
+    // Filter nextStatuses to only include allowed transitions
+    const filtered = config.completionAction.nextStatuses.filter((statusOption) =>
+      allowedTransitions.includes(statusOption.value)
+    );
+
+    setAllowedNextStatuses(filtered);
+  }, [entityData?.status, statusSettings, entityType, config?.completionAction?.nextStatuses]);
 
   if (!entityData || !config?.items) {
     return (
@@ -198,8 +227,8 @@ function ChecklistTab({
         </div>
       </ScrollArea>
 
-      {/* Action buttons footer */}
-      {config.completionAction && (
+      {/* Action buttons footer - Only show if there are allowed transitions */}
+      {config.completionAction && allowedNextStatuses.length > 0 && (
         <div className="p-4">
           <Card>
             <CardContent className="pt-6">
@@ -216,9 +245,9 @@ function ChecklistTab({
                   </div>
                 )}
 
-                {/* Completion action buttons - Support multiple status transitions */}
+                {/* Completion action buttons - Only show allowed status transitions */}
                 <div className="flex gap-3 items-center flex-wrap ml-auto">
-                  {config.completionAction?.nextStatuses?.map((statusOption) => (
+                  {allowedNextStatuses.map((statusOption) => (
                     <Button
                       key={statusOption.value}
                       variant="outline"

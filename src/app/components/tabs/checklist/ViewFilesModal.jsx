@@ -28,14 +28,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPenToSquare, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faPenToSquare, faTrashCan, faEye } from "@fortawesome/free-solid-svg-icons";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
-import extractFileNameFromURL from "@/app/functions/extractFileNameFromURL";
 import sortObjectsByDateOrId from "@/app/functions/sortObjectsByDateOrId";
-import defineDateBlock from "@/app/functions/defineDateBlock";
-import checkNumericInput from "@/app/functions/checkNumericInput";
+import DocumentEditModal from "./DocumentEditModal";
 
 /**
  * ViewFilesModal - Display all versions of a checklist item
@@ -67,6 +72,8 @@ function ViewFilesModal({
 }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [fileToEdit, setFileToEdit] = useState(null);
 
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
@@ -130,6 +137,34 @@ function ViewFilesModal({
     return file.fileName || "No file";
   };
 
+  // Format metadata for display
+  const formatMetadata = (file) => {
+    if (!file.metadata || Object.keys(file.metadata).length === 0) {
+      return <span className="text-muted-foreground text-sm">No metadata</span>;
+    }
+
+    return (
+      <div className="space-y-1">
+        {Object.entries(file.metadata).map(([key, value]) => {
+          if (!value) return null;
+
+          // Format field name (camelCase to Title Case)
+          const fieldName = key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
+
+          return (
+            <div key={key} className="text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">{fieldName}:</span>{' '}
+              <span className="text-slate-600 dark:text-slate-400">{value}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -150,62 +185,66 @@ function ViewFilesModal({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>File/Document</TableHead>
-                    <TableHead>Dates</TableHead>
+                    <TableHead>Metadata</TableHead>
                     {!readOnly && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedFiles.map((file) => (
                     <TableRow key={file.id}>
-                      <TableCell>
-                        {file.filePath ? (
-                          <Link
-                            href={`/api/v1/files/${file.filePath.replace(/^uploads\//, '')}`}
-                            target="_blank"
-                            className="font-semibold capitalize text-blue-600 hover:underline"
-                          >
-                            {getDisplayValue(file)}
-                          </Link>
-                        ) : (
-                          <span className="font-semibold capitalize">
-                            {getDisplayValue(file)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{defineDateBlock(file)}</TableCell>
+                      <TableCell>{formatMetadata(file)}</TableCell>
                       {!readOnly && (
                         <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            {canEdit && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  // TODO: Open edit modal
-                                  console.log("Edit file:", file);
-                                }}
-                                className="h-8 w-8"
-                              >
-                                <FontAwesomeIcon
-                                  icon={faPenToSquare}
-                                  className="text-orange-600"
-                                />
-                              </Button>
-                            )}
-                            {canDelete && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteClick(file)}
-                                className="h-8 w-8"
-                              >
-                                <FontAwesomeIcon
-                                  icon={faTrashCan}
-                                  className="text-red-600"
-                                />
-                              </Button>
-                            )}
+                          <div className="flex justify-end">
+                            <ButtonGroup>
+                              {file.filePath && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  asChild
+                                  className="h-8 w-8"
+                                >
+                                  <Link
+                                    href={`/api/v1/files/${file.filePath.replace(/^uploads\//, '')}`}
+                                    target="_blank"
+                                  >
+                                    <FontAwesomeIcon
+                                      icon={faEye}
+                                      className="text-slate-600"
+                                    />
+                                  </Link>
+                                </Button>
+                              )}
+                              {canEdit && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setFileToEdit(file);
+                                    setEditModalOpen(true);
+                                  }}
+                                  className="h-8 w-8"
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faPenToSquare}
+                                    className="text-orange-600"
+                                  />
+                                </Button>
+                              )}
+                              {canDelete && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleDeleteClick(file)}
+                                  className="h-8 w-8"
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faTrashCan}
+                                    className="text-red-600"
+                                  />
+                                </Button>
+                              )}
+                            </ButtonGroup>
                           </div>
                         </TableCell>
                       )}
@@ -235,6 +274,21 @@ function ViewFilesModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Document Edit Modal */}
+      {fileToEdit && (
+        <DocumentEditModal
+          open={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setFileToEdit(null);
+          }}
+          file={fileToEdit}
+          entityType={entityType}
+          entityId={entityId}
+          loadData={loadData}
+        />
+      )}
     </>
   );
 }
