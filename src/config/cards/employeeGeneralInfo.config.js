@@ -1,5 +1,8 @@
 import { EMPLOYEE_EDIT_FORM_CONFIG } from "@/config/forms/employeeEditForm.config";
 import { EMPLOYMENT_TYPE_CHOICES } from "@/config/clientData";
+import { EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG } from "@/config/checklists/employeePreHiringChecklist.config";
+import { EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG } from "@/config/checklists/employeeOnboardingChecklist.config";
+import { generateFileSectionsFromChecklists } from "@/lib/configUtils";
 
 /**
  * Employee General Info Tab Configuration
@@ -160,148 +163,44 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   ],
 
   // File sections - READ-ONLY display in General tab
-  // Uses Prisma DocumentType enum values (18 types available)
-  // Organized into logical groups for employee onboarding
-  fileSections: [
+  // Generated dynamically from checklist configs (single source of truth)
+  // Checklists define what documents exist, this config defines how to group them for display
+  fileSections: generateFileSectionsFromChecklists(
+    // Checklist configs - source of truth for document types
+    [
+      EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG,
+      EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG,
+    ],
+    // Section groupings - how to organize documents in General Info tab
     {
-      title: "Identity & Work Authorization",
-      defaultOpen: true,
-      items: [
-        {
-          key: "government_id",
-          label: "Government ID",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "work_authorization",
-          label: "Work Authorization",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "immigration_documents",
-          label: "Immigration Documents",
-          optional: true,
-          itemType: "file",
-        },
+      "Identity & Work Authorization": [
+        "government_id",
+        "work_authorization",
+        "immigration_documents",
       ],
-    },
-    {
-      title: "Hiring & Employment",
-      defaultOpen: false,
-      items: [
-        {
-          key: "employment_application",
-          label: "Employment Application",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "resume",
-          label: "Resume/CV",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "background_check_consent",
-          label: "Background Check Consent",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "employment_contract",
-          label: "Employment Contract",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "company_policies",
-          label: "Company Policies Acknowledgement",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "confidentiality_agreement",
-          label: "Confidentiality Agreement",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "emergency_contact",
-          label: "Emergency Contact Form",
-          optional: false,
-          itemType: "file",
-        },
+      "Hiring & Employment": [
+        "resume",
+        "background_check_consent",
+        "employment_contract",
+        "company_policies",
+        "confidentiality_agreement",
       ],
-    },
-    {
-      title: "Payroll & Benefits",
-      defaultOpen: false,
-      items: [
-        {
-          key: "sin_ssn",
-          label: "SIN/SSN",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "direct_deposit",
-          label: "Direct Deposit (Void Cheque)",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "tax_forms",
-          label: "Tax Forms",
-          optional: false,
-          itemType: "file",
-        },
-        {
-          key: "benefits_enrollment",
-          label: "Benefits Enrollment",
-          optional: true,
-          itemType: "file",
-        },
+      "Payroll & Benefits": [
+        "sin_ssn",
+        "direct_deposit",
+        "tax_forms",
+        "benefits_enrollment",
       ],
-    },
-    {
-      title: "Certifications & Training",
-      defaultOpen: false,
-      items: [
-        {
-          key: "professional_certifications",
-          label: "Professional Certifications",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "education_verification",
-          label: "Education Verification",
-          optional: true,
-          itemType: "file",
-        },
-        {
-          key: "safety_training",
-          label: "Safety Training Certificates",
-          optional: true,
-          itemType: "file",
-        },
+      "Certifications & Training": [
+        "professional_certifications",
+        "education_verification",
+        "safety_training",
       ],
-    },
-    {
-      title: "Other",
-      defaultOpen: false,
-      items: [
-        {
-          key: "other_documents",
-          label: "Other Documents",
-          optional: true,
-          itemType: "file",
-        },
+      "Other": [
+        "other_documents",
       ],
-    },
-  ],
+    }
+  ),
 };
 
 export default EMPLOYEE_GENERAL_INFO_CONFIG;
