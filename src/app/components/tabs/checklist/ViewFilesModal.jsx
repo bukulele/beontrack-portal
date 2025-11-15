@@ -186,68 +186,66 @@ function ViewFilesModal({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Metadata</TableHead>
-                    {!readOnly && <TableHead className="text-right">Actions</TableHead>}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedFiles.map((file) => (
                     <TableRow key={file.id}>
                       <TableCell>{formatMetadata(file)}</TableCell>
-                      {!readOnly && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end">
-                            <ButtonGroup>
-                              {file.filePath && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  asChild
-                                  className="h-8 w-8"
-                                >
-                                  <Link
-                                    href={`/api/v1/files/${file.filePath.replace(/^uploads\//, '')}`}
-                                    target="_blank"
-                                  >
-                                    <FontAwesomeIcon
-                                      icon={faEye}
-                                      className="text-slate-600"
-                                    />
-                                  </Link>
-                                </Button>
-                              )}
-                              {canEdit && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => {
-                                    setFileToEdit(file);
-                                    setEditModalOpen(true);
-                                  }}
-                                  className="h-8 w-8"
+                      <TableCell className="text-right">
+                        <div className="flex justify-end">
+                          <ButtonGroup>
+                            {file.filePath && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                asChild
+                                className="h-8 w-8"
+                              >
+                                <Link
+                                  href={`/api/v1/files/${file.filePath.replace(/^uploads\//, '')}`}
+                                  target="_blank"
                                 >
                                   <FontAwesomeIcon
-                                    icon={faPenToSquare}
-                                    className="text-orange-600"
+                                    icon={faEye}
+                                    className="text-slate-600"
                                   />
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleDeleteClick(file)}
-                                  className="h-8 w-8"
-                                >
-                                  <FontAwesomeIcon
-                                    icon={faTrashCan}
-                                    className="text-red-600"
-                                  />
-                                </Button>
-                              )}
-                            </ButtonGroup>
-                          </div>
-                        </TableCell>
-                      )}
+                                </Link>
+                              </Button>
+                            )}
+                            {!readOnly && canEdit && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setFileToEdit(file);
+                                  setEditModalOpen(true);
+                                }}
+                                className="h-8 w-8"
+                              >
+                                <FontAwesomeIcon
+                                  icon={faPenToSquare}
+                                  className="text-orange-600"
+                                />
+                              </Button>
+                            )}
+                            {!readOnly && canDelete && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleDeleteClick(file)}
+                                className="h-8 w-8"
+                              >
+                                <FontAwesomeIcon
+                                  icon={faTrashCan}
+                                  className="text-red-600"
+                                />
+                              </Button>
+                            )}
+                          </ButtonGroup>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
