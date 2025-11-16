@@ -20,8 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useLoader } from "@/app/context/LoaderContext";
 import { getMetadataFields } from "@/config/prisma/documentMetadataSchemas";
+import { parse, format, isValid } from "date-fns";
 
 /**
  * DocumentEditModal - Modal for editing document metadata
@@ -125,11 +127,9 @@ export function DocumentEditModal({
 
       case "date":
         return (
-          <Input
-            id={field.name}
-            type="date"
-            value={value}
-            onChange={(e) => handleChange(field.name, e.target.value)}
+          <DatePicker
+            value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
+            onChange={(date) => handleChange(field.name, date && isValid(date) ? format(date, "yyyy-MM-dd") : "")}
           />
         );
 

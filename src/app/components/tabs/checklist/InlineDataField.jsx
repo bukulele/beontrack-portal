@@ -20,9 +20,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Check, X, Pencil, Circle } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
+import { parse, format, isValid } from "date-fns";
 
 /**
  * InlineDataField - Inline editable data field for checklist
@@ -124,11 +126,11 @@ export function InlineDataField({
 
       case "date":
         return (
-          <Input
-            type="date"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="h-8"
+          <DatePicker
+            value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
+            onChange={(date) => {
+              setValue(date && isValid(date) ? format(date, "yyyy-MM-dd") : "");
+            }}
           />
         );
 

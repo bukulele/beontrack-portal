@@ -20,8 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
+import { parse, format, isValid } from "date-fns";
 
 /**
  * EntityFormDialog - Modern form dialog for add/edit sub-entities
@@ -240,11 +242,9 @@ function EntityFormDialog({
               {field.label}
               {field.required && <span className="text-red-600 ml-1">*</span>}
             </Label>
-            <Input
-              id={field.key}
-              type="date"
-              value={value}
-              onChange={(e) => handleChange(field.key, e.target.value)}
+            <DatePicker
+              value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
+              onChange={(date) => handleChange(field.key, date && isValid(date) ? format(date, "yyyy-MM-dd") : "")}
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>

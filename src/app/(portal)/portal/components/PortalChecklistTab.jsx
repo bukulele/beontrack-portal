@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CompactFileRow from '@/app/components/tabs/checklist/CompactFileRow';
 import CompactDataRow from '@/app/components/tabs/checklist/CompactDataRow';
 import CompactModalRow from '@/app/components/tabs/checklist/CompactModalRow';
+import { usePortal } from '@/app/context/PortalContext';
 
 export default function PortalChecklistTab({
   config,
@@ -27,6 +28,7 @@ export default function PortalChecklistTab({
   readOnly = false,
   hideFiles = false, // New prop to hide Documents card
 }) {
+  const { updateField, getFieldValue } = usePortal();
   if (!config || !entityData) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -74,10 +76,8 @@ export default function PortalChecklistTab({
                 <CompactDataRow
                   key={item.key}
                   item={item}
-                  entityData={entityData}
-                  loadData={loadData}
-                  entityType={entityType}
-                  entityId={entityId}
+                  onFieldChange={updateField}
+                  value={getFieldValue(item.key)}
                 />
               );
             })}

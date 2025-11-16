@@ -29,10 +29,12 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Plus, Trash2, AlertCircle } from "lucide-react";
 import { useLoader } from "@/app/context/LoaderContext";
 import { OPTION_LISTS } from "@/config/clientData";
 import checkActivityPeriod from "@/app/functions/checkActivityPeriod";
+import { parse, format, isValid } from "date-fns";
 
 const ACTIVITY_TEMPLATE = {
   activityType: "",
@@ -320,42 +322,39 @@ export function ActivityHistoryModal({
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label>Start Date *</Label>
-                        <Input
-                          type="date"
-                          value={activity.startDate || ""}
-                          onChange={(e) =>
-                            updateActivity(actualIndex, "startDate", e.target.value)
+                        <DatePicker
+                          value={activity.startDate ? parse(activity.startDate, "yyyy-MM-dd", new Date()) : undefined}
+                          onChange={(date) =>
+                            updateActivity(actualIndex, "startDate", date && isValid(date) ? format(date, "yyyy-MM-dd") : "")
                           }
                         />
                       </div>
 
                       <div className="space-y-1">
                         <Label>End Date *</Label>
-                        <InputGroup>
-                          <InputGroupInput
-                            type="date"
-                            value={activity.endDate || ""}
-                            onChange={(e) =>
-                              updateActivity(actualIndex, "endDate", e.target.value)
+                        <div className="flex items-center gap-2">
+                          <DatePicker
+                            value={activity.endDate ? parse(activity.endDate, "yyyy-MM-dd", new Date()) : undefined}
+                            onChange={(date) =>
+                              updateActivity(actualIndex, "endDate", date && isValid(date) ? format(date, "yyyy-MM-dd") : "")
                             }
                             disabled={activity.tillNow}
+                            className="flex-1"
                           />
-                          <InputGroupAddon align="inline-end">
-                            <div className="flex items-center gap-1.5">
-                              <Checkbox
-                                checked={activity.tillNow}
-                                onCheckedChange={(checked) =>
-                                  updateActivity(actualIndex, "tillNow", checked)
-                                }
-                              />
-                              <Label className="text-xs cursor-pointer" onClick={() =>
-                                updateActivity(actualIndex, "tillNow", !activity.tillNow)
-                              }>
-                                Till now
-                              </Label>
-                            </div>
-                          </InputGroupAddon>
-                        </InputGroup>
+                          <div className="flex items-center gap-1.5">
+                            <Checkbox
+                              checked={activity.tillNow}
+                              onCheckedChange={(checked) =>
+                                updateActivity(actualIndex, "tillNow", checked)
+                              }
+                            />
+                            <Label className="text-xs cursor-pointer whitespace-nowrap" onClick={() =>
+                              updateActivity(actualIndex, "tillNow", !activity.tillNow)
+                            }>
+                              Till now
+                            </Label>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

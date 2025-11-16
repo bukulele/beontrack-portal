@@ -20,7 +20,7 @@ import CompactDataRow from '@/app/components/tabs/checklist/CompactDataRow';
 import { getPortalConfig } from '@/config/portal/portalConfigs';
 
 function ApplicationPageContent({ entityType }) {
-  const { entityData, loading, error, reloadEntityData, canEdit } = usePortal();
+  const { entityData, loading, error, reloadEntityData, canEdit, updateField, getFieldValue } = usePortal();
 
   // Load portal config for this entity type
   const portalConfig = getPortalConfig(entityType);
@@ -107,12 +107,10 @@ function ApplicationPageContent({ entityType }) {
                   optional: !field.required,
                   placeholder: field.placeholder,
                   selectOptions: field.options,
-                  readOnly: field.readOnly, // Pass readOnly flag
+                  readOnly: field.readOnly,
                 }}
-                entityData={entityData}
-                loadData={reloadEntityData}
-                entityType={entityType}
-                entityId={entityData.id}
+                onFieldChange={updateField}
+                value={getFieldValue(field.key)}
               />
             ))}
           </CardContent>
@@ -128,63 +126,8 @@ function ApplicationPageContent({ entityType }) {
           readOnly={!canEdit}
           hideFiles={true}
         />
-
-        {/* Submit button for new applications */}
-        {entityData.status === 'new' && canEdit && (
-          <div className="mt-6 flex justify-end">
-            <SubmitApplicationButton
-              entityType={entityType}
-              entityId={entityData.id}
-              onSuccess={reloadEntityData}
-            />
-          </div>
-        )}
       </div>
     </div>
-  );
-}
-
-function SubmitApplicationButton({ entityType, entityId, onSuccess }) {
-  const [loading, setLoading] = React.useState(false);
-
-  const handleSubmit = async () => {
-    if (!confirm('Submit your application for review? You will not be able to edit it after submission.')) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch(`/api/v1/${entityType}/${entityId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'under_review',
-          allowApplicationEdit: false,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit application');
-      }
-
-      alert('Application submitted successfully! We will review it and get back to you soon.');
-      onSuccess?.();
-    } catch (err) {
-      alert('Error: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Button
-      size="lg"
-      onClick={handleSubmit}
-      disabled={loading}
-    >
-      {loading ? 'Submitting...' : 'Submit Application'}
-    </Button>
   );
 }
 
