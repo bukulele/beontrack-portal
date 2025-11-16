@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:studio": "npx prisma studio",
+    "db:studio": "npx prisma studio --browser none",
+    "db:studio:prod": "echo 'Prisma Studio is disabled in production'",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "node prisma/seed.js",
     "db:reset": "npx prisma migrate reset"
