@@ -8,12 +8,12 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { getPortalConfig } from '@/config/portal/portalConfigs';
 
 const PortalContext = createContext(null);
 
 export function PortalProvider({ children, entityType = 'employees' }) {
   const [entityData, setEntityData] = useState(null);
-  const [portalConfig, setPortalConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,24 +21,8 @@ export function PortalProvider({ children, entityType = 'employees' }) {
   const [formChanges, setFormChanges] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Load portal configuration
-  useEffect(() => {
-    async function loadPortalConfig() {
-      try {
-        // Fetch portal config from database
-        const response = await fetch(`/api/portal/config/${entityType}`);
-        if (!response.ok) throw new Error('Failed to load portal configuration');
-
-        const config = await response.json();
-        setPortalConfig(config);
-      } catch (err) {
-        console.error('Error loading portal config:', err);
-        setError(err.message);
-      }
-    }
-
-    loadPortalConfig();
-  }, [entityType]);
+  // Load portal configuration from JavaScript config files
+  const portalConfig = getPortalConfig(entityType);
 
   // Load current user's entity data (employee record)
   useEffect(() => {

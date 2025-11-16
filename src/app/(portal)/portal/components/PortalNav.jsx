@@ -55,9 +55,6 @@ export default function PortalNav() {
   // Merge entityData with formChanges for validation
   const currentData = { ...entityData, ...formChanges };
 
-  // Get full portal config (API config only has navigationItems)
-  const fullPortalConfig = getPortalConfig(entityType);
-
   // Filter navigation items based on current status
   const visibleNavItems = portalConfig.navigationItems?.filter(item => {
     if (item.statuses.includes('all')) return true;
@@ -81,8 +78,7 @@ export default function PortalNav() {
   };
 
   // Validate application completeness (using current data including unsaved changes)
-  // Use fullPortalConfig which has personalInfoFields, applicationChecklist, etc.
-  const validation = getValidationSummary(currentData, fullPortalConfig);
+  const validation = getValidationSummary(currentData, portalConfig);
   const canSubmit = validation.isValid && currentStatus === 'new' && canEdit;
 
   // Handle save progress

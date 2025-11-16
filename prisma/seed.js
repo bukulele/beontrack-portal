@@ -16,81 +16,17 @@ async function main() {
 
   // Check what data already exists
   const userCount = await prisma.user.count();
-  const portalConfigCount = await prisma.portalConfig.count();
 
-  // Check for force re-seed flag
-  const forceReseedPortal = process.env.FORCE_RESEED_PORTAL === 'true';
-
-  if (forceReseedPortal) {
-    console.log('🔄 Force re-seeding portal configs...');
-    await prisma.portalConfig.deleteMany({});
-    await createPortalConfig();
-    console.log('✅ Portal configuration re-seeded successfully!');
-    return;
-  }
-
-  // If everything is already seeded, skip
-  if (userCount > 0 && portalConfigCount > 0) {
-    console.log('⚠️  Database already fully seeded. Skipping.');
-    console.log(`   Users: ${userCount}, Portal Configs: ${portalConfigCount}`);
-    return;
-  }
-
-  // If users exist but portal config doesn't, just add portal config
-  if (userCount > 0 && portalConfigCount === 0) {
-    console.log('⚠️  Users exist but portal config missing. Adding portal config...');
-    await createPortalConfig();
-    console.log('✅ Portal configuration added successfully!');
+  // If database has users already, skip seeding
+  if (userCount > 0) {
+    console.log('⚠️  Database already seeded. Skipping.');
+    console.log(`   Users: ${userCount}`);
     return;
   }
 
   // Full seed if database is empty
-  if (userCount === 0) {
-    await fullSeed();
-    return;
-  }
-}
-
-async function createPortalConfig() {
-  const employeePortalConfig = await prisma.portalConfig.create({
-    data: {
-      entityType: 'employees',
-      allowedStatuses: ['new', 'under_review', 'application_on_hold', 'offer_accepted', 'trainee', 'active', 'vacation', 'on_leave', 'wcb'],
-      checklistRefs: {
-        application: 'employeePreHiringChecklist',
-        onboarding: 'employeeOnboardingChecklist',
-      },
-      navigationItems: [
-        { key: 'application', label: 'General', route: '/portal/employees/application', statuses: ['new', 'under_review', 'application_on_hold'] },
-        { key: 'documents', label: 'Documents', route: '/portal/employees/documents', statuses: ['all'] },
-        { key: 'onboarding', label: 'Onboarding', route: '/portal/employees/onboarding', statuses: ['offer_accepted', 'trainee'] },
-        { key: 'info', label: 'My Info', route: '/portal/employees/info', statuses: ['trainee', 'active', 'vacation', 'on_leave', 'wcb'] },
-        { key: 'timecard', label: 'Timecard', route: '/portal/employees/timecard', statuses: ['active', 'vacation', 'on_leave', 'wcb'] },
-      ],
-      statusMessages: {
-        new: 'Complete your application and upload required documents to submit for review.',
-        under_review: 'Your application is being reviewed by our team. We\'ll notify you of any updates.',
-        application_on_hold: 'Your application is currently on hold. Please check the status notes for more information.',
-        rejected: 'We appreciate your interest. Your application was not selected at this time.',
-        offer_accepted: 'Congratulations! Please complete your onboarding documents to continue.',
-        trainee: 'Welcome to the team! You\'re currently in training. Access your timecard and company info below.',
-        active: 'Welcome aboard! You have full access to all portal features.',
-        vacation: 'Enjoy your time off! Your timecard and info are still accessible.',
-        on_leave: 'You\'re currently on leave. Your information remains accessible.',
-        wcb: 'You\'re on workers\' compensation leave. Access your info and documents below.',
-        resigned: 'Your employment has ended. Thank you for your service.',
-        terminated: 'Your employment has ended.',
-        suspended: 'Your access is temporarily suspended. Contact HR for more information.',
-      },
-      fieldConfig: {
-        visible: ['firstName', 'lastName', 'email', 'phoneNumber', 'dateOfBirth', 'addressLine1', 'addressLine2', 'city', 'stateProvince', 'postalCode', 'country', 'emergencyContactName', 'emergencyContactPhone'],
-        hidden: ['hireDate', 'terminationDate', 'jobTitle', 'department', 'employmentType', 'officeLocation'],
-        editableWhenNew: ['firstName', 'lastName', 'phoneNumber', 'dateOfBirth', 'addressLine1', 'addressLine2', 'city', 'stateProvince', 'postalCode', 'country', 'emergencyContactName', 'emergencyContactPhone'],
-      },
-      isActive: true,
-    },
-  });
-  console.log('   ✓ Created employee portal configuration');
+  console.log('📦 Empty database detected. Running full seed...');
+  await fullSeed();
 }
 
 async function fullSeed() {
@@ -381,10 +317,6 @@ async function fullSeed() {
   });
   console.log(`   ✓ Assigned admin role to admin user`);
 
-  // Create portal configuration
-  console.log('🌐 Creating portal configuration...');
-  await createPortalConfig();
-
   console.log('');
   console.log('✅ Database seeding completed successfully!');
   console.log('');
@@ -395,7 +327,6 @@ async function fullSeed() {
   console.log(`   - Status Transitions: ${transitions.length}`);
   console.log(`   - Roles: ${roles.length}`);
   console.log(`   - Permissions: ${permissions.length}`);
-  console.log(`   - Portal Configs: 1 (employees)`);
   console.log('');
   console.log('🔑 Admin Login Credentials:');
   console.log(`   - Email: admin@example.com`);
@@ -403,7 +334,7 @@ async function fullSeed() {
   console.log('');
   console.log('🌐 Portal Access:');
   console.log(`   - Sign in at: /portal`);
-  console.log(`   - New applicants will auto-create employee records`);
+  console.log(`   - Portal config: JavaScript files in src/config/portal/`);
   console.log('');
   console.log('🔍 View data in Prisma Studio: npm run db:studio');
   console.log('');

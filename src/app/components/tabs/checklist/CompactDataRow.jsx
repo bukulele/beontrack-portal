@@ -67,8 +67,8 @@ export function CompactDataRow({
     }
   })();
 
-  // Show red dot for empty required fields
-  const showRedDot = !item.optional && isEmpty;
+  // Show red dot for empty required fields (but not for read-only fields)
+  const showRedDot = !item.optional && isEmpty && !item.readOnly;
 
   // Render input based on type
   const renderInput = () => {

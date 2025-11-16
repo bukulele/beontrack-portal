@@ -447,23 +447,7 @@ model WorkRule {
   @@map("work_rules")
 }
 
-/// Portal Configuration - Multi-entity portal settings
-/// Defines portal access rules, checklists, and navigation for different entity types
-model PortalConfig {
-  id              String   @id @default(uuid()) @db.Uuid
-  entityType      String   @unique @map("entity_type") @db.VarChar(50)
-  allowedStatuses String[] @map("allowed_statuses")
-  checklistRefs   Json     @map("checklist_refs")
-  navigationItems Json     @map("navigation_items")
-  statusMessages  Json?    @map("status_messages")
-  fieldConfig     Json?    @map("field_config")
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([entityType])
-  @@map("portal_configs")
-}
+// PortalConfig removed - now using JavaScript config files in src/config/portal/
 
 enum EmployeeStatus {
   new
