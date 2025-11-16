@@ -89,6 +89,56 @@ export const auth = betterAuth({
     },
   },
 
+  // Database hooks - Auto-create employee records on session creation
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          // Find user to get their email
+          const user = await prisma.user.findUnique({
+            where: { id: session.userId },
+          });
+
+          if (!user?.email) {
+            console.log('⚠️ Session created but no user email found');
+            return;
+          }
+
+          // Check if employee record already exists
+          const existingEmployee = await prisma.officeEmployee.findFirst({
+            where: {
+              email: user.email,
+              isDeleted: false,
+            },
+          });
+
+          if (existingEmployee) {
+            console.log(`✓ Employee record already exists for ${user.email}`);
+            return;
+          }
+
+          // Auto-create employee record for portal access
+          const newEmployee = await prisma.officeEmployee.create({
+            data: {
+              employeeId: null, // Will be assigned by HR
+              firstName: user.firstName || '',
+              lastName: user.lastName || '',
+              email: user.email,
+              status: 'new',
+              portalAccessEnabled: true,
+              allowApplicationEdit: true,
+              portalUser: { connect: { id: user.id } },
+              createdBy: { connect: { id: user.id } },
+              updatedBy: { connect: { id: user.id } },
+            },
+          });
+
+          console.log(`✅ Auto-created employee record for ${user.email} (ID: ${newEmployee.id})`);
+        },
+      },
+    },
+  },
+
   // Plugins
   plugins: [
     // Email OTP for passwordless portal authentication

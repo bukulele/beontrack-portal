@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,31 +8,475 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+model User {
+  id                      String            @id @default(uuid()) @db.Uuid
+  username                String            @unique @db.VarChar(150)
+  email                   String            @unique @db.VarChar(254)
+  passwordHash            String?           @map("password_hash") @db.VarChar(255)
+  firstName               String?           @map("first_name") @db.VarChar(150)
+  lastName                String?           @map("last_name") @db.VarChar(150)
+  isActive                Boolean           @default(true) @map("is_active")
+  isStaff                 Boolean           @default(false) @map("is_staff")
+  isSuperuser             Boolean           @default(false) @map("is_superuser")
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  department              String?           @db.VarChar(100)
+  emailVerified           Boolean           @default(false) @map("email_verified")
+  location                String?           @db.VarChar(100)
+  accounts                Account[]
+  activityHistoryReviewed ActivityHistory[] @relation("ActivityHistoryReviewedBy")
+  activityLogsPerformed   ActivityLog[]     @relation("ActivityLogPerformedBy")
+  documentsReviewed       Document[]        @relation("DocumentReviewedBy")
+  documentsUploaded       Document[]        @relation("DocumentUploadedBy")
+  adjustmentsApproved     HoursAdjustment[] @relation("AdjustmentApprovedBy")
+  adjustmentsCreated      HoursAdjustment[] @relation("AdjustmentCreatedBy")
+  employeesCreated        OfficeEmployee[]  @relation("EmployeeCreatedBy")
+  employeesUpdated        OfficeEmployee[]  @relation("EmployeeUpdatedBy")
+  employeePortalLink      OfficeEmployee[]  @relation("EmployeePortalUser")
+  sessions                Session[]
+  timeAmendmentsApproved  TimeAmendment[]   @relation("TimeAmendmentApprovedBy")
+  timeAmendmentsCreated   TimeAmendment[]   @relation("TimeAmendmentCreatedBy")
+  timeApprovalsDecided    TimeApproval[]    @relation("TimeApprovalDecidedBy")
+  timeBreaksCreated       TimeBreak[]       @relation("TimeBreakCreatedBy")
+  timeEntriesCreated      TimeEntry[]       @relation("TimeEntryCreatedBy")
+  roles                   UserRole[]
+
+  @@map("users")
+}
+
+model OfficeEmployee {
+  id                    String            @id @default(uuid()) @db.Uuid
+  employeeId            String?           @unique @map("employee_id") @db.VarChar(50)
+  firstName             String            @map("first_name") @db.VarChar(100)
+  lastName              String            @map("last_name") @db.VarChar(100)
+  email                 String?           @db.VarChar(254)
+  phoneNumber           String?           @map("phone_number") @db.VarChar(20)
+  emergencyContactName  String?           @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone String?           @map("emergency_contact_phone") @db.VarChar(20)
+  addressLine1          String?           @map("address_line1") @db.VarChar(255)
+  addressLine2          String?           @map("address_line2") @db.VarChar(255)
+  city                  String?           @db.VarChar(100)
+  stateProvince         String?           @map("state_province") @db.VarChar(100)
+  postalCode            String?           @map("postal_code") @db.VarChar(20)
+  country               String?           @db.VarChar(100)
+  hireDate              DateTime?         @map("hire_date") @db.Date
+  terminationDate       DateTime?         @map("termination_date") @db.Date
+  jobTitle              String?           @map("job_title") @db.VarChar(100)
+  department            String?           @db.VarChar(100)
+  employmentType        EmploymentType?   @map("employment_type")
+  officeLocation        String?           @map("office_location") @db.VarChar(100)
+  dateOfBirth           DateTime?         @map("date_of_birth") @db.Date
+  status                EmployeeStatus    @default(new)
+  profilePhotoId        String?           @map("profile_photo_id") @db.Uuid
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById           String            @map("created_by_id") @db.Uuid
+  updatedById           String            @map("updated_by_id") @db.Uuid
+  isDeleted             Boolean           @default(false) @map("is_deleted")
+  deletedAt             DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  dateOfLeaving         DateTime?         @map("date_of_leaving") @db.Date
+  reasonForLeaving      String?           @map("reason_for_leaving")
+  remarksComments       String?           @map("remarks_comments")
+  statusNote            String?           @map("status_note")
+  canCheckinRemotely    Boolean           @default(false) @map("can_checkin_remotely")
+  allowApplicationEdit  Boolean           @default(true) @map("allow_application_edit")
+  portalAccessEnabled   Boolean           @default(true) @map("portal_access_enabled")
+  userId                String?           @map("user_id") @db.Uuid
+  activityHistory       ActivityHistory[] @relation("EmployeeActivityHistory")
+  createdBy             User              @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  profilePhoto          Document?         @relation("EmployeeProfilePhoto", fields: [profilePhotoId], references: [id])
+  updatedBy             User              @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
+  portalUser            User?             @relation("EmployeePortalUser", fields: [userId], references: [id])
+
+  @@map("office_employees")
+}
+
+model Document {
+  id                    String           @id @default(uuid()) @db.Uuid
+  documentType          DocumentType     @map("document_type")
+  filePath              String           @map("file_path") @db.VarChar(500)
+  fileName              String           @map("file_name") @db.VarChar(255)
+  mimeType              String           @map("mime_type") @db.VarChar(100)
+  fileSize              Int              @map("file_size")
+  version               Int              @default(1)
+  metadata              Json?
+  wasReviewed           Boolean          @default(false) @map("was_reviewed")
+  reviewedById          String?          @map("reviewed_by_id") @db.Uuid
+  reviewedAt            DateTime?        @map("reviewed_at") @db.Timestamptz(6)
+  uploadedById          String           @map("uploaded_by_id") @db.Uuid
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isDeleted             Boolean          @default(false) @map("is_deleted")
+  deletedAt             DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  entityType            String           @map("entity_type") @db.VarChar(50)
+  entityId              String           @map("entity_id") @db.Uuid
+  reviewedBy            User?            @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
+  uploadedBy            User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
+  employeeProfilePhotos OfficeEmployee[] @relation("EmployeeProfilePhoto")
+
+  @@index([entityType, entityId])
+  @@index([documentType])
+  @@map("documents")
+}
+
+/// Activity History - Employment, education, and other activities
+/// Used for tracking applicant/employee activity over the last 10 years
+model ActivityHistory {
+  id               String         @id @default(uuid()) @db.Uuid
+  employeeId       String         @map("employee_id") @db.Uuid
+  activityType     ActivityType   @map("activity_type")
+  description      String?
+  startDate        DateTime       @map("start_date") @db.Date
+  endDate          DateTime?      @map("end_date") @db.Date
+  tillNow          Boolean        @default(false) @map("till_now")
+  organizationName String?        @map("organization_name") @db.VarChar(255)
+  roleOrPosition   String?        @map("role_or_position") @db.VarChar(255)
+  location         String?        @db.VarChar(255)
+  emailAddress     String?        @map("email_address") @db.VarChar(254)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isDeleted        Boolean        @default(false) @map("is_deleted")
+  deletedAt        DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  reviewedAt       DateTime?      @map("reviewed_at") @db.Timestamptz(6)
+  reviewedById     String?        @map("reviewed_by_id") @db.Uuid
+  wasReviewed      Boolean        @default(false) @map("was_reviewed")
+  employee         OfficeEmployee @relation("EmployeeActivityHistory", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewedBy       User?          @relation("ActivityHistoryReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([employeeId])
+  @@index([startDate, endDate])
+  @@map("activity_history")
+}
+
+model ActivityLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  actionType    String   @map("action_type") @db.VarChar(50)
+  fieldName     String?  @map("field_name") @db.VarChar(100)
+  oldValue      String?  @map("old_value")
+  newValue      String?  @map("new_value")
+  performedById String   @map("performed_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  entityType    String   @map("entity_type") @db.VarChar(50)
+  entityId      String   @map("entity_id") @db.Uuid
+  performedBy   User     @relation("ActivityLogPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
+
+/// Status configuration for entity types
+/// Stores available statuses, colors, and labels
+model StatusConfig {
+  id              String             @id @default(uuid()) @db.Uuid
+  entityType      EntityType         @map("entity_type")
+  statusCode      String             @map("status_code") @db.VarChar(50)
+  statusLabel     String             @map("status_label") @db.VarChar(100)
+  color           String             @db.VarChar(7)
+  sortOrder       Int                @default(0) @map("sort_order")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  transitionsFrom StatusTransition[] @relation("TransitionFrom")
+  transitionsTo   StatusTransition[] @relation("TransitionTo")
+
+  @@unique([entityType, statusCode])
+  @@index([entityType])
+  @@map("status_configs")
+}
+
+/// Status transition rules
+/// Defines which statuses can transition to which (state machine)
+model StatusTransition {
+  id           String       @id @default(uuid()) @db.Uuid
+  fromStatusId String       @map("from_status_id") @db.Uuid
+  toStatusId   String       @map("to_status_id") @db.Uuid
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  fromStatus   StatusConfig @relation("TransitionFrom", fields: [fromStatusId], references: [id], onDelete: Cascade)
+  toStatus     StatusConfig @relation("TransitionTo", fields: [toStatusId], references: [id], onDelete: Cascade)
+
+  @@unique([fromStatusId, toStatusId])
+  @@index([fromStatusId])
+  @@map("status_transitions")
+}
+
+/// Roles define groups of users with similar responsibilities
+/// e.g., 'admin', 'payroll', 'safety', 'dispatch', etc.
+model Role {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @unique @db.VarChar(50)
+  description String?
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  permissions Permission[]
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+/// Junction table for many-to-many User-Role relationship
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+/// Permissions define what actions roles can perform on which resources
+/// Supports entity-level, action-level, field-level, and record-level (ABAC) permissions
+model Permission {
+  id         String   @id @default(uuid()) @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  entityType String   @map("entity_type") @db.VarChar(50)
+  actions    String[] @db.VarChar(20)
+  fields     Json?
+  conditions Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([roleId])
+  @@index([entityType])
+  @@map("permissions")
+}
+
+/// Session management for Better Auth
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// OAuth/Social login accounts for Better Auth
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  accountId             String    @map("account_id") @db.VarChar(255)
+  providerId            String    @map("provider_id") @db.VarChar(100)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(6)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(6)
+  scope                 String?
+  idToken               String?   @map("id_token")
+  password              String?   @db.VarChar(255)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([providerId])
+  @@map("accounts")
+}
+
+/// Email verification and password reset tokens for Better Auth
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String   @db.VarChar(255)
+  value      String   @db.VarChar(255)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([identifier])
+  @@index([expiresAt])
+  @@map("verifications")
+}
+
+/// Time Entry - Core time tracking record (immutable original)
+/// Stores clock in/out times with timezone and location data
+model TimeEntry {
+  id               String          @id @default(uuid()) @db.Uuid
+  entityType       String          @map("entity_type") @db.VarChar(50)
+  entityId         String          @map("entity_id") @db.Uuid
+  clockInTime      DateTime        @map("clock_in_time") @db.Timestamptz(6)
+  clockOutTime     DateTime?       @map("clock_out_time") @db.Timestamptz(6)
+  timezone         String          @db.VarChar(50)
+  clockInLocation  Json?           @map("clock_in_location")
+  clockOutLocation Json?           @map("clock_out_location")
+  entryType        TimeEntryType   @map("entry_type")
+  entrySource      EntrySource     @map("entry_source")
+  workType         String?         @map("work_type") @db.VarChar(50)
+  projectId        String?         @map("project_id") @db.Uuid
+  departmentCode   String?         @map("department_code") @db.VarChar(50)
+  costCenter       String?         @map("cost_center") @db.VarChar(50)
+  status           TimeEntryStatus @default(draft)
+  totalMinutes     Int?            @map("total_minutes")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      String          @map("created_by_id") @db.Uuid
+  isDeleted        Boolean         @default(false) @map("is_deleted")
+  deletedAt        DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  amendments       TimeAmendment[]
+  approvals        TimeApproval[]
+  breaks           TimeBreak[]
+  createdBy        User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId, clockInTime])
+  @@index([status, clockInTime])
+  @@index([clockInTime])
+  @@map("time_entries")
+}
+
+/// Time Break - Break tracking (meal, rest, etc.)
+model TimeBreak {
+  id             String    @id @default(uuid()) @db.Uuid
+  timeEntryId    String    @map("time_entry_id") @db.Uuid
+  startTime      DateTime  @map("start_time") @db.Timestamptz(6)
+  endTime        DateTime? @map("end_time") @db.Timestamptz(6)
+  breakType      BreakType @map("break_type")
+  isPaid         Boolean   @default(false) @map("is_paid")
+  isAutoDeducted Boolean   @default(false) @map("is_auto_deducted")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById    String    @map("created_by_id") @db.Uuid
+  isDeleted      Boolean   @default(false) @map("is_deleted")
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  timeEntry      TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  @@index([timeEntryId])
+  @@map("time_breaks")
+}
+
+/// Time Amendment - Audit trail for all changes to time entries
+/// Append-only, immutable record of modifications
+model TimeAmendment {
+  id               String        @id @default(uuid()) @db.Uuid
+  timeEntryId      String        @map("time_entry_id") @db.Uuid
+  amendmentType    AmendmentType @map("amendment_type")
+  fieldChanged     String?       @map("field_changed") @db.VarChar(50)
+  oldValue         String?       @map("old_value")
+  newValue         String?       @map("new_value")
+  reason           String
+  requiresApproval Boolean       @default(true) @map("requires_approval")
+  isApproved       Boolean?      @map("is_approved")
+  approvedById     String?       @map("approved_by_id") @db.Uuid
+  approvedAt       DateTime?     @map("approved_at") @db.Timestamptz(6)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      String        @map("created_by_id") @db.Uuid
+  approvedBy       User?         @relation("TimeAmendmentApprovedBy", fields: [approvedById], references: [id])
+  createdBy        User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  timeEntry        TimeEntry     @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  @@index([timeEntryId, createdAt])
+  @@index([isApproved, createdAt])
+  @@map("time_amendments")
+}
+
+/// Time Approval - Multi-level approval workflow
+/// Append-only, immutable approval records
+model TimeApproval {
+  id            String           @id @default(uuid()) @db.Uuid
+  timeEntryId   String           @map("time_entry_id") @db.Uuid
+  approvalLevel Int
+  approverRole  String           @map("approver_role") @db.VarChar(50)
+  decision      ApprovalDecision
+  comments      String?
+  decidedAt     DateTime         @map("decided_at") @db.Timestamptz(6)
+  decidedById   String           @map("decided_by_id") @db.Uuid
+  decidedBy     User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id], onDelete: Cascade)
+  timeEntry     TimeEntry        @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  @@index([timeEntryId])
+  @@index([decidedById])
+  @@index([decision])
+  @@map("time_approvals")
+}
+
+/// Hours Adjustment - Manual adjustments to hours (comp time, corrections, etc.)
+model HoursAdjustment {
+  id              String         @id @default(uuid()) @db.Uuid
+  entityType      String         @map("entity_type") @db.VarChar(50)
+  entityId        String         @map("entity_id") @db.Uuid
+  payPeriodStart  DateTime       @map("pay_period_start") @db.Date
+  payPeriodEnd    DateTime       @map("pay_period_end") @db.Date
+  adjustmentType  AdjustmentType @map("adjustment_type")
+  hours           Float
+  reason          String
+  referenceNumber String?        @map("reference_number") @db.VarChar(100)
+  isApproved      Boolean        @default(false) @map("is_approved")
+  approvedById    String?        @map("approved_by_id") @db.Uuid
+  approvedAt      DateTime?      @map("approved_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById     String         @map("created_by_id") @db.Uuid
+  isDeleted       Boolean        @default(false) @map("is_deleted")
+  deletedAt       DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  approvedBy      User?          @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id])
+  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId, payPeriodStart])
+  @@index([payPeriodStart])
+  @@map("hours_adjustments")
+}
+
+/// Work Rule - Jurisdiction-specific labor law compliance rules
+/// Defines overtime thresholds, break requirements, hour limits per jurisdiction
+model WorkRule {
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String    @db.VarChar(200)
+  jurisdiction     String    @db.VarChar(100)
+  effectiveDate    DateTime  @map("effective_date") @db.Date
+  expiryDate       DateTime? @map("expiry_date") @db.Date
+  overtimeRules    Json      @map("overtime_rules")
+  breakRules       Json      @map("break_rules")
+  weeklyHourLimits Json?     @map("weekly_hour_limits")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([jurisdiction, effectiveDate])
+  @@map("work_rules")
+}
+
+/// Portal Configuration - Multi-entity portal settings
+/// Defines portal access rules, checklists, and navigation for different entity types
+model PortalConfig {
+  id              String   @id @default(uuid()) @db.Uuid
+  entityType      String   @unique @map("entity_type") @db.VarChar(50)
+  allowedStatuses String[] @map("allowed_statuses")
+  checklistRefs   Json     @map("checklist_refs")
+  navigationItems Json     @map("navigation_items")
+  statusMessages  Json?    @map("status_messages")
+  fieldConfig     Json?    @map("field_config")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([entityType])
+  @@map("portal_configs")
+}
 
 enum EmployeeStatus {
-  // Recruiting Phase
   new
   under_review
   application_on_hold
   rejected
-
-  // Transition Phase
   offer_accepted
-
-  // Employment Phase
   trainee
   active
   resigned
-
-  // Leave Phase
   vacation
   on_leave
-  wcb // Workers' compensation
-
-  // Separation Phase
+  wcb
   terminated
   suspended
 }
@@ -50,38 +488,25 @@ enum EmploymentType {
 }
 
 enum DocumentType {
-  // Identity & Work Authorization
   government_id
   work_authorization
   sin_ssn
-
-  // Banking & Tax
   direct_deposit
   tax_forms
-
-  // Hiring Documents
   employment_application
   resume
   background_check_consent
   emergency_contact
-
-  // Employment Contract & Policies
   employment_contract
   company_policies
   confidentiality_agreement
   benefits_enrollment
-
-  // Certifications & Qualifications
   professional_certifications
   education_verification
   safety_training
-
-  // Profile
-  profile_photo
-
-  // Other
   immigration_documents
   other_documents
+  profile_photo
 }
 
 enum EntityType {
@@ -161,690 +586,4 @@ enum AdjustmentType {
   bonus_hours
   penalty_deduction
   other
-}
-
-// ============================================================================
-// MODELS
-// ============================================================================
-
-model User {
-  id            String   @id @default(uuid()) @db.Uuid
-  username      String   @unique @db.VarChar(150)
-  email         String   @unique @db.VarChar(254)
-  passwordHash  String?  @map("password_hash") @db.VarChar(255) // Optional: Better Auth stores passwords in Account table
-  firstName     String?  @map("first_name") @db.VarChar(150)
-  lastName      String?  @map("last_name") @db.VarChar(150)
-  isActive      Boolean  @default(true) @map("is_active")
-  isStaff       Boolean  @default(false) @map("is_staff")
-  isSuperuser   Boolean  @default(false) @map("is_superuser")
-
-  // ABAC Attributes (for record-level conditions)
-  department    String?  @db.VarChar(100)
-  location      String?  @db.VarChar(100)
-
-  // Better Auth fields
-  emailVerified Boolean  @default(false) @map("email_verified")
-
-  // Timestamps
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  // Relations (with CASCADE for audit trail preservation)
-  employeesCreated        OfficeEmployee[] @relation("EmployeeCreatedBy")
-  employeesUpdated        OfficeEmployee[] @relation("EmployeeUpdatedBy")
-  employeePortalLink      OfficeEmployee[] @relation("EmployeePortalUser")
-  documentsUploaded       Document[]       @relation("DocumentUploadedBy")
-  documentsReviewed       Document[]       @relation("DocumentReviewedBy")
-  activityHistoryReviewed ActivityHistory[] @relation("ActivityHistoryReviewedBy")
-  activityLogsPerformed   ActivityLog[]    @relation("ActivityLogPerformedBy")
-
-  // Time tracking relations
-  timeEntriesCreated      TimeEntry[]      @relation("TimeEntryCreatedBy")
-  timeBreaksCreated       TimeBreak[]      @relation("TimeBreakCreatedBy")
-  timeAmendmentsCreated   TimeAmendment[]  @relation("TimeAmendmentCreatedBy")
-  timeAmendmentsApproved  TimeAmendment[]  @relation("TimeAmendmentApprovedBy")
-  timeApprovalsDecided    TimeApproval[]   @relation("TimeApprovalDecidedBy")
-  adjustmentsCreated      HoursAdjustment[] @relation("AdjustmentCreatedBy")
-  adjustmentsApproved     HoursAdjustment[] @relation("AdjustmentApprovedBy")
-
-  // Authorization relations
-  roles                   UserRole[]
-  sessions                Session[]
-  accounts                Account[]
-
-  @@map("users")
-}
-
-model OfficeEmployee {
-  id                      String          @id @default(uuid()) @db.Uuid
-
-  // Identity
-  employeeId              String          @unique @map("employee_id") @db.VarChar(50)
-  firstName               String          @map("first_name") @db.VarChar(100)
-  lastName                String          @map("last_name") @db.VarChar(100)
-
-  // Contact
-  email                   String?         @db.VarChar(254)
-  phoneNumber             String?         @map("phone_number") @db.VarChar(20)
-  emergencyContactName    String?         @map("emergency_contact_name") @db.VarChar(200)
-  emergencyContactPhone   String?         @map("emergency_contact_phone") @db.VarChar(20)
-
-  // Address
-  addressLine1            String?         @map("address_line1") @db.VarChar(255)
-  addressLine2            String?         @map("address_line2") @db.VarChar(255)
-  city                    String?         @db.VarChar(100)
-  stateProvince           String?         @map("state_province") @db.VarChar(100)
-  postalCode              String?         @map("postal_code") @db.VarChar(20)
-  country                 String?         @db.VarChar(100)
-
-  // Employment
-  hireDate                DateTime?       @map("hire_date") @db.Date
-  terminationDate         DateTime?       @map("termination_date") @db.Date
-  jobTitle                String?         @map("job_title") @db.VarChar(100)
-  department              String?         @db.VarChar(100)
-  employmentType          EmploymentType? @map("employment_type")
-  officeLocation          String?         @map("office_location") @db.VarChar(100)
-  dateOfBirth             DateTime?       @map("date_of_birth") @db.Date
-
-  // Time tracking preferences
-  canCheckinRemotely      Boolean         @default(false) @map("can_checkin_remotely")
-
-  // Status
-  status                  EmployeeStatus  @default(new)
-  statusNote              String?         @map("status_note") @db.Text
-
-  // Portal access control
-  portalAccessEnabled     Boolean         @default(true) @map("portal_access_enabled")
-  allowApplicationEdit    Boolean         @default(true) @map("allow_application_edit")
-  userId                  String?         @map("user_id") @db.Uuid
-  portalUser              User?           @relation("EmployeePortalUser", fields: [userId], references: [id], onDelete: SetNull)
-
-  // Notes and leaving details
-  remarksComments         String?         @map("remarks_comments") @db.Text
-  reasonForLeaving        String?         @map("reason_for_leaving") @db.Text
-  dateOfLeaving           DateTime?       @map("date_of_leaving") @db.Date
-
-  // Photo
-  profilePhotoId          String?         @map("profile_photo_id") @db.Uuid
-  profilePhoto            Document?       @relation("EmployeeProfilePhoto", fields: [profilePhotoId], references: [id])
-
-  // Audit
-  createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById             String          @map("created_by_id") @db.Uuid
-  createdBy               User            @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  updatedById             String          @map("updated_by_id") @db.Uuid
-  updatedBy               User            @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
-  isDeleted               Boolean         @default(false) @map("is_deleted")
-  deletedAt               DateTime?       @map("deleted_at") @db.Timestamptz(6)
-
-  // Relations
-  activityHistory         ActivityHistory[]  @relation("EmployeeActivityHistory")
-
-  @@map("office_employees")
-}
-
-model Document {
-  id                String        @id @default(uuid()) @db.Uuid
-
-  // Generic entity relation
-  entityType        String        @map("entity_type") @db.VarChar(50) // 'employees', 'trucks', 'drivers', 'equipment', etc.
-  entityId          String        @map("entity_id") @db.Uuid
-
-  // Document details
-  documentType      DocumentType  @map("document_type")
-  filePath          String        @map("file_path") @db.VarChar(500)
-  fileName          String        @map("file_name") @db.VarChar(255)
-  mimeType          String        @map("mime_type") @db.VarChar(100)
-  fileSize          Int           @map("file_size") // bytes
-  version           Int           @default(1)
-
-  // Metadata (JSON for flexible fields like expiry_date, notes, document_number, etc.)
-  metadata          Json?         @db.JsonB
-
-  // Review status
-  wasReviewed       Boolean       @default(false) @map("was_reviewed")
-  reviewedById      String?       @map("reviewed_by_id") @db.Uuid
-  reviewedBy        User?         @relation("DocumentReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
-  reviewedAt        DateTime?     @map("reviewed_at") @db.Timestamptz(6)
-
-  // Upload info
-  uploadedById      String        @map("uploaded_by_id") @db.Uuid
-  uploadedBy        User          @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
-
-  // Audit
-  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
-  isDeleted         Boolean       @default(false) @map("is_deleted")
-  deletedAt         DateTime?     @map("deleted_at") @db.Timestamptz(6)
-
-  // Relations
-  employeeProfilePhotos OfficeEmployee[] @relation("EmployeeProfilePhoto")
-
-  @@index([entityType, entityId])
-  @@index([documentType])
-  @@map("documents")
-}
-
-/// Activity History - Employment, education, and other activities
-/// Used for tracking applicant/employee activity over the last 10 years
-model ActivityHistory {
-  id                 String          @id @default(uuid()) @db.Uuid
-
-  // Employee relation
-  employeeId         String          @map("employee_id") @db.Uuid
-  employee           OfficeEmployee  @relation("EmployeeActivityHistory", fields: [employeeId], references: [id], onDelete: Cascade)
-
-  // Activity details
-  activityType       ActivityType    @map("activity_type")
-  description        String?         @db.Text
-  startDate          DateTime        @map("start_date") @db.Date
-  endDate            DateTime?       @map("end_date") @db.Date
-  tillNow            Boolean         @default(false) @map("till_now") // If true, activity is ongoing
-
-  // Organization details
-  organizationName   String?         @map("organization_name") @db.VarChar(255)
-  roleOrPosition     String?         @map("role_or_position") @db.VarChar(255)
-  location           String?         @db.VarChar(255)
-  emailAddress       String?         @map("email_address") @db.VarChar(254)
-
-  // Review tracking (for checklists)
-  wasReviewed        Boolean         @default(false) @map("was_reviewed")
-  reviewedBy         User?           @relation("ActivityHistoryReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
-  reviewedById       String?         @map("reviewed_by_id") @db.Uuid
-  reviewedAt         DateTime?       @map("reviewed_at") @db.Timestamptz(6)
-
-  // Audit
-  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  isDeleted          Boolean         @default(false) @map("is_deleted")
-  deletedAt          DateTime?       @map("deleted_at") @db.Timestamptz(6)
-
-  @@index([employeeId])
-  @@index([startDate, endDate])
-  @@map("activity_history")
-}
-
-model ActivityLog {
-  id            String          @id @default(uuid()) @db.Uuid
-
-  // Generic entity relation
-  entityType    String          @map("entity_type") @db.VarChar(50)
-  entityId      String          @map("entity_id") @db.Uuid
-
-  // Action details
-  actionType    String          @map("action_type") @db.VarChar(50) // created, updated, status_changed, document_uploaded, etc.
-  fieldName     String?         @map("field_name") @db.VarChar(100)
-  oldValue      String?         @map("old_value") @db.Text
-  newValue      String?         @map("new_value") @db.Text
-
-  // Performed by
-  performedById String          @map("performed_by_id") @db.Uuid
-  performedBy   User            @relation("ActivityLogPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
-
-  // Timestamp
-  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([entityType, entityId])
-  @@map("activity_logs")
-}
-
-// ============================================================================
-// STATUS CONFIGURATION MODELS
-// ============================================================================
-
-/// Status configuration for entity types
-/// Stores available statuses, colors, and labels
-model StatusConfig {
-  id          String     @id @default(uuid()) @db.Uuid
-
-  // Entity configuration
-  entityType  EntityType @map("entity_type")
-  statusCode  String     @map("status_code") @db.VarChar(50) // e.g., "active", "new", "terminated"
-  statusLabel String     @map("status_label") @db.VarChar(100) // Human-readable label
-
-  // Display configuration
-  color       String     @db.VarChar(7) // Hex color code, e.g., "#22C55E"
-  sortOrder   Int        @default(0) @map("sort_order") // For UI ordering
-
-  // Audit
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  // Relations
-  transitionsFrom StatusTransition[] @relation("TransitionFrom")
-  transitionsTo   StatusTransition[] @relation("TransitionTo")
-
-  @@unique([entityType, statusCode])
-  @@index([entityType])
-  @@map("status_configs")
-}
-
-/// Status transition rules
-/// Defines which statuses can transition to which (state machine)
-model StatusTransition {
-  id          String       @id @default(uuid()) @db.Uuid
-
-  // Transition definition
-  fromStatusId String      @map("from_status_id") @db.Uuid
-  fromStatus   StatusConfig @relation("TransitionFrom", fields: [fromStatusId], references: [id], onDelete: Cascade)
-
-  toStatusId   String      @map("to_status_id") @db.Uuid
-  toStatus     StatusConfig @relation("TransitionTo", fields: [toStatusId], references: [id], onDelete: Cascade)
-
-  // Audit
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@unique([fromStatusId, toStatusId])
-  @@index([fromStatusId])
-  @@map("status_transitions")
-}
-
-// ============================================================================
-// AUTHORIZATION MODELS (ABAC System)
-// ============================================================================
-
-/// Roles define groups of users with similar responsibilities
-/// e.g., 'admin', 'payroll', 'safety', 'dispatch', etc.
-model Role {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique @db.VarChar(50) // 'admin', 'payroll', 'safety', etc.
-  description String?  @db.Text
-  isActive    Boolean  @default(true) @map("is_active")
-
-  // Audit
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  // Relations
-  users       UserRole[]
-  permissions Permission[]
-
-  @@map("roles")
-}
-
-/// Junction table for many-to-many User-Role relationship
-model UserRole {
-  id        String   @id @default(uuid()) @db.Uuid
-
-  userId    String   @map("user_id") @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  roleId    String   @map("role_id") @db.Uuid
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  // Audit
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@unique([userId, roleId])
-  @@index([userId])
-  @@index([roleId])
-  @@map("user_roles")
-}
-
-/// Permissions define what actions roles can perform on which resources
-/// Supports entity-level, action-level, field-level, and record-level (ABAC) permissions
-model Permission {
-  id         String   @id @default(uuid()) @db.Uuid
-
-  roleId     String   @map("role_id") @db.Uuid
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  // What resource? (Entity-level)
-  entityType String   @map("entity_type") @db.VarChar(50) // 'employees', 'trucks', 'drivers', etc.
-
-  // What actions? (Action-level)
-  // Stored as array: ['create', 'read', 'update', 'delete']
-  actions    String[] @db.VarChar(20)
-
-  // Which fields? (Field-level) - null means all fields
-  // JSON structure: { "allowed": ["firstName", "email"], "denied": ["salary"] }
-  // If null, all fields are accessible based on action permissions
-  fields     Json?    @db.JsonB
-
-  // Record-level conditions (ABAC) - null means all records
-  // JSON structure for attribute-based conditions:
-  // {
-  //   "department": { "eq": "${user.department}" },  // Only records where department matches user's department
-  //   "location": { "in": ["${user.location}", "headquarters"] },
-  //   "createdById": { "eq": "${user.id}" }  // Only own records
-  // }
-  // Supported operators: eq, ne, in, notIn, gt, lt, gte, lte, contains
-  conditions Json?    @db.JsonB
-
-  // Audit
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([roleId])
-  @@index([entityType])
-  @@map("permissions")
-}
-
-/// Session management for Better Auth
-model Session {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  token     String   @unique @db.VarChar(255)
-  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
-  ipAddress String?  @map("ip_address") @db.VarChar(45) // IPv6 max length
-  userAgent String?  @map("user_agent") @db.Text
-
-  // Audit
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
-  @@map("sessions")
-}
-
-/// OAuth/Social login accounts for Better Auth
-model Account {
-  id                     String    @id @default(uuid()) @db.Uuid
-  userId                 String    @map("user_id") @db.Uuid
-  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  accountId              String    @map("account_id") @db.VarChar(255)
-  providerId             String    @map("provider_id") @db.VarChar(100)
-  accessToken            String?   @map("access_token") @db.Text
-  refreshToken           String?   @map("refresh_token") @db.Text
-  accessTokenExpiresAt   DateTime? @map("access_token_expires_at") @db.Timestamptz(6)
-  refreshTokenExpiresAt  DateTime? @map("refresh_token_expires_at") @db.Timestamptz(6)
-  scope                  String?   @db.Text
-  idToken                String?   @map("id_token") @db.Text
-  password               String?   @db.VarChar(255)
-
-  // Audit
-  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([userId])
-  @@index([providerId])
-  @@map("accounts")
-}
-
-/// Email verification and password reset tokens for Better Auth
-model Verification {
-  id         String   @id @default(uuid()) @db.Uuid
-  identifier String   @db.VarChar(255)
-  value      String   @db.VarChar(255)
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
-
-  // Audit
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([identifier])
-  @@index([expiresAt])
-  @@map("verifications")
-}
-
-// ============================================================================
-// TIME TRACKING MODELS
-// ============================================================================
-
-/// Time Entry - Core time tracking record (immutable original)
-/// Stores clock in/out times with timezone and location data
-model TimeEntry {
-  id              String          @id @default(uuid()) @db.Uuid
-
-  // Universal entity relation (employees, drivers, contractors)
-  entityType      String          @map("entity_type") @db.VarChar(50)
-  entityId        String          @map("entity_id") @db.Uuid
-
-  // Time tracking (immutable original values)
-  clockInTime     DateTime        @map("clock_in_time") @db.Timestamptz(6)
-  clockOutTime    DateTime?       @map("clock_out_time") @db.Timestamptz(6)
-
-  // Timezone capture (store what timezone user was in)
-  timezone        String          @db.VarChar(50) // e.g., "America/Winnipeg"
-
-  // Location tracking (optional, for remote work compliance)
-  // Structure: { lat, lon, address, ipAddress, deviceId }
-  clockInLocation  Json?          @map("clock_in_location") @db.JsonB
-  clockOutLocation Json?          @map("clock_out_location") @db.JsonB
-
-  // Entry metadata
-  entryType       TimeEntryType   @map("entry_type")
-  entrySource     EntrySource     @map("entry_source")
-
-  // Work classification (optional)
-  workType        String?         @map("work_type") @db.VarChar(50) // regular, overtime, training, meeting
-  projectId       String?         @map("project_id") @db.Uuid
-  departmentCode  String?         @map("department_code") @db.VarChar(50)
-  costCenter      String?         @map("cost_center") @db.VarChar(50)
-
-  // Status and approval
-  status          TimeEntryStatus @default(draft)
-
-  // Calculated hours (denormalized for performance)
-  totalMinutes    Int?            @map("total_minutes") // Calculated on clock-out
-
-  // Audit (immutable - who created the ORIGINAL entry)
-  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById     String          @map("created_by_id") @db.Uuid
-  createdBy       User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-
-  // Soft delete (legal retention requirement)
-  isDeleted       Boolean         @default(false) @map("is_deleted")
-  deletedAt       DateTime?       @map("deleted_at") @db.Timestamptz(6)
-
-  // Relations
-  breaks          TimeBreak[]
-  amendments      TimeAmendment[]
-  approvals       TimeApproval[]
-
-  @@index([entityType, entityId, clockInTime])
-  @@index([status, clockInTime])
-  @@index([clockInTime])
-  @@map("time_entries")
-}
-
-/// Time Break - Break tracking (meal, rest, etc.)
-model TimeBreak {
-  id              String    @id @default(uuid()) @db.Uuid
-
-  timeEntryId     String    @map("time_entry_id") @db.Uuid
-  timeEntry       TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
-
-  // Break timing
-  startTime       DateTime  @map("start_time") @db.Timestamptz(6)
-  endTime         DateTime? @map("end_time") @db.Timestamptz(6)
-
-  // Break classification
-  breakType       BreakType @map("break_type")
-  isPaid          Boolean   @default(false) @map("is_paid")
-  isAutoDeducted  Boolean   @default(false) @map("is_auto_deducted") // Was this auto-calculated?
-
-  // Audit
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById     String    @map("created_by_id") @db.Uuid
-  createdBy       User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-
-  // Soft delete (labor law compliance)
-  isDeleted       Boolean   @default(false) @map("is_deleted")
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@index([timeEntryId])
-  @@map("time_breaks")
-}
-
-/// Time Amendment - Audit trail for all changes to time entries
-/// Append-only, immutable record of modifications
-model TimeAmendment {
-  id              String        @id @default(uuid()) @db.Uuid
-
-  timeEntryId     String        @map("time_entry_id") @db.Uuid
-  timeEntry       TimeEntry     @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
-
-  // What changed?
-  amendmentType   AmendmentType @map("amendment_type")
-  fieldChanged    String?       @map("field_changed") @db.VarChar(50) // Which field was amended
-
-  // Values
-  oldValue        String?       @map("old_value") @db.Text
-  newValue        String?       @map("new_value") @db.Text
-
-  // Why?
-  reason          String        @db.Text // Required reason for change
-
-  // Approval
-  requiresApproval Boolean      @default(true) @map("requires_approval")
-  isApproved      Boolean?      @map("is_approved") // null = pending, true = approved, false = rejected
-  approvedById    String?       @map("approved_by_id") @db.Uuid
-  approvedBy      User?         @relation("TimeAmendmentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
-  approvedAt      DateTime?     @map("approved_at") @db.Timestamptz(6)
-
-  // Audit (immutable, no soft delete)
-  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById     String        @map("created_by_id") @db.Uuid
-  createdBy       User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-
-  @@index([timeEntryId, createdAt])
-  @@index([isApproved, createdAt])
-  @@map("time_amendments")
-}
-
-/// Time Approval - Multi-level approval workflow
-/// Append-only, immutable approval records
-model TimeApproval {
-  id              String           @id @default(uuid()) @db.Uuid
-
-  timeEntryId     String           @map("time_entry_id") @db.Uuid
-  timeEntry       TimeEntry        @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
-
-  // Approval flow
-  approvalLevel   Int              // 1, 2, 3 for multi-level approval
-  approverRole    String           @map("approver_role") @db.VarChar(50) // supervisor, manager, payroll, hr
-
-  // Decision
-  decision        ApprovalDecision
-  comments        String?          @db.Text
-
-  // Audit (immutable, no soft delete)
-  decidedAt       DateTime         @map("decided_at") @db.Timestamptz(6)
-  decidedById     String           @map("decided_by_id") @db.Uuid
-  decidedBy       User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id], onDelete: Cascade)
-
-  @@index([timeEntryId])
-  @@index([decidedById])
-  @@index([decision])
-  @@map("time_approvals")
-}
-
-/// Hours Adjustment - Manual adjustments to hours (comp time, corrections, etc.)
-model HoursAdjustment {
-  id              String         @id @default(uuid()) @db.Uuid
-
-  // Universal entity relation
-  entityType      String         @map("entity_type") @db.VarChar(50)
-  entityId        String         @map("entity_id") @db.Uuid
-
-  // Pay period
-  payPeriodStart  DateTime       @map("pay_period_start") @db.Date
-  payPeriodEnd    DateTime       @map("pay_period_end") @db.Date
-
-  // Adjustment
-  adjustmentType  AdjustmentType @map("adjustment_type")
-  hours           Float          // Can be positive or negative
-  reason          String         @db.Text
-  referenceNumber String?        @map("reference_number") @db.VarChar(100) // For reconciliation
-
-  // Approval
-  isApproved      Boolean        @default(false) @map("is_approved")
-  approvedById    String?        @map("approved_by_id") @db.Uuid
-  approvedBy      User?          @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
-  approvedAt      DateTime?      @map("approved_at") @db.Timestamptz(6)
-
-  // Audit
-  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById     String         @map("created_by_id") @db.Uuid
-  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-
-  // Soft delete (may need to reverse erroneous adjustments)
-  isDeleted       Boolean        @default(false) @map("is_deleted")
-  deletedAt       DateTime?      @map("deleted_at") @db.Timestamptz(6)
-
-  @@index([entityType, entityId, payPeriodStart])
-  @@index([payPeriodStart])
-  @@map("hours_adjustments")
-}
-
-/// Work Rule - Jurisdiction-specific labor law compliance rules
-/// Defines overtime thresholds, break requirements, hour limits per jurisdiction
-model WorkRule {
-  id                  String    @id @default(uuid()) @db.Uuid
-
-  // Applicability
-  name                String    @db.VarChar(200)
-  jurisdiction        String    @db.VarChar(100) // "CA-ON", "US-CA", "US-NY", etc.
-  effectiveDate       DateTime  @map("effective_date") @db.Date
-  expiryDate          DateTime? @map("expiry_date") @db.Date
-
-  // Rules (stored as JSON for flexibility)
-  // Example overtime: { "dailyThreshold": 8, "weeklyThreshold": 40, "rate": 1.5 }
-  overtimeRules       Json      @map("overtime_rules") @db.JsonB
-
-  // Example breaks: { "mealAfterHours": 5, "mealDuration": 30, "restBreaks": [{"afterHours": 4, "duration": 15}] }
-  breakRules          Json      @map("break_rules") @db.JsonB
-
-  // Example limits: { "maxDailyHours": 13, "maxWeeklyHours": 60, "minRestBetweenShifts": 8 }
-  weeklyHourLimits    Json?     @map("weekly_hour_limits") @db.JsonB
-
-  // Audit
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([jurisdiction, effectiveDate])
-  @@map("work_rules")
-}
-
-// ============================================================================
-// PORTAL CONFIGURATION MODELS
-// ============================================================================
-
-/// Portal Configuration - Multi-entity portal settings
-/// Defines portal access rules, checklists, and navigation for different entity types
-model PortalConfig {
-  id              String   @id @default(uuid()) @db.Uuid
-
-  // Entity type (employees, clients, suppliers)
-  entityType      String   @unique @map("entity_type") @db.VarChar(50)
-
-  // Allowed statuses for portal access
-  allowedStatuses String[] @map("allowed_statuses")
-
-  // Checklist references (which checklists to use for application/onboarding)
-  // Structure: { "application": "employeePreHiringChecklist", "onboarding": "employeeOnboardingChecklist" }
-  checklistRefs   Json     @map("checklist_refs") @db.JsonB
-
-  // Navigation items configuration
-  // Structure: [{ "key": "application", "label": "Application", "statuses": ["new", "under_review"] }, ...]
-  navigationItems Json     @map("navigation_items") @db.JsonB
-
-  // Status messages
-  // Structure: { "new": "Complete your application...", "under_review": "Being reviewed..." }
-  statusMessages  Json?    @map("status_messages") @db.JsonB
-
-  // Visible/hidden fields configuration
-  // Structure: { "visible": ["firstName", "lastName"], "hidden": ["hireDate", "jobTitle"] }
-  fieldConfig     Json?    @map("field_config") @db.JsonB
-
-  // Active flag
-  isActive        Boolean  @default(true) @map("is_active")
-
-  // Audit
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([entityType])
-  @@map("portal_configs")
 }
