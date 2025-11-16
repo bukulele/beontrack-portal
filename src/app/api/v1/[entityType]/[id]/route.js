@@ -244,6 +244,18 @@ export async function PATCH(request, { params }) {
       return recordAuth.response;
     }
 
+    // Portal-specific check: If user is the employee themselves (portal access),
+    // verify they have permission to edit
+    if (entityType === 'employees' && currentEntity.userId === user.id) {
+      if (!currentEntity.allowApplicationEdit) {
+        return createErrorResponse(
+          403,
+          'Forbidden',
+          'Your application is currently locked for editing. Contact support if you need to make changes.'
+        );
+      }
+    }
+
     // Check if user can update the specific fields being changed
     const fieldsToUpdate = Object.keys(body);
     const fieldAuth = await authorizeFieldAccess(checker, 'update', entityType, fieldsToUpdate);
@@ -295,6 +307,8 @@ export async function PATCH(request, { params }) {
       reasonForLeaving: 'reasonForLeaving',
       dateOfLeaving: 'dateOfLeaving',
       profilePhotoId: 'profilePhotoId',
+      portalAccessEnabled: 'portalAccessEnabled',
+      allowApplicationEdit: 'allowApplicationEdit',
     } : {};
 
     // Track changes and build update data

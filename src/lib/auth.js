@@ -7,7 +7,7 @@
 
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { customSession } from "better-auth/plugins";
+import { customSession, emailOTP } from "better-auth/plugins";
 import { PrismaClient } from "../generated/prisma/index.js";
 import bcrypt from "bcrypt";
 
@@ -87,6 +87,28 @@ export const auth = betterAuth({
 
   // Plugins
   plugins: [
+    // Email OTP for passwordless portal authentication
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        // Mock OTP sender - always use 123456 for development
+        console.log(`📧 [MOCK] Sending OTP to ${email}`);
+        console.log(`📧 [MOCK] OTP Code: 123456 (ignoring generated: ${otp})`);
+        console.log(`📧 [MOCK] Type: ${type}`);
+
+        // In production, replace this with real email sending:
+        // await sendEmail({
+        //   to: email,
+        //   subject: 'Your verification code',
+        //   text: `Your code is: ${otp}`,
+        // });
+
+        return { success: true };
+      },
+      otpLength: 6,
+      expiresIn: 600, // 10 minutes
+      sendOnSignUp: true, // Send OTP on first sign-up
+    }),
+
     customSession(async ({ user, session }) => {
       // Fetch user's roles and permissions
       const userWithRoles = await prisma.user.findUnique({

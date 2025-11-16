@@ -161,6 +161,22 @@ export const EMPLOYEE_EDIT_FORM_CONFIG = {
       type: "text",
       required: false,
     },
+
+    // ========================================
+    // Portal Access Section
+    // ========================================
+    {
+      key: "portalAccessEnabled",
+      label: "Portal Access Enabled",
+      type: "checkbox",
+      required: false,
+    },
+    {
+      key: "allowApplicationEdit",
+      label: "Allow Portal Edits",
+      type: "checkbox",
+      required: false,
+    },
   ],
 };
 

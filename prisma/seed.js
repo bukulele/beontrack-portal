@@ -14,15 +14,76 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // Check if database is already seeded
+  // Check what data already exists
   const userCount = await prisma.user.count();
-  const employeeCount = await prisma.officeEmployee.count();
+  const portalConfigCount = await prisma.portalConfig.count();
 
-  if (userCount > 0 || employeeCount > 0) {
-    console.log('⚠️  Database already contains data. Skipping seed.');
-    console.log(`   Users: ${userCount}, Employees: ${employeeCount}`);
+  // If everything is already seeded, skip
+  if (userCount > 0 && portalConfigCount > 0) {
+    console.log('⚠️  Database already fully seeded. Skipping.');
+    console.log(`   Users: ${userCount}, Portal Configs: ${portalConfigCount}`);
     return;
   }
+
+  // If users exist but portal config doesn't, just add portal config
+  if (userCount > 0 && portalConfigCount === 0) {
+    console.log('⚠️  Users exist but portal config missing. Adding portal config...');
+    await createPortalConfig();
+    console.log('✅ Portal configuration added successfully!');
+    return;
+  }
+
+  // Full seed if database is empty
+  if (userCount === 0) {
+    await fullSeed();
+    return;
+  }
+}
+
+async function createPortalConfig() {
+  const employeePortalConfig = await prisma.portalConfig.create({
+    data: {
+      entityType: 'employees',
+      allowedStatuses: ['new', 'under_review', 'application_on_hold', 'offer_accepted', 'trainee', 'active', 'vacation', 'on_leave', 'wcb'],
+      checklistRefs: {
+        application: 'employeePreHiringChecklist',
+        onboarding: 'employeeOnboardingChecklist',
+      },
+      navigationItems: [
+        { key: 'application', label: 'Application', route: '/portal/employees/application', statuses: ['new', 'under_review', 'application_on_hold'] },
+        { key: 'documents', label: 'Documents', route: '/portal/employees/documents', statuses: ['all'] },
+        { key: 'onboarding', label: 'Onboarding', route: '/portal/employees/onboarding', statuses: ['offer_accepted', 'trainee'] },
+        { key: 'info', label: 'My Info', route: '/portal/employees/info', statuses: ['trainee', 'active', 'vacation', 'on_leave', 'wcb'] },
+        { key: 'timecard', label: 'Timecard', route: '/portal/employees/timecard', statuses: ['active', 'vacation', 'on_leave', 'wcb'] },
+        { key: 'status', label: 'Status', route: '/portal/employees/status', statuses: ['all'] },
+      ],
+      statusMessages: {
+        new: 'Complete your application and upload required documents to submit for review.',
+        under_review: 'Your application is being reviewed by our team. We\'ll notify you of any updates.',
+        application_on_hold: 'Your application is currently on hold. Please check the status notes for more information.',
+        rejected: 'We appreciate your interest. Your application was not selected at this time.',
+        offer_accepted: 'Congratulations! Please complete your onboarding documents to continue.',
+        trainee: 'Welcome to the team! You\'re currently in training. Access your timecard and company info below.',
+        active: 'Welcome aboard! You have full access to all portal features.',
+        vacation: 'Enjoy your time off! Your timecard and info are still accessible.',
+        on_leave: 'You\'re currently on leave. Your information remains accessible.',
+        wcb: 'You\'re on workers\' compensation leave. Access your info and documents below.',
+        resigned: 'Your employment has ended. Thank you for your service.',
+        terminated: 'Your employment has ended.',
+        suspended: 'Your access is temporarily suspended. Contact HR for more information.',
+      },
+      fieldConfig: {
+        visible: ['firstName', 'lastName', 'email', 'phoneNumber', 'dateOfBirth', 'addressLine1', 'addressLine2', 'city', 'stateProvince', 'postalCode', 'country', 'emergencyContactName', 'emergencyContactPhone'],
+        hidden: ['hireDate', 'terminationDate', 'jobTitle', 'department', 'employmentType', 'officeLocation'],
+        editableWhenNew: ['firstName', 'lastName', 'phoneNumber', 'dateOfBirth', 'addressLine1', 'addressLine2', 'city', 'stateProvince', 'postalCode', 'country', 'emergencyContactName', 'emergencyContactPhone'],
+      },
+      isActive: true,
+    },
+  });
+  console.log('   ✓ Created employee portal configuration');
+}
+
+async function fullSeed() {
 
   // Create admin user using Better Auth API (handles password hashing and account creation)
   console.log('👤 Creating admin user...');
@@ -49,123 +110,6 @@ async function main() {
     },
   });
   console.log(`   ✓ Created admin user: ${adminUser.email}`);
-
-  // Create sample employees
-  console.log('👥 Creating sample employees...');
-
-  const employee1 = await prisma.officeEmployee.create({
-    data: {
-      employeeId: 'EMP001',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      phoneNumber: '+1-555-0101',
-      emergencyContactName: 'Jane Doe',
-      emergencyContactPhone: '+1-555-0102',
-      addressLine1: '123 Main Street',
-      city: 'Vancouver',
-      stateProvince: 'BC',
-      postalCode: 'V6B 1A1',
-      country: 'Canada',
-      hireDate: new Date('2023-01-15'),
-      jobTitle: 'HR Manager',
-      department: 'Human Resources',
-      employmentType: 'full_time',
-      officeLocation: 'Vancouver Office',
-      dateOfBirth: new Date('1985-05-20'),
-      status: 'active',
-      createdById: adminUser.id,
-      updatedById: adminUser.id,
-    },
-  });
-  console.log(`   ✓ Created employee: ${employee1.firstName} ${employee1.lastName} (${employee1.status})`);
-
-  const employee2 = await prisma.officeEmployee.create({
-    data: {
-      employeeId: 'EMP002',
-      firstName: 'Sarah',
-      lastName: 'Smith',
-      email: 'sarah.smith@example.com',
-      phoneNumber: '+1-555-0103',
-      emergencyContactName: 'Michael Smith',
-      emergencyContactPhone: '+1-555-0104',
-      addressLine1: '456 Oak Avenue',
-      city: 'Toronto',
-      stateProvince: 'ON',
-      postalCode: 'M5H 2N2',
-      country: 'Canada',
-      hireDate: new Date('2024-03-01'),
-      jobTitle: 'Accountant',
-      department: 'Finance',
-      employmentType: 'full_time',
-      officeLocation: 'Toronto Office',
-      dateOfBirth: new Date('1990-08-15'),
-      status: 'trainee',
-      createdById: adminUser.id,
-      updatedById: adminUser.id,
-    },
-  });
-  console.log(`   ✓ Created employee: ${employee2.firstName} ${employee2.lastName} (${employee2.status})`);
-
-  const employee3 = await prisma.officeEmployee.create({
-    data: {
-      employeeId: 'EMP003',
-      firstName: 'Michael',
-      lastName: 'Johnson',
-      email: 'michael.johnson@example.com',
-      phoneNumber: '+1-555-0105',
-      addressLine1: '789 Pine Road',
-      city: 'Calgary',
-      stateProvince: 'AB',
-      postalCode: 'T2P 1J9',
-      country: 'Canada',
-      jobTitle: 'Recruitment Specialist',
-      department: 'Human Resources',
-      employmentType: 'part_time',
-      officeLocation: 'Calgary Office',
-      dateOfBirth: new Date('1992-11-30'),
-      status: 'under_review',
-      createdById: adminUser.id,
-      updatedById: adminUser.id,
-    },
-  });
-  console.log(`   ✓ Created employee: ${employee3.firstName} ${employee3.lastName} (${employee3.status})`);
-
-  // Create activity logs
-  console.log('📝 Creating activity logs...');
-  await prisma.activityLog.create({
-    data: {
-      entityType: 'employees',
-      entityId: employee1.id,
-      actionType: 'created',
-      fieldName: 'status',
-      newValue: 'active',
-      performedById: adminUser.id,
-    },
-  });
-
-  await prisma.activityLog.create({
-    data: {
-      entityType: 'employees',
-      entityId: employee2.id,
-      actionType: 'created',
-      fieldName: 'status',
-      newValue: 'trainee',
-      performedById: adminUser.id,
-    },
-  });
-
-  await prisma.activityLog.create({
-    data: {
-      entityType: 'employees',
-      entityId: employee3.id,
-      actionType: 'created',
-      fieldName: 'status',
-      newValue: 'under_review',
-      performedById: adminUser.id,
-    },
-  });
-  console.log('   ✓ Created activity logs');
 
   // Create employee status configurations
   console.log('🎨 Creating employee status configurations...');
@@ -427,207 +371,32 @@ async function main() {
   });
   console.log(`   ✓ Assigned admin role to admin user`);
 
-  // Create work rules for common jurisdictions
-  console.log('⚖️  Creating work rules for labor law compliance...');
-
-  const workRules = [
-    {
-      name: 'Ontario Labor Standards',
-      jurisdiction: 'CA-ON',
-      effectiveDate: new Date('2024-01-01'),
-      overtimeRules: {
-        dailyThreshold: 8,
-        weeklyThreshold: 44,
-        dailyRate: 1.5,
-        weeklyRate: 1.5,
-        description: 'Overtime after 44 hours per week',
-      },
-      breakRules: {
-        mealAfterHours: 5,
-        mealDuration: 30,
-        mealPaid: false,
-        restBreaks: [],
-        description: '30-minute meal break after 5 consecutive hours',
-      },
-      weeklyHourLimits: {
-        maxDailyHours: 13,
-        maxWeeklyHours: 48,
-        minRestBetweenShifts: 11,
-        description: 'Maximum 13 hours per day, 48 hours per week',
-      },
-    },
-    {
-      name: 'British Columbia Employment Standards',
-      jurisdiction: 'CA-BC',
-      effectiveDate: new Date('2024-01-01'),
-      overtimeRules: {
-        dailyThreshold: 8,
-        weeklyThreshold: 40,
-        dailyRate: 1.5,
-        weeklyRate: 1.5,
-        doubleTimeAfter: 12,
-        description: 'Overtime after 8 hours/day or 40 hours/week, double time after 12 hours/day',
-      },
-      breakRules: {
-        mealAfterHours: 5,
-        mealDuration: 30,
-        mealPaid: false,
-        restBreaks: [{ afterHours: 4, duration: 15, paid: false }],
-        description: '30-minute meal break after 5 hours',
-      },
-      weeklyHourLimits: null,
-    },
-    {
-      name: 'California Labor Code',
-      jurisdiction: 'US-CA',
-      effectiveDate: new Date('2024-01-01'),
-      overtimeRules: {
-        dailyThreshold: 8,
-        weeklyThreshold: 40,
-        dailyRate: 1.5,
-        weeklyRate: 1.5,
-        doubleTimeAfter: 12,
-        description: 'Overtime after 8 hours/day or 40 hours/week, double time after 12 hours/day',
-      },
-      breakRules: {
-        mealAfterHours: 5,
-        mealDuration: 30,
-        mealPaid: false,
-        restBreaks: [
-          { afterHours: 4, duration: 10, paid: true },
-          { afterHours: 6, duration: 10, paid: true },
-        ],
-        description: '30-minute meal break after 5 hours, 10-minute paid rest breaks',
-      },
-      weeklyHourLimits: null,
-    },
-    {
-      name: 'New York Labor Law',
-      jurisdiction: 'US-NY',
-      effectiveDate: new Date('2024-01-01'),
-      overtimeRules: {
-        dailyThreshold: null,
-        weeklyThreshold: 40,
-        dailyRate: null,
-        weeklyRate: 1.5,
-        description: 'Overtime after 40 hours per week',
-      },
-      breakRules: {
-        mealAfterHours: 6,
-        mealDuration: 30,
-        mealPaid: false,
-        restBreaks: [],
-        description: '30-minute meal break for shifts over 6 hours',
-      },
-      weeklyHourLimits: null,
-    },
-  ];
-
-  for (const ruleData of workRules) {
-    await prisma.workRule.create({
-      data: ruleData,
-    });
-    console.log(`   ✓ Created work rule: ${ruleData.name} (${ruleData.jurisdiction})`);
-  }
-
-  // Create sample time entries for employee1
-  console.log('⏰ Creating sample time tracking data...');
-
-  const today = new Date();
-  const thisWeekStart = new Date(today);
-  thisWeekStart.setDate(today.getDate() - today.getDay()); // Sunday
-
-  // Create time entries for the past 5 days
-  const timeEntries = [];
-  for (let i = 1; i <= 5; i++) {
-    const entryDate = new Date(thisWeekStart);
-    entryDate.setDate(thisWeekStart.getDate() + i); // Monday-Friday
-
-    const clockIn = new Date(entryDate);
-    clockIn.setHours(9, 0, 0, 0);
-
-    const clockOut = new Date(entryDate);
-    clockOut.setHours(17, 30, 0, 0); // 8.5 hours
-
-    const totalMinutes = Math.round((clockOut - clockIn) / 60000);
-
-    const timeEntry = await prisma.timeEntry.create({
-      data: {
-        entityType: 'employees',
-        entityId: employee1.id,
-        clockInTime: clockIn,
-        clockOutTime: clockOut,
-        timezone: 'America/Vancouver',
-        entryType: 'regular_work',
-        entrySource: 'web_portal',
-        status: i < 3 ? 'approved' : 'submitted', // First 2 approved, rest submitted
-        totalMinutes,
-        createdById: adminUser.id,
-      },
-    });
-
-    // Auto-create meal break (30 min) for each day
-    await prisma.timeBreak.create({
-      data: {
-        timeEntryId: timeEntry.id,
-        startTime: new Date(clockIn.getTime() + 4 * 60 * 60 * 1000), // 4 hours after clock-in
-        endTime: new Date(clockIn.getTime() + 4.5 * 60 * 60 * 1000), // 30 min later
-        breakType: 'meal_break',
-        isPaid: false,
-        isAutoDeducted: true,
-        createdById: adminUser.id,
-      },
-    });
-
-    timeEntries.push(timeEntry);
-  }
-  console.log(`   ✓ Created ${timeEntries.length} time entries with breaks for ${employee1.firstName}`);
-
-  // Create a sample hours adjustment
-  const payPeriodStart = new Date(thisWeekStart);
-  payPeriodStart.setDate(1); // First of month
-  const payPeriodEnd = new Date(payPeriodStart);
-  payPeriodEnd.setDate(15); // 15th of month
-
-  await prisma.hoursAdjustment.create({
-    data: {
-      entityType: 'employees',
-      entityId: employee1.id,
-      payPeriodStart,
-      payPeriodEnd,
-      hours: 2.0,
-      reason: 'Compensatory time off for weekend work',
-      adjustmentType: 'comp_time',
-      isApproved: true,
-      approvedById: adminUser.id,
-      approvedAt: new Date(),
-      createdById: adminUser.id,
-    },
-  });
-  console.log(`   ✓ Created sample hours adjustment for ${employee1.firstName}`);
+  // Create portal configuration
+  console.log('🌐 Creating portal configuration...');
+  await createPortalConfig();
 
   console.log('');
   console.log('✅ Database seeding completed successfully!');
   console.log('');
   console.log('📊 Summary:');
   console.log(`   - Users: 1 (admin)`);
-  console.log(`   - Employees: 3 (1 active, 1 trainee, 1 under_review)`);
-  console.log(`   - Activity Logs: 3`);
+  console.log(`   - Employees: 0 (no sample data - create via portal)`);
   console.log(`   - Status Configs: ${statusConfigs.length}`);
   console.log(`   - Status Transitions: ${transitions.length}`);
   console.log(`   - Roles: ${roles.length}`);
   console.log(`   - Permissions: ${permissions.length}`);
-  console.log(`   - Work Rules: ${workRules.length} (CA-ON, CA-BC, US-CA, US-NY)`);
-  console.log(`   - Time Entries: ${timeEntries.length} with breaks`);
-  console.log(`   - Hours Adjustments: 1`);
+  console.log(`   - Portal Configs: 1 (employees)`);
   console.log('');
-  console.log('🔑 Login Credentials:');
+  console.log('🔑 Admin Login Credentials:');
   console.log(`   - Email: admin@example.com`);
   console.log(`   - Password: admin123`);
   console.log('');
+  console.log('🌐 Portal Access:');
+  console.log(`   - Sign in at: /portal`);
+  console.log(`   - New applicants will auto-create employee records`);
+  console.log('');
   console.log('🔍 View data in Prisma Studio: npm run db:studio');
   console.log('');
-  console.log('⚠️  Note: No mock files created. Upload documents via API.');
 }
 
 main()

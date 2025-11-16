@@ -8,11 +8,14 @@
 "use client";
 
 import { createAuthClient } from "better-auth/react";
-import { customSessionClient } from "better-auth/client/plugins";
+import { customSessionClient, emailOTPClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002",
-  plugins: [customSessionClient()],
+  plugins: [
+    customSessionClient(),
+    emailOTPClient(),
+  ],
 });
 
 /**

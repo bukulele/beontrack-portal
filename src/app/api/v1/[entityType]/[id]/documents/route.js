@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { saveUploadedFile } from '@/lib/fileUpload';
 import { auth } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 // Supported entity types
 const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
@@ -133,6 +134,36 @@ export async function POST(request, { params }) {
           { error: `${entityType} not found` },
           { status: 404 }
         );
+      }
+
+      // Get session for permission checks and rate limiting
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+
+      // Rate limiting: 10 document uploads per 5 minutes per user
+      if (session?.user) {
+        const rateLimitResult = checkRateLimit(session.user.id, 'DOCUMENT_UPLOAD');
+        if (!rateLimitResult.allowed) {
+          return NextResponse.json(
+            {
+              error: `Too many upload requests. Please try again in ${rateLimitResult.retryAfter} seconds.`,
+              retryAfter: rateLimitResult.retryAfter,
+            },
+            { status: 429 } // Too Many Requests
+          );
+        }
+      }
+
+      // Portal-specific check: If user is the employee themselves (portal access),
+      // verify they have permission to upload/edit documents
+      if (session?.user && entityType === 'employees' && entity.userId === session.user.id) {
+        if (!entity.allowApplicationEdit) {
+          return NextResponse.json(
+            { error: 'Your application is currently locked for editing. Contact support if you need to upload documents.' },
+            { status: 403 }
+          );
+        }
       }
     }
 

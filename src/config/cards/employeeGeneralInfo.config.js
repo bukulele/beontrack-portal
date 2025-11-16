@@ -158,6 +158,29 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
                    (entityData.status === "resigned" || entityData.status === "terminated");
           },
         },
+        {
+          key: "portalAccessEnabled",
+          label: "Portal Access",
+          type: "boolean",
+          editable: true,
+          formatter: (value) => value ? "Enabled" : "Disabled",
+          conditional: (entityData) => {
+            // Only show for applicants/employees with email
+            return entityData.email && entityData.userId;
+          },
+        },
+        {
+          key: "allowApplicationEdit",
+          label: "Allow Portal Edits",
+          type: "boolean",
+          editable: true,
+          formatter: (value) => value ? "Yes" : "No",
+          conditional: (entityData) => {
+            // Only show if portal access is enabled
+            return entityData.portalAccessEnabled && entityData.userId;
+          },
+          sideInfo: () => "Controls whether applicant can edit their application in the portal",
+        },
       ],
     },
   ],

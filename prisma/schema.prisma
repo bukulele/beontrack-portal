@@ -192,6 +192,7 @@ model User {
   // Relations
   employeesCreated        OfficeEmployee[] @relation("EmployeeCreatedBy")
   employeesUpdated        OfficeEmployee[] @relation("EmployeeUpdatedBy")
+  employeePortalLink      OfficeEmployee[] @relation("EmployeePortalUser")
   documentsUploaded       Document[]       @relation("DocumentUploadedBy")
   documentsReviewed       Document[]       @relation("DocumentReviewedBy")
   activityHistoryReviewed ActivityHistory[] @relation("ActivityHistoryReviewedBy")
@@ -251,6 +252,12 @@ model OfficeEmployee {
   // Status
   status                  EmployeeStatus  @default(new)
   statusNote              String?         @map("status_note") @db.Text
+
+  // Portal access control
+  portalAccessEnabled     Boolean         @default(true) @map("portal_access_enabled")
+  allowApplicationEdit    Boolean         @default(true) @map("allow_application_edit")
+  userId                  String?         @map("user_id") @db.Uuid
+  portalUser              User?           @relation("EmployeePortalUser", fields: [userId], references: [id])
 
   // Notes and leaving details
   remarksComments         String?         @map("remarks_comments") @db.Text
@@ -798,4 +805,46 @@ model WorkRule {
 
   @@index([jurisdiction, effectiveDate])
   @@map("work_rules")
+}
+
+// ============================================================================
+// PORTAL CONFIGURATION MODELS
+// ============================================================================
+
+/// Portal Configuration - Multi-entity portal settings
+/// Defines portal access rules, checklists, and navigation for different entity types
+model PortalConfig {
+  id              String   @id @default(uuid()) @db.Uuid
+
+  // Entity type (employees, clients, suppliers)
+  entityType      String   @unique @map("entity_type") @db.VarChar(50)
+
+  // Allowed statuses for portal access
+  allowedStatuses String[] @map("allowed_statuses")
+
+  // Checklist references (which checklists to use for application/onboarding)
+  // Structure: { "application": "employeePreHiringChecklist", "onboarding": "employeeOnboardingChecklist" }
+  checklistRefs   Json     @map("checklist_refs") @db.JsonB
+
+  // Navigation items configuration
+  // Structure: [{ "key": "application", "label": "Application", "statuses": ["new", "under_review"] }, ...]
+  navigationItems Json     @map("navigation_items") @db.JsonB
+
+  // Status messages
+  // Structure: { "new": "Complete your application...", "under_review": "Being reviewed..." }
+  statusMessages  Json?    @map("status_messages") @db.JsonB
+
+  // Visible/hidden fields configuration
+  // Structure: { "visible": ["firstName", "lastName"], "hidden": ["hireDate", "jobTitle"] }
+  fieldConfig     Json?    @map("field_config") @db.JsonB
+
+  // Active flag
+  isActive        Boolean  @default(true) @map("is_active")
+
+  // Audit
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([entityType])
+  @@map("portal_configs")
 }
