@@ -21,12 +21,15 @@ import {
  * - Direct text input for manual entry
  * - Validates and formats dates
  * - Returns dates in YYYY-MM-DD format
+ * - Configurable year range for dropdown
  *
  * @param {Date | undefined} value - Selected date
  * @param {Function} onChange - Callback with Date object
  * @param {string} placeholder - Placeholder text
  * @param {string} className - Additional classes
  * @param {boolean} disabled - Disable input
+ * @param {number} startYear - Start year for dropdown (default: 1900)
+ * @param {number} endYear - End year for dropdown (default: 2100)
  */
 export function DatePicker({
   value,
@@ -34,6 +37,8 @@ export function DatePicker({
   placeholder = "YYYY-MM-DD",
   className,
   disabled = false,
+  startYear = 1900,
+  endYear = 2100,
   ...props
 }) {
   const [open, setOpen] = React.useState(false);
@@ -106,6 +111,8 @@ export function DatePicker({
             selected={value}
             onSelect={handleSelect}
             captionLayout="dropdown"
+            startMonth={new Date(startYear, 0)}
+            endMonth={new Date(endYear, 11)}
             initialFocus
           />
         </PopoverContent>

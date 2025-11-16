@@ -84,6 +84,7 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       label: "Date of Birth",
       type: "date",
       required: true,
+      dateRange: { start: 1900, end: 'current-16' }, // Must be at least 16 years old
     },
 
     // ========================================
@@ -140,12 +141,14 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       label: "Hire Date",
       type: "date",
       required: false,
+      dateRange: { start: 1950, end: 'current+5' }, // Allow future hires
     },
     {
       key: "terminationDate",
       label: "Termination Date",
       type: "date",
       required: false,
+      dateRange: { start: 1950, end: 'current+5' },
     },
     {
       key: "jobTitle",

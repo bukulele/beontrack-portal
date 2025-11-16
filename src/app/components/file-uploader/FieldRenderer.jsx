@@ -22,7 +22,24 @@ import NumericInput from '../numericInput/NumericInput';
  * @param {string} error - Validation error message
  */
 export function FieldRenderer({ field, value, onChange, error }) {
-  const { type, name, label, required, options, props = {}, validation = {} } = field;
+  const { type, name, label, required, options, props = {}, validation = {}, dateRange } = field;
+
+  // Convert date range notation to actual years
+  const getYearFromRange = (rangeValue) => {
+    const currentYear = new Date().getFullYear();
+
+    if (rangeValue === 'current') {
+      return currentYear;
+    } else if (typeof rangeValue === 'string' && rangeValue.startsWith('current')) {
+      // Handle 'current+5', 'current-16' etc
+      const match = rangeValue.match(/current([+-]\d+)/);
+      if (match) {
+        return currentYear + parseInt(match[1]);
+      }
+    }
+
+    return rangeValue; // Numeric year
+  };
 
   // Common label component
   const FieldLabel = () => (
@@ -111,6 +128,14 @@ export function FieldRenderer({ field, value, onChange, error }) {
       );
 
     case 'date':
+      // Get date range from field config
+      const startYear = dateRange?.start
+        ? getYearFromRange(dateRange.start)
+        : 1900;
+      const endYear = dateRange?.end
+        ? getYearFromRange(dateRange.end)
+        : 2100;
+
       return (
         <div className="space-y-1.5">
           <FieldLabel />
@@ -123,6 +148,8 @@ export function FieldRenderer({ field, value, onChange, error }) {
             onChange={(date) => {
               onChange(date && isValid(date) ? format(date, 'yyyy-MM-dd') : '');
             }}
+            startYear={startYear}
+            endYear={endYear}
             className={error ? 'border-red-500' : ''}
             {...props}
           />

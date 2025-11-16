@@ -23,14 +23,14 @@ export function getMetadataFields(documentType, entityType) {
     // Identity & Work Authorization
     government_id: [
       { name: 'number', type: 'text', label: 'ID Number', placeholder: 'Enter ID number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date' },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date' },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     work_authorization: [
       { name: 'number', type: 'text', label: 'Authorization Number', placeholder: 'Enter authorization number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date' },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date' },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     sin_ssn: [
@@ -47,13 +47,13 @@ export function getMetadataFields(documentType, entityType) {
     tax_forms: [
       { name: 'taxYear', type: 'text', label: 'Tax Year', placeholder: 'YYYY' },
       { name: 'formType', type: 'text', label: 'Form Type', placeholder: 'e.g., W-4, T4, etc.' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date' },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
     // Hiring Documents
     employment_application: [
-      { name: 'applicationDate', type: 'date', label: 'Application Date' },
+      { name: 'applicationDate', type: 'date', label: 'Application Date', dateRange: { start: 1950, end: 'current' } },
       { name: 'positionApplied', type: 'text', label: 'Position Applied For', placeholder: 'Job title' },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
@@ -61,7 +61,7 @@ export function getMetadataFields(documentType, entityType) {
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     background_check_consent: [
-      { name: 'consentDate', type: 'date', label: 'Consent Date' },
+      { name: 'consentDate', type: 'date', label: 'Consent Date', dateRange: { start: 1950, end: 'current' } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     emergency_contact: [
@@ -73,26 +73,26 @@ export function getMetadataFields(documentType, entityType) {
 
     // Employment Contract & Policies
     employment_contract: [
-      { name: 'contractDate', type: 'date', label: 'Contract Date' },
-      { name: 'startDate', type: 'date', label: 'Start Date' },
-      { name: 'endDate', type: 'date', label: 'End Date (if applicable)' },
+      { name: 'contractDate', type: 'date', label: 'Contract Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'startDate', type: 'date', label: 'Start Date', dateRange: { start: 1950, end: 'current+5' } },
+      { name: 'endDate', type: 'date', label: 'End Date (if applicable)', dateRange: { start: 'current', end: 2100 } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     company_policies: [
       { name: 'policyName', type: 'text', label: 'Policy Name', placeholder: 'e.g., Code of Conduct' },
       { name: 'version', type: 'text', label: 'Version', placeholder: 'Policy version' },
-      { name: 'acknowledgementDate', type: 'date', label: 'Acknowledgement Date' },
+      { name: 'acknowledgementDate', type: 'date', label: 'Acknowledgement Date', dateRange: { start: 1950, end: 'current' } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     confidentiality_agreement: [
-      { name: 'agreementDate', type: 'date', label: 'Agreement Date' },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date (if applicable)' },
+      { name: 'agreementDate', type: 'date', label: 'Agreement Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date (if applicable)', dateRange: { start: 'current', end: 2100 } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     benefits_enrollment: [
-      { name: 'enrollmentDate', type: 'date', label: 'Enrollment Date' },
+      { name: 'enrollmentDate', type: 'date', label: 'Enrollment Date', dateRange: { start: 1950, end: 'current' } },
       { name: 'planType', type: 'text', label: 'Plan Type', placeholder: 'e.g., Health, Dental' },
-      { name: 'effectiveDate', type: 'date', label: 'Effective Date' },
+      { name: 'effectiveDate', type: 'date', label: 'Effective Date', dateRange: { start: 1950, end: 'current+5' } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
@@ -100,21 +100,21 @@ export function getMetadataFields(documentType, entityType) {
     professional_certifications: [
       { name: 'certificationName', type: 'text', label: 'Certification Name', placeholder: 'e.g., PMP, CPA' },
       { name: 'certificationNumber', type: 'text', label: 'Certification Number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date' },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date' },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
       { name: 'issuingAuthority', type: 'text', label: 'Issuing Authority', placeholder: 'Organization' },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     education_verification: [
       { name: 'institution', type: 'text', label: 'Institution', placeholder: 'University/College name' },
       { name: 'degree', type: 'text', label: 'Degree/Diploma', placeholder: 'e.g., Bachelor of Science' },
-      { name: 'graduationDate', type: 'date', label: 'Graduation Date' },
+      { name: 'graduationDate', type: 'date', label: 'Graduation Date', dateRange: { start: 1950, end: 'current' } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     safety_training: [
       { name: 'trainingName', type: 'text', label: 'Training Name', placeholder: 'e.g., WHMIS, First Aid' },
-      { name: 'completionDate', type: 'date', label: 'Completion Date' },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date' },
+      { name: 'completionDate', type: 'date', label: 'Completion Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
       { name: 'certificationNumber', type: 'text', label: 'Certification Number' },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
@@ -123,8 +123,8 @@ export function getMetadataFields(documentType, entityType) {
     immigration_documents: [
       { name: 'documentName', type: 'text', label: 'Document Name', placeholder: 'e.g., Work Permit, Visa' },
       { name: 'number', type: 'text', label: 'Document Number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date' },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date' },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
       { name: 'country', type: 'text', label: 'Issuing Country' },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],

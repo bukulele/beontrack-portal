@@ -327,6 +327,8 @@ export function ActivityHistoryModal({
                           onChange={(date) =>
                             updateActivity(actualIndex, "startDate", date && isValid(date) ? format(date, "yyyy-MM-dd") : "")
                           }
+                          startYear={1950}
+                          endYear={new Date().getFullYear() + 10}
                         />
                       </div>
 
@@ -339,6 +341,8 @@ export function ActivityHistoryModal({
                               updateActivity(actualIndex, "endDate", date && isValid(date) ? format(date, "yyyy-MM-dd") : "")
                             }
                             disabled={activity.tillNow}
+                            startYear={1950}
+                            endYear={new Date().getFullYear() + 10}
                             className="flex-1"
                           />
                           <div className="flex items-center gap-1.5">

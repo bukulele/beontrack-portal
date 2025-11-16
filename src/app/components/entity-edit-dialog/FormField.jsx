@@ -22,6 +22,23 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { parse, format, isValid } from "date-fns";
 
+// Convert date range notation to actual years
+const getYearFromRange = (rangeValue) => {
+  const currentYear = new Date().getFullYear();
+
+  if (rangeValue === 'current') {
+    return currentYear;
+  } else if (typeof rangeValue === 'string' && rangeValue.startsWith('current')) {
+    // Handle 'current+5', 'current-16' etc
+    const match = rangeValue.match(/current([+-]\d+)/);
+    if (match) {
+      return currentYear + parseInt(match[1]);
+    }
+  }
+
+  return rangeValue; // Numeric year
+};
+
 /**
  * Render appropriate input based on field type
  */
@@ -44,6 +61,14 @@ function renderInput(field, formField) {
       return <Input type="email" {...formField} disabled={field.disabled} />;
 
     case "date":
+      // Get date range from field config
+      const startYear = field.dateRange?.start
+        ? getYearFromRange(field.dateRange.start)
+        : 1900;
+      const endYear = field.dateRange?.end
+        ? getYearFromRange(field.dateRange.end)
+        : 2100;
+
       return (
         <DatePicker
           value={
@@ -56,6 +81,8 @@ function renderInput(field, formField) {
               date && isValid(date) ? format(date, "yyyy-MM-dd") : ""
             );
           }}
+          startYear={startYear}
+          endYear={endYear}
           disabled={field.disabled}
         />
       );

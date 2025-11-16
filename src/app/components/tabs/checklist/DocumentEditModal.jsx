@@ -73,6 +73,23 @@ export function DocumentEditModal({
     }));
   };
 
+  // Convert date range notation to actual years
+  const getYearFromRange = (rangeValue) => {
+    const currentYear = new Date().getFullYear();
+
+    if (rangeValue === 'current') {
+      return currentYear;
+    } else if (typeof rangeValue === 'string' && rangeValue.startsWith('current')) {
+      // Handle 'current+5', 'current-16' etc
+      const match = rangeValue.match(/current([+-]\d+)/);
+      if (match) {
+        return currentYear + parseInt(match[1]);
+      }
+    }
+
+    return rangeValue; // Numeric year
+  };
+
   // Handle save
   const handleSave = async () => {
     try {
@@ -126,10 +143,20 @@ export function DocumentEditModal({
         );
 
       case "date":
+        // Get date range from field config
+        const startYear = field.dateRange?.start
+          ? getYearFromRange(field.dateRange.start)
+          : 1900;
+        const endYear = field.dateRange?.end
+          ? getYearFromRange(field.dateRange.end)
+          : 2100;
+
         return (
           <DatePicker
             value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
             onChange={(date) => handleChange(field.name, date && isValid(date) ? format(date, "yyyy-MM-dd") : "")}
+            startYear={startYear}
+            endYear={endYear}
           />
         );
 
