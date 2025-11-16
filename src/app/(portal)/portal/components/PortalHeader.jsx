@@ -14,7 +14,7 @@ import { authClient } from '@/lib/auth-client';
 
 export default function PortalHeader() {
   const router = useRouter();
-  const { entityData, portalConfig } = usePortal();
+  const { entityType, entityData, portalConfig } = usePortal();
   const user = usePortalUser();
 
   const handleSignOut = async () => {
@@ -27,12 +27,23 @@ export default function PortalHeader() {
   // Get status config for color
   const statusMessage = portalConfig?.statusMessages?.[entityData.status] || entityData.status;
 
+  // Dynamic title based on entity type
+  const getPortalTitle = () => {
+    const entityTypeMap = {
+      employees: 'Employee Portal',
+      drivers: 'Driver Portal',
+      clients: 'Client Portal',
+      suppliers: 'Supplier Portal',
+    };
+    return entityTypeMap[entityType] || 'Portal';
+  };
+
   return (
     <header className="border-b bg-background">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">Applicant Portal</h1>
+            <h1 className="text-xl font-semibold">{getPortalTitle()}</h1>
             {user.fullName && (
               <p className="text-sm text-muted-foreground">
                 Welcome, {user.fullName}
@@ -41,13 +52,11 @@ export default function PortalHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="text-right">
-              <Badge variant="outline" className="mb-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Status:</span>
+              <Badge variant="outline">
                 {entityData.status.replace(/_/g, ' ').toUpperCase()}
               </Badge>
-              <p className="text-xs text-muted-foreground">
-                ID: {entityData.employeeId}
-              </p>
             </div>
 
             <Button
@@ -59,12 +68,6 @@ export default function PortalHeader() {
             </Button>
           </div>
         </div>
-
-        {statusMessage && (
-          <div className="mt-3 p-3 bg-muted rounded-md">
-            <p className="text-sm">{statusMessage}</p>
-          </div>
-        )}
       </div>
     </header>
   );

@@ -177,6 +177,15 @@ export function CompactDataRow({
 
   // Render input based on type
   const renderInput = () => {
+    // Check if field is read-only
+    if (item.readOnly) {
+      return (
+        <span className="text-sm text-slate-600 dark:text-slate-400">
+          {value || <span className="text-muted-foreground italic">Not assigned</span>}
+        </span>
+      );
+    }
+
     // Support both item.type and item.dataField.type
     const fieldType = item.type || item.dataField?.type || "text";
 

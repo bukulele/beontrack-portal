@@ -18,6 +18,17 @@ async function main() {
   const userCount = await prisma.user.count();
   const portalConfigCount = await prisma.portalConfig.count();
 
+  // Check for force re-seed flag
+  const forceReseedPortal = process.env.FORCE_RESEED_PORTAL === 'true';
+
+  if (forceReseedPortal) {
+    console.log('🔄 Force re-seeding portal configs...');
+    await prisma.portalConfig.deleteMany({});
+    await createPortalConfig();
+    console.log('✅ Portal configuration re-seeded successfully!');
+    return;
+  }
+
   // If everything is already seeded, skip
   if (userCount > 0 && portalConfigCount > 0) {
     console.log('⚠️  Database already fully seeded. Skipping.');
@@ -50,12 +61,11 @@ async function createPortalConfig() {
         onboarding: 'employeeOnboardingChecklist',
       },
       navigationItems: [
-        { key: 'application', label: 'Application', route: '/portal/employees/application', statuses: ['new', 'under_review', 'application_on_hold'] },
+        { key: 'application', label: 'General', route: '/portal/employees/application', statuses: ['new', 'under_review', 'application_on_hold'] },
         { key: 'documents', label: 'Documents', route: '/portal/employees/documents', statuses: ['all'] },
         { key: 'onboarding', label: 'Onboarding', route: '/portal/employees/onboarding', statuses: ['offer_accepted', 'trainee'] },
         { key: 'info', label: 'My Info', route: '/portal/employees/info', statuses: ['trainee', 'active', 'vacation', 'on_leave', 'wcb'] },
         { key: 'timecard', label: 'Timecard', route: '/portal/employees/timecard', statuses: ['active', 'vacation', 'on_leave', 'wcb'] },
-        { key: 'status', label: 'Status', route: '/portal/employees/status', statuses: ['all'] },
       ],
       statusMessages: {
         new: 'Complete your application and upload required documents to submit for review.',

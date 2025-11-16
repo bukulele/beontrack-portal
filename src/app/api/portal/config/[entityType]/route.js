@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 export async function GET(request, { params }) {
   try {
-    const { entityType } = params;
+    const { entityType} = await params;
 
     const config = await prisma.portalConfig.findUnique({
       where: {

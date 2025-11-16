@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CompactFileRow from '@/app/components/tabs/checklist/CompactFileRow';
 import CompactDataRow from '@/app/components/tabs/checklist/CompactDataRow';
 import CompactModalRow from '@/app/components/tabs/checklist/CompactModalRow';
-import ChecklistProgress from '@/app/components/tabs/checklist/ChecklistProgress';
 
 export default function PortalChecklistTab({
   config,
@@ -26,6 +25,7 @@ export default function PortalChecklistTab({
   entityType,
   entityId,
   readOnly = false,
+  hideFiles = false, // New prop to hide Documents card
 }) {
   if (!config || !entityData) {
     return (
@@ -47,29 +47,8 @@ export default function PortalChecklistTab({
   const dataItems = visibleItems.filter(item => item.itemType === 'data' || item.itemType === 'modal');
   const fileItems = visibleItems.filter(item => item.itemType === 'file');
 
-  // Calculate progress (only for file items with checkable=true)
-  const checkableFileItems = fileItems.filter(item => item.actions?.checkable !== false);
-  const checkedCount = checkableFileItems.filter(item => {
-    const itemData = entityData[item.key];
-    if (Array.isArray(itemData)) {
-      return itemData.some(doc => doc.wasReviewed);
-    }
-    return itemData?.wasReviewed;
-  }).length;
-
-  const showProgress = config.showProgress !== false && checkableFileItems.length > 0;
-
   return (
     <div className="space-y-6">
-      {/* Progress indicator */}
-      {showProgress && (
-        <ChecklistProgress
-          checked={checkedCount}
-          total={checkableFileItems.length}
-          allChecked={checkedCount === checkableFileItems.length}
-        />
-      )}
-
       {/* Data fields card (if any) */}
       {dataItems.length > 0 && (
         <Card>
@@ -107,7 +86,7 @@ export default function PortalChecklistTab({
       )}
 
       {/* Documents card */}
-      {fileItems.length > 0 && (
+      {!hideFiles && fileItems.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Documents</CardTitle>
@@ -133,14 +112,6 @@ export default function PortalChecklistTab({
           </CardContent>
         </Card>
       )}
-
-      {/* Help text */}
-      <div className="text-sm text-muted-foreground">
-        <p>
-          <strong>Required documents</strong> are marked with a red dot.
-          Upload all required documents to complete your application.
-        </p>
-      </div>
     </div>
   );
 }

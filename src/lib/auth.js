@@ -13,6 +13,10 @@ import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
+// Temporary storage for OTP in development mode
+const devOTPStorage = new Map();
+export { devOTPStorage };
+
 export const auth = betterAuth({
   // Database configuration with Prisma adapter
   database: prismaAdapter(prisma, {
@@ -90,10 +94,17 @@ export const auth = betterAuth({
     // Email OTP for passwordless portal authentication
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        // Mock OTP sender - always use 123456 for development
+        // Mock OTP sender for development
         console.log(`📧 [MOCK] Sending OTP to ${email}`);
-        console.log(`📧 [MOCK] OTP Code: 123456 (ignoring generated: ${otp})`);
+        console.log(`📧 [MOCK] OTP Code: ${otp}`);
         console.log(`📧 [MOCK] Type: ${type}`);
+
+        // Store OTP in memory for dev mode (expires in 10 minutes)
+        if (process.env.NODE_ENV === 'development') {
+          devOTPStorage.set(email.toLowerCase(), { otp, expiresAt: Date.now() + 600000 });
+          // Clean up after 10 minutes
+          setTimeout(() => devOTPStorage.delete(email.toLowerCase()), 600000);
+        }
 
         // In production, replace this with real email sending:
         // await sendEmail({

@@ -22,10 +22,35 @@ export async function POST(request) {
       );
     }
 
-    // MOCK MODE: Accept 123456 as valid OTP
-    const isValidOTP = otp === '123456';
+    // Sign in using Email OTP - this verifies the OTP and creates a session
+    console.log(`🔐 Attempting to verify OTP for ${email} with code: ${otp}`);
 
-    if (!isValidOTP) {
+    let signInResult;
+    try {
+      signInResult = await auth.api.signInEmailOTP({
+        body: {
+          email: email.toLowerCase(),
+          otp: otp,
+        },
+        headers: request.headers,
+      });
+
+      console.log('✅ OTP verification successful:', signInResult);
+
+      if (!signInResult || signInResult.error) {
+        console.error('❌ OTP verification returned error:', signInResult?.error);
+        return NextResponse.json(
+          { error: 'Invalid verification code. Please try again.' },
+          { status: 401 }
+        );
+      }
+    } catch (otpError) {
+      console.error('❌ OTP sign-in failed:', otpError);
+      console.error('Error details:', {
+        status: otpError.status,
+        body: otpError.body,
+        message: otpError.message,
+      });
       return NextResponse.json(
         { error: 'Invalid verification code. Please try again.' },
         { status: 401 }
@@ -67,26 +92,9 @@ export async function POST(request) {
 
     // If no employee exists, create one
     if (!employee) {
-      // Generate unique employee ID
-      const lastEmployee = await prisma.officeEmployee.findFirst({
-        where: {
-          employeeId: {
-            startsWith: 'APP',
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
-
-      const lastNumber = lastEmployee
-        ? parseInt(lastEmployee.employeeId.replace('APP', ''))
-        : 0;
-      const newEmployeeId = `APP${String(lastNumber + 1).padStart(3, '0')}`;
-
       employee = await prisma.officeEmployee.create({
         data: {
-          employeeId: newEmployeeId,
+          employeeId: null, // Will be assigned by HR when reviewing application
           firstName: '',
           lastName: '',
           email: email.toLowerCase(),
@@ -99,17 +107,10 @@ export async function POST(request) {
         },
       });
 
-      console.log(`✅ Created new employee record: ${employee.employeeId} for ${email}`);
+      console.log(`✅ Created new employee record (no ID yet) for ${email}`);
     }
 
-    // Create a session for the user
-    const session = await auth.api.signInEmail({
-      body: {
-        email: email.toLowerCase(),
-        password: '', // Not used for OTP auth
-      },
-    });
-
+    // Session was already created by signInEmailOTP above
     return NextResponse.json({
       success: true,
       message: 'Verification successful',

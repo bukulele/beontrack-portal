@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth-client';
 
 export default function PortalSignInPage() {
   const router = useRouter();
@@ -31,25 +32,38 @@ export default function PortalSignInPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/portal/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+      // Use Better Auth client directly
+      const { data, error } = await authClient.emailOtp.sendVerificationOtp({
+        email: email.toLowerCase(),
+        type: 'sign-in',
       });
 
-      const data = await response.json();
+      if (error) {
+        throw new Error(error.message || 'Failed to send verification code');
+      }
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send verification code');
+      // In development, fetch the OTP code
+      if (process.env.NODE_ENV === 'development') {
+        try {
+          const otpResponse = await fetch('/api/portal/auth/get-dev-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.toLowerCase() }),
+          });
+
+          if (otpResponse.ok) {
+            const otpData = await otpResponse.json();
+            setSuccess(`Verification code sent! Use code: ${otpData.otp} (dev mode)`);
+            setStep('otp');
+            return;
+          }
+        } catch (otpErr) {
+          console.error('Failed to fetch dev OTP:', otpErr);
+        }
       }
 
       setSuccess('Verification code sent! Check your email.');
       setStep('otp');
-
-      // In development, show the mock OTP
-      if (data.mockOTP) {
-        setSuccess(`Verification code sent! Use code: ${data.mockOTP} (dev mode)`);
-      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,24 +78,27 @@ export default function PortalSignInPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/portal/auth/verify-otp', {
+      // Use Better Auth client to sign in with OTP
+      const { data, error } = await authClient.signIn.emailOtp({
+        email: email.toLowerCase(),
+        otp: otp,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Invalid verification code');
+      }
+
+      // Create employee record if it doesn't exist
+      await fetch('/api/portal/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Invalid verification code');
-      }
-
       setSuccess('Verification successful! Redirecting...');
 
       // Redirect to application page
-      setTimeout(() => {
-        router.push('/portal/employees/application');
-      }, 1000);
+      router.push('/portal/employees/application');
     } catch (err) {
       setError(err.message);
     } finally {

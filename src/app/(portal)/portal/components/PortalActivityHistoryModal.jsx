@@ -47,7 +47,12 @@ const ACTIVITY_TEMPLATE = {
 };
 
 /**
- * ActivityHistoryModal - Modal for editing activity history
+ * Portal Activity History Modal - Simplified version for portal users
+ *
+ * SIMPLIFIED FROM OFFICE VERSION:
+ * - Uses dynamic entityType parameter (not hardcoded to "employees")
+ * - No review functionality (no wasReviewed, reviewedBy)
+ * - Portal users can only edit their own activity history
  *
  * ARCHITECTURE:
  * - Takes a snapshot of itemData when modal opens
@@ -61,10 +66,10 @@ const ACTIVITY_TEMPLATE = {
  * @param {Array} itemData - Activity history data from parent
  * @param {Object} entityData - Entity data (not used, included for consistency)
  * @param {Function} loadData - Reload entity data callback
- * @param {string} entityType - Entity type (employee/driver)
- * @param {number} entityId - Entity ID
+ * @param {string} entityType - Entity type (employees, drivers, etc.)
+ * @param {string} entityId - Entity ID
  */
-export function ActivityHistoryModal({
+export function PortalActivityHistoryModal({
   open,
   onClose,
   item,
@@ -441,4 +446,4 @@ export function ActivityHistoryModal({
   );
 }
 
-export default ActivityHistoryModal;
+export default PortalActivityHistoryModal;

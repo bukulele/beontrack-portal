@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { auth, devOTPStorage } from '@/lib/auth';
 import { PrismaClient } from '@/generated/prisma';
 import { checkRateLimit } from '@/lib/rateLimit';
 
@@ -36,42 +36,28 @@ export async function POST(request) {
       );
     }
 
-    // Check if email already exists (prevent duplicates)
-    const existingEmployee = await prisma.officeEmployee.findFirst({
-      where: {
-        email: email.toLowerCase(),
-        isDeleted: false,
-      },
-    });
-
-    if (existingEmployee) {
-      return NextResponse.json(
-        {
-          error: 'This email is already registered. Please contact HR if you need assistance.',
-          code: 'EMAIL_EXISTS'
-        },
-        { status: 409 }
-      );
-    }
-
     // Send OTP using Better Auth's email OTP system
-    // Better Auth will automatically create a User account if it doesn't exist
+    // Use 'sign-in' type instead of 'email-verification' for passwordless sign-in
+    // Works for both new and existing users
     const otpResult = await auth.api.sendVerificationOTP({
       body: {
         email: email.toLowerCase(),
-        type: 'email-verification',
+        type: 'sign-in',
       },
     });
 
     console.log('📧 OTP sent to:', email);
-    console.log('📧 Use code: 123456 (mock mode)');
+
+    // Get OTP from dev storage
+    const storedOTP = devOTPStorage.get(email.toLowerCase());
+    const actualOTP = storedOTP?.otp;
 
     return NextResponse.json({
       success: true,
       message: 'Verification code sent to your email. Please check your inbox.',
-      // In mock mode, expose the OTP for development
-      ...(process.env.NODE_ENV === 'development' && {
-        mockOTP: '123456',
+      // In development mode, expose the actual OTP
+      ...(process.env.NODE_ENV === 'development' && actualOTP && {
+        mockOTP: actualOTP,
       }),
     });
 

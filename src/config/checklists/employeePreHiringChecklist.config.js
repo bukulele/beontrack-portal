@@ -209,26 +209,6 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
         delete: ["admin"],
       },
     },
-
-    // Activity History (special data-only item)
-    {
-      key: "activityHistory", // camelCase to match API response
-      label: "Activity History",
-      optional: false,
-      itemType: "data",
-      modalComponent: ActivityHistoryModal,
-
-      actions: {
-        checkable: true,
-        uploadable: false,
-        editable: false,
-        deletable: false,
-      },
-
-      roles: {
-        view: ["all"],
-      },
-    },
   ],
 
   // Completion action - What happens when checklist is 100% complete

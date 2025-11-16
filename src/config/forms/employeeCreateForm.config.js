@@ -26,8 +26,8 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       label: "Employee ID",
       type: "text",
       required: true,
-      placeholder: "e.g., EMP-001",
-      // Editable in create form (unlike edit form where it's disabled)
+      readOnly: true, // Read-only - assigned by HR
+      placeholder: "Assigned by HR",
     },
     {
       key: "firstName",
@@ -51,28 +51,28 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       key: "email",
       label: "Email",
       type: "email",
-      required: false,
+      required: true,
       placeholder: "user@example.com",
     },
     {
       key: "phoneNumber",
       label: "Phone Number",
       type: "phone",
-      required: false,
+      required: true,
       placeholder: "+1 (555) 123-4567",
     },
     {
       key: "emergencyContactName",
       label: "Emergency Contact Name",
       type: "text",
-      required: false,
+      required: true,
       placeholder: "Full name",
     },
     {
       key: "emergencyContactPhone",
       label: "Emergency Contact Phone",
       type: "phone",
-      required: false,
+      required: true,
       placeholder: "+1 (555) 123-4567",
     },
 
@@ -83,7 +83,7 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       key: "dateOfBirth",
       label: "Date of Birth",
       type: "date",
-      required: false,
+      required: true,
     },
 
     // ========================================
@@ -93,7 +93,7 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       key: "addressLine1",
       label: "Address Line 1",
       type: "text",
-      required: false,
+      required: true,
       placeholder: "Street address",
     },
     {
@@ -107,7 +107,7 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       key: "city",
       label: "City",
       type: "text",
-      required: false,
+      required: true,
       placeholder: "City name",
     },
     {
@@ -115,13 +115,13 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       label: "State/Province",
       type: "select",
       options: CANADIAN_PROVINCES,
-      required: false,
+      required: true,
     },
     {
       key: "postalCode",
       label: "Postal Code",
       type: "text",
-      required: false,
+      required: true,
       placeholder: "A1A 1A1",
     },
     {

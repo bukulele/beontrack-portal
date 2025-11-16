@@ -15,11 +15,13 @@ const PUBLIC_ROUTES = [
   '/login',
   '/signup',
   '/forgot-password',
+  '/portal',  // Portal sign-in page (public)
 ];
 
 // API routes that don't require authentication
 const PUBLIC_API_ROUTES = [
-  '/api/auth',  // Better Auth endpoints
+  '/api/auth',    // Better Auth endpoints
+  '/api/portal',  // Portal auth endpoints (send-otp, verify-otp)
 ];
 
 /**
@@ -28,12 +30,12 @@ const PUBLIC_API_ROUTES = [
 export default async function proxy(request) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
+  // Allow public routes (exact match)
   if (PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // Allow public API routes
+  // Allow public API routes (prefix match)
   if (PUBLIC_API_ROUTES.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
@@ -49,6 +51,18 @@ export default async function proxy(request) {
 
   // Check for session cookie (lightweight check)
   const sessionCookie = request.cookies.get('better-auth.session_token');
+
+  // Portal authenticated routes - check session for portal users
+  if (pathname.startsWith('/portal/') && pathname !== '/portal') {
+    // Portal application pages require authentication
+    // Allow if session exists (will be validated in portal pages)
+    if (sessionCookie) {
+      return NextResponse.next();
+    }
+    // No session - redirect to portal sign-in
+    const portalLoginUrl = new URL('/portal', request.url);
+    return NextResponse.redirect(portalLoginUrl);
+  }
 
   if (!sessionCookie) {
     // No session - redirect to login

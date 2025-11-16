@@ -9,6 +9,7 @@
 import { EMPLOYEE_CREATE_FORM_CONFIG } from '@/config/forms/employeeCreateForm.config';
 import { EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG } from '@/config/checklists/employeePreHiringChecklist.config';
 import { EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG } from '@/config/checklists/employeeOnboardingChecklist.config';
+import PortalActivityHistoryModal from '@/app/(portal)/portal/components/PortalActivityHistoryModal';
 
 export const EMPLOYEE_PORTAL_CONFIG = {
   entityType: 'employees',
@@ -26,6 +27,17 @@ export const EMPLOYEE_PORTAL_CONFIG = {
 
   // Onboarding checklist (shown after offer_accepted)
   onboardingChecklist: EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG,
+
+  // Additional items for Documents tab (Activity History)
+  documentTabItems: [
+    {
+      key: "activityHistory",
+      label: "Activity History",
+      optional: false,
+      itemType: "modal",
+      modalComponent: PortalActivityHistoryModal,
+    },
+  ],
 
   // Status-based visibility for different sections
   sections: {

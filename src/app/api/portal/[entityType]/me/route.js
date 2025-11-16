@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
 
 export async function GET(request, { params }) {
   try {
-    const { entityType } = params;
+    const { entityType } = await params;
 
     // Get current session
     const session = await auth.api.getSession({
