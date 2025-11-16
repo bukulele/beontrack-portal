@@ -189,7 +189,7 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  // Relations
+  // Relations (with CASCADE for audit trail preservation)
   employeesCreated        OfficeEmployee[] @relation("EmployeeCreatedBy")
   employeesUpdated        OfficeEmployee[] @relation("EmployeeUpdatedBy")
   employeePortalLink      OfficeEmployee[] @relation("EmployeePortalUser")
@@ -257,7 +257,7 @@ model OfficeEmployee {
   portalAccessEnabled     Boolean         @default(true) @map("portal_access_enabled")
   allowApplicationEdit    Boolean         @default(true) @map("allow_application_edit")
   userId                  String?         @map("user_id") @db.Uuid
-  portalUser              User?           @relation("EmployeePortalUser", fields: [userId], references: [id])
+  portalUser              User?           @relation("EmployeePortalUser", fields: [userId], references: [id], onDelete: SetNull)
 
   // Notes and leaving details
   remarksComments         String?         @map("remarks_comments") @db.Text
@@ -272,9 +272,9 @@ model OfficeEmployee {
   createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById             String          @map("created_by_id") @db.Uuid
-  createdBy               User            @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+  createdBy               User            @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   updatedById             String          @map("updated_by_id") @db.Uuid
-  updatedBy               User            @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id])
+  updatedBy               User            @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   isDeleted               Boolean         @default(false) @map("is_deleted")
   deletedAt               DateTime?       @map("deleted_at") @db.Timestamptz(6)
 
@@ -305,12 +305,12 @@ model Document {
   // Review status
   wasReviewed       Boolean       @default(false) @map("was_reviewed")
   reviewedById      String?       @map("reviewed_by_id") @db.Uuid
-  reviewedBy        User?         @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
+  reviewedBy        User?         @relation("DocumentReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt        DateTime?     @map("reviewed_at") @db.Timestamptz(6)
 
   // Upload info
   uploadedById      String        @map("uploaded_by_id") @db.Uuid
-  uploadedBy        User          @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  uploadedBy        User          @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
 
   // Audit
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -350,7 +350,7 @@ model ActivityHistory {
 
   // Review tracking (for checklists)
   wasReviewed        Boolean         @default(false) @map("was_reviewed")
-  reviewedBy         User?           @relation("ActivityHistoryReviewedBy", fields: [reviewedById], references: [id])
+  reviewedBy         User?           @relation("ActivityHistoryReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedById       String?         @map("reviewed_by_id") @db.Uuid
   reviewedAt         DateTime?       @map("reviewed_at") @db.Timestamptz(6)
 
@@ -380,7 +380,7 @@ model ActivityLog {
 
   // Performed by
   performedById String          @map("performed_by_id") @db.Uuid
-  performedBy   User            @relation("ActivityLogPerformedBy", fields: [performedById], references: [id])
+  performedBy   User            @relation("ActivityLogPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
 
   // Timestamp
   createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -629,7 +629,7 @@ model TimeEntry {
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById     String          @map("created_by_id") @db.Uuid
-  createdBy       User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id])
+  createdBy       User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 
   // Soft delete (legal retention requirement)
   isDeleted       Boolean         @default(false) @map("is_deleted")
@@ -666,7 +666,7 @@ model TimeBreak {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById     String    @map("created_by_id") @db.Uuid
-  createdBy       User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id])
+  createdBy       User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 
   // Soft delete (labor law compliance)
   isDeleted       Boolean   @default(false) @map("is_deleted")
@@ -699,13 +699,13 @@ model TimeAmendment {
   requiresApproval Boolean      @default(true) @map("requires_approval")
   isApproved      Boolean?      @map("is_approved") // null = pending, true = approved, false = rejected
   approvedById    String?       @map("approved_by_id") @db.Uuid
-  approvedBy      User?         @relation("TimeAmendmentApprovedBy", fields: [approvedById], references: [id])
+  approvedBy      User?         @relation("TimeAmendmentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedAt      DateTime?     @map("approved_at") @db.Timestamptz(6)
 
   // Audit (immutable, no soft delete)
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById     String        @map("created_by_id") @db.Uuid
-  createdBy       User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id])
+  createdBy       User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 
   @@index([timeEntryId, createdAt])
   @@index([isApproved, createdAt])
@@ -731,7 +731,7 @@ model TimeApproval {
   // Audit (immutable, no soft delete)
   decidedAt       DateTime         @map("decided_at") @db.Timestamptz(6)
   decidedById     String           @map("decided_by_id") @db.Uuid
-  decidedBy       User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id])
+  decidedBy       User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id], onDelete: Cascade)
 
   @@index([timeEntryId])
   @@index([decidedById])
@@ -760,14 +760,14 @@ model HoursAdjustment {
   // Approval
   isApproved      Boolean        @default(false) @map("is_approved")
   approvedById    String?        @map("approved_by_id") @db.Uuid
-  approvedBy      User?          @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id])
+  approvedBy      User?          @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedAt      DateTime?      @map("approved_at") @db.Timestamptz(6)
 
   // Audit
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById     String         @map("created_by_id") @db.Uuid
-  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id])
+  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 
   // Soft delete (may need to reverse erroneous adjustments)
   isDeleted       Boolean        @default(false) @map("is_deleted")
