@@ -2,10 +2,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Item,
-  ItemMedia,
   ItemContent,
   ItemTitle,
   ItemDescription,
@@ -78,60 +76,36 @@ function PortalChecklistItem({
     ? itemData.length > 0
     : Object.keys(latestItem).length > 0;
 
-  // Check if reviewed
-  const isReviewed = latestItem.was_reviewed || false;
-  const reviewedBy = latestItem.last_reviewed_by || "";
-
   // Simple permission check - use readOnly prop from parent
   const canEdit = !readOnly;
-
-  // Handle checkmark toggle
-  const handleCheckmark = async (checked) => {
-    if (!hasData) return; // Can't check if no file uploaded
-
-    try {
-      startLoading();
-
-      const data = {
-        endpointIdentifier: item.key,
-        id: latestItem.id,
-        last_reviewed_by: session.user.name,
-        was_reviewed: checked,
-        changed_by: session.user.name,
-      };
-
-      const response = await fetch(apiRoute, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        loadData();
-      } else {
-        stopLoading();
-        console.error("Failed to update checkmark");
-      }
-    } catch (error) {
-      console.error("Error updating checkmark:", error);
-      stopLoading();
-    }
-  };
 
   // Build file uploader config from item config
   const getFileUploaderConfig = () => {
     if (!item.fileUpload) return null;
 
+    // Build generic API endpoint: /api/v1/{entityType}/{entityId}/documents
+    const apiEndpoint = `/api/v1/${entityType}/${entityId}/documents`;
+
     return {
-      mode: "immediate",
-      entityType: entityType,
-      entityId: entityId,
+      title: `Upload ${item.label}`,
+      apiEndpoint: apiEndpoint,
+      documentType: item.key,
+      mode: item.fileUpload.mode || "immediate",
       accept: item.fileUpload.accept || "image/*,application/pdf",
-      fields: item.fileUpload.fields || [],
-      apiRoute: apiRoute,
-      endpointIdentifier: item.key,
+      fields: [
+        // File input field - first
+        {
+          type: 'file',
+          name: 'file',
+          label: item.label,
+          required: !item.optional,
+          validation: {
+            accept: item.fileUpload.accept || "image/*,application/pdf",
+          },
+        },
+        // Metadata fields - after file input
+        ...(item.fileUpload.fields || []),
+      ],
       onSuccess: () => {
         setFileUploaderOpen(false);
         loadData();
@@ -167,39 +141,12 @@ function PortalChecklistItem({
   // Get description text
   const getDescription = () => {
     if (!hasData) return "Not uploaded";
-    if (isReviewed) return `Reviewed by ${reviewedBy}`;
-    return "Pending review";
+    return "Uploaded";
   };
 
   return (
     <>
       <Item variant="outline" size="sm" className={item.optional ? "opacity-60" : ""}>
-        {/* Checkmark */}
-        {item.actions?.checkable && (
-          <ItemMedia>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Checkbox
-                      checked={isReviewed}
-                      onCheckedChange={handleCheckmark}
-                      disabled={!hasData}
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isReviewed
-                    ? `Reviewed by ${reviewedBy}`
-                    : hasData
-                    ? "Mark as reviewed"
-                    : "Upload file first"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </ItemMedia>
-        )}
-
         {/* Label & Description */}
         <ItemContent>
           <ItemTitle>

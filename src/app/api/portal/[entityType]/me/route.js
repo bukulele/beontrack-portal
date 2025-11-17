@@ -170,15 +170,11 @@ export async function PATCH(request, { params }) {
         }
       }
 
-      console.log('Filtered updates before save:', filteredUpdates);
-
       // Add audit fields
       filteredUpdates.updatedAt = new Date();
       if (session.user.id) {
         filteredUpdates.updatedById = session.user.id;
       }
-
-      console.log('Updates with audit fields:', filteredUpdates);
 
       // Update employee record
       const updatedEmployee = await prisma.officeEmployee.update({
@@ -191,12 +187,6 @@ export async function PATCH(request, { params }) {
             orderBy: { startDate: 'desc' },
           },
         },
-      });
-
-      console.log('Updated employee data returned:', {
-        id: updatedEmployee.id,
-        dateOfBirth: updatedEmployee.dateOfBirth,
-        firstName: updatedEmployee.firstName,
       });
 
       return NextResponse.json(updatedEmployee);
