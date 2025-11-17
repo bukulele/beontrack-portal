@@ -90,8 +90,25 @@ export function DocumentEditModal({
     return rangeValue; // Numeric year
   };
 
+  // Validate required fields
+  const isFormValid = () => {
+    return fields.every((field) => {
+      if (field.required) {
+        const value = formData[field.name];
+        return value !== undefined && value !== null && value !== "";
+      }
+      return true;
+    });
+  };
+
   // Handle save
   const handleSave = async () => {
+    // Validate required fields
+    if (!isFormValid()) {
+      alert("Please fill in all required fields (marked with *)");
+      return;
+    }
+
     try {
       startLoading();
 
@@ -124,9 +141,17 @@ export function DocumentEditModal({
     }
   };
 
+  // Check if a field has an error (required but empty)
+  const hasError = (field) => {
+    if (!field.required) return false;
+    const value = formData[field.name];
+    return value === undefined || value === null || value === "";
+  };
+
   // Render form field based on type
   const renderField = (field) => {
     const value = formData[field.name] || "";
+    const showError = hasError(field);
 
     switch (field.type) {
       case "text":
@@ -139,6 +164,7 @@ export function DocumentEditModal({
             value={value}
             onChange={(e) => handleChange(field.name, e.target.value)}
             placeholder={field.label}
+            className={showError ? "border-red-500" : ""}
           />
         );
 
@@ -152,12 +178,14 @@ export function DocumentEditModal({
           : 2100;
 
         return (
-          <DatePicker
-            value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
-            onChange={(date) => handleChange(field.name, date && isValid(date) ? format(date, "yyyy-MM-dd") : "")}
-            startYear={startYear}
-            endYear={endYear}
-          />
+          <div className={showError ? "border border-red-500 rounded-md" : ""}>
+            <DatePicker
+              value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
+              onChange={(date) => handleChange(field.name, date && isValid(date) ? format(date, "yyyy-MM-dd") : "")}
+              startYear={startYear}
+              endYear={endYear}
+            />
+          </div>
         );
 
       case "textarea":
@@ -168,6 +196,7 @@ export function DocumentEditModal({
             onChange={(e) => handleChange(field.name, e.target.value)}
             placeholder={field.label}
             rows={3}
+            className={showError ? "border-red-500" : ""}
           />
         );
 
@@ -177,7 +206,7 @@ export function DocumentEditModal({
             value={value}
             onValueChange={(val) => handleChange(field.name, val)}
           >
-            <SelectTrigger>
+            <SelectTrigger className={showError ? "border-red-500" : ""}>
               <SelectValue placeholder={`Select ${field.label}`} />
             </SelectTrigger>
             <SelectContent>
@@ -198,6 +227,7 @@ export function DocumentEditModal({
             value={value}
             onChange={(e) => handleChange(field.name, e.target.value)}
             placeholder={field.label}
+            className={showError ? "border-red-500" : ""}
           />
         );
     }
@@ -235,7 +265,7 @@ export function DocumentEditModal({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={fields.length === 0}>
+          <Button onClick={handleSave} disabled={fields.length === 0 || !isFormValid()}>
             Save Changes
           </Button>
         </DialogFooter>

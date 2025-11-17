@@ -22,114 +22,108 @@ export function getMetadataFields(documentType, entityType) {
   const schemas = {
     // Identity & Work Authorization
     government_id: [
-      { name: 'number', type: 'text', label: 'ID Number', placeholder: 'Enter ID number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
+      { name: 'number', type: 'text', label: 'ID Number', placeholder: 'Enter ID number', required: true },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     work_authorization: [
-      { name: 'number', type: 'text', label: 'Authorization Number', placeholder: 'Enter authorization number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
+      { name: 'number', type: 'text', label: 'Authorization Number', placeholder: 'Enter authorization number', required: true },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     sin_ssn: [
-      { name: 'number', type: 'text', label: 'SIN/SSN', placeholder: '9 digits', pattern: '^\\d{9}$' },
+      { name: 'number', type: 'text', label: 'SIN/SSN', placeholder: '9 digits', pattern: '^\\d{9}$', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
     // Banking & Tax
     direct_deposit: [
-      { name: 'accountNumber', type: 'text', label: 'Account Number (last 4 digits)', placeholder: 'Last 4 digits only' },
-      { name: 'bankName', type: 'text', label: 'Bank Name', placeholder: 'Name of financial institution' },
+      { name: 'accountNumber', type: 'text', label: 'Account Number (last 4 digits)', placeholder: 'Last 4 digits only', required: true },
+      { name: 'bankName', type: 'text', label: 'Bank Name', placeholder: 'Name of financial institution', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     tax_forms: [
-      { name: 'taxYear', type: 'text', label: 'Tax Year', placeholder: 'YYYY' },
-      { name: 'formType', type: 'text', label: 'Form Type', placeholder: 'e.g., W-4, T4, etc.' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'taxYear', type: 'text', label: 'Tax Year', placeholder: 'YYYY', required: true },
+      { name: 'formType', type: 'text', label: 'Form Type', placeholder: 'e.g., W-4, T4, etc.', required: true },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
     // Hiring Documents
     employment_application: [
-      { name: 'applicationDate', type: 'date', label: 'Application Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'positionApplied', type: 'text', label: 'Position Applied For', placeholder: 'Job title' },
+      { name: 'applicationDate', type: 'date', label: 'Application Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'positionApplied', type: 'text', label: 'Position Applied For', placeholder: 'Job title', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     resume: [
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     background_check_consent: [
-      { name: 'consentDate', type: 'date', label: 'Consent Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
-    ],
-    emergency_contact: [
-      { name: 'contactName', type: 'text', label: 'Contact Name', placeholder: 'Full name' },
-      { name: 'relationship', type: 'text', label: 'Relationship', placeholder: 'e.g., Spouse, Parent' },
-      { name: 'phoneNumber', type: 'text', label: 'Phone Number', placeholder: 'Contact phone' },
+      { name: 'consentDate', type: 'date', label: 'Consent Date', dateRange: { start: 1950, end: 'current' }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
     // Employment Contract & Policies
     employment_contract: [
-      { name: 'contractDate', type: 'date', label: 'Contract Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'startDate', type: 'date', label: 'Start Date', dateRange: { start: 1950, end: 'current+5' } },
+      { name: 'contractDate', type: 'date', label: 'Contract Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'startDate', type: 'date', label: 'Start Date', dateRange: { start: 1950, end: 'current+5' }, required: true },
       { name: 'endDate', type: 'date', label: 'End Date (if applicable)', dateRange: { start: 'current', end: 2100 } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     company_policies: [
-      { name: 'policyName', type: 'text', label: 'Policy Name', placeholder: 'e.g., Code of Conduct' },
-      { name: 'version', type: 'text', label: 'Version', placeholder: 'Policy version' },
-      { name: 'acknowledgementDate', type: 'date', label: 'Acknowledgement Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'policyName', type: 'text', label: 'Policy Name', placeholder: 'e.g., Code of Conduct', required: true },
+      { name: 'version', type: 'text', label: 'Version', placeholder: 'Policy version', required: true },
+      { name: 'acknowledgementDate', type: 'date', label: 'Acknowledgement Date', dateRange: { start: 1950, end: 'current' }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     confidentiality_agreement: [
-      { name: 'agreementDate', type: 'date', label: 'Agreement Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'agreementDate', type: 'date', label: 'Agreement Date', dateRange: { start: 1950, end: 'current' }, required: true },
       { name: 'expiryDate', type: 'date', label: 'Expiry Date (if applicable)', dateRange: { start: 'current', end: 2100 } },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     benefits_enrollment: [
-      { name: 'enrollmentDate', type: 'date', label: 'Enrollment Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'planType', type: 'text', label: 'Plan Type', placeholder: 'e.g., Health, Dental' },
-      { name: 'effectiveDate', type: 'date', label: 'Effective Date', dateRange: { start: 1950, end: 'current+5' } },
+      { name: 'enrollmentDate', type: 'date', label: 'Enrollment Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'planType', type: 'text', label: 'Plan Type', placeholder: 'e.g., Health, Dental', required: true },
+      { name: 'effectiveDate', type: 'date', label: 'Effective Date', dateRange: { start: 1950, end: 'current+5' }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
     // Certifications & Qualifications
     professional_certifications: [
-      { name: 'certificationName', type: 'text', label: 'Certification Name', placeholder: 'e.g., PMP, CPA' },
-      { name: 'certificationNumber', type: 'text', label: 'Certification Number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
-      { name: 'issuingAuthority', type: 'text', label: 'Issuing Authority', placeholder: 'Organization' },
+      { name: 'certificationName', type: 'text', label: 'Certification Name', placeholder: 'e.g., PMP, CPA', required: true },
+      { name: 'certificationNumber', type: 'text', label: 'Certification Number', required: true },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 }, required: true },
+      { name: 'issuingAuthority', type: 'text', label: 'Issuing Authority', placeholder: 'Organization', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     education_verification: [
-      { name: 'institution', type: 'text', label: 'Institution', placeholder: 'University/College name' },
-      { name: 'degree', type: 'text', label: 'Degree/Diploma', placeholder: 'e.g., Bachelor of Science' },
-      { name: 'graduationDate', type: 'date', label: 'Graduation Date', dateRange: { start: 1950, end: 'current' } },
+      { name: 'institution', type: 'text', label: 'Institution', placeholder: 'University/College name', required: true },
+      { name: 'degree', type: 'text', label: 'Degree/Diploma', placeholder: 'e.g., Bachelor of Science', required: true },
+      { name: 'graduationDate', type: 'date', label: 'Graduation Date', dateRange: { start: 1950, end: 'current' }, required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     safety_training: [
-      { name: 'trainingName', type: 'text', label: 'Training Name', placeholder: 'e.g., WHMIS, First Aid' },
-      { name: 'completionDate', type: 'date', label: 'Completion Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
-      { name: 'certificationNumber', type: 'text', label: 'Certification Number' },
+      { name: 'trainingName', type: 'text', label: 'Training Name', placeholder: 'e.g., WHMIS, First Aid', required: true },
+      { name: 'completionDate', type: 'date', label: 'Completion Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 }, required: true },
+      { name: 'certificationNumber', type: 'text', label: 'Certification Number', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
 
     // Other
     immigration_documents: [
-      { name: 'documentName', type: 'text', label: 'Document Name', placeholder: 'e.g., Work Permit, Visa' },
-      { name: 'number', type: 'text', label: 'Document Number' },
-      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' } },
-      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 } },
-      { name: 'country', type: 'text', label: 'Issuing Country' },
+      { name: 'documentName', type: 'text', label: 'Document Name', placeholder: 'e.g., Work Permit, Visa', required: true },
+      { name: 'number', type: 'text', label: 'Document Number', required: true },
+      { name: 'issueDate', type: 'date', label: 'Issue Date', dateRange: { start: 1950, end: 'current' }, required: true },
+      { name: 'expiryDate', type: 'date', label: 'Expiry Date', dateRange: { start: 'current', end: 2100 }, required: true },
+      { name: 'country', type: 'text', label: 'Issuing Country', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
     other_documents: [
-      { name: 'documentName', type: 'text', label: 'Document Name', placeholder: 'Brief description' },
+      { name: 'documentName', type: 'text', label: 'Document Name', placeholder: 'Brief description', required: true },
       { name: 'comment', type: 'textarea', label: 'Comment', placeholder: 'Additional notes' },
     ],
   };
@@ -156,7 +150,6 @@ export function getAllDocumentTypes() {
     { value: 'employment_application', label: 'Employment Application' },
     { value: 'resume', label: 'Resume/CV' },
     { value: 'background_check_consent', label: 'Background Check Consent' },
-    { value: 'emergency_contact', label: 'Emergency Contact Form' },
 
     // Employment Contract & Policies
     { value: 'employment_contract', label: 'Employment Contract' },

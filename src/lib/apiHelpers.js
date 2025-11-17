@@ -3,6 +3,97 @@
  * Reusable functions for API endpoints
  */
 
+import { prisma } from '@/lib/prisma';
+
+/**
+ * Fetch and group documents by documentType for ANY entity
+ * Works universally for employees, trucks, drivers, or any future entity type
+ *
+ * @param {string} entityType - Entity type (e.g., 'employees', 'trucks', 'drivers')
+ * @param {string} entityId - Entity UUID
+ * @returns {Promise<Object>} Grouped documents { documentType: [array of docs], ... }
+ *
+ * @example
+ * const groupedDocs = await fetchGroupedDocuments('employees', 'uuid-123');
+ * // Returns: { resume: [{...}], drivers_license: [{...}, {...}], ... }
+ */
+export async function fetchGroupedDocuments(entityType, entityId) {
+  // Fetch documents using generic entityType + entityId
+  const documents = await prisma.document.findMany({
+    where: {
+      entityType,
+      entityId,
+      isDeleted: false,
+    },
+    include: {
+      uploadedBy: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      reviewedBy: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  // Group documents by documentType for checklist consumption
+  const groupedDocuments = {};
+  documents.forEach(doc => {
+    if (!groupedDocuments[doc.documentType]) {
+      groupedDocuments[doc.documentType] = [];
+    }
+    groupedDocuments[doc.documentType].push(doc);
+  });
+
+  return groupedDocuments;
+}
+
+/**
+ * Fetch activity logs for ANY entity
+ * Works universally for employees, trucks, drivers, or any future entity type
+ *
+ * @param {string} entityType - Entity type
+ * @param {string} entityId - Entity UUID
+ * @param {number} limit - Max number of logs to fetch (default: 50)
+ * @returns {Promise<Array>} Array of activity logs
+ */
+export async function fetchActivityLogs(entityType, entityId, limit = 50) {
+  const activityLogs = await prisma.activityLog.findMany({
+    where: {
+      entityType,
+      entityId,
+    },
+    include: {
+      performedBy: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: limit,
+  });
+
+  return activityLogs;
+}
+
 /**
  * Build Prisma where clause for employee filtering
  * @param {Object} filters - Filter parameters

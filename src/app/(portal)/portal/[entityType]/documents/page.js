@@ -186,6 +186,7 @@ function DocumentsPageContent({ entityType }) {
                   loadData={reloadEntityData}
                   entityType={entityType}
                   entityId={entityData.id}
+                  apiRoute={`/api/v1/${entityType}/${entityData.id}`}
                 />
               </Card>
             ))}

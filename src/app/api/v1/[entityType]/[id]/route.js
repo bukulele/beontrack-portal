@@ -18,6 +18,7 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from '@/lib/api-auth';
+import { fetchGroupedDocuments, fetchActivityLogs } from '@/lib/apiHelpers';
 
 // Supported entity types
 const VALID_ENTITY_TYPES = ['employees'];
@@ -119,66 +120,9 @@ export async function GET(request, { params }) {
       return recordAuth.response;
     }
 
-    // Fetch documents manually using entityType + entityId
-    const documents = await prisma.document.findMany({
-      where: {
-        entityType,
-        entityId: id,
-        isDeleted: false,
-      },
-      include: {
-        uploadedBy: {
-          select: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        reviewedBy: {
-          select: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    // Fetch activity logs manually using entityType + entityId
-    const activityLogs = await prisma.activityLog.findMany({
-      where: {
-        entityType,
-        entityId: id,
-      },
-      include: {
-        performedBy: {
-          select: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 50, // Latest 50 activity logs
-    });
-
-    // Group documents by documentType for checklist consumption
-    const groupedDocuments = {};
-    documents.forEach(doc => {
-      if (!groupedDocuments[doc.documentType]) {
-        groupedDocuments[doc.documentType] = [];
-      }
-      groupedDocuments[doc.documentType].push(doc);
-    });
+    // Fetch documents and activity logs using universal helpers
+    const groupedDocuments = await fetchGroupedDocuments(entityType, id);
+    const activityLogs = await fetchActivityLogs(entityType, id, 50);
 
     // Combine entity data with manually fetched relations
     const entityData = {

@@ -12,9 +12,8 @@
 
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { PrismaClient } from '@/generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { fetchGroupedDocuments } from '@/lib/apiHelpers';
 
 export async function GET(request, { params }) {
   try {
@@ -57,7 +56,16 @@ export async function GET(request, { params }) {
         );
       }
 
-      return NextResponse.json(employee);
+      // Fetch grouped documents for this employee
+      const groupedDocuments = await fetchGroupedDocuments(entityType, employee.id);
+
+      // Combine employee data with documents
+      const employeeData = {
+        ...employee,
+        ...groupedDocuments, // Spread grouped documents at top level
+      };
+
+      return NextResponse.json(employeeData);
     }
 
     // Add support for other entity types here
@@ -75,8 +83,6 @@ export async function GET(request, { params }) {
       { error: 'Failed to load your data' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -189,7 +195,16 @@ export async function PATCH(request, { params }) {
         },
       });
 
-      return NextResponse.json(updatedEmployee);
+      // Fetch grouped documents for updated response
+      const groupedDocuments = await fetchGroupedDocuments(entityType, updatedEmployee.id);
+
+      // Combine employee data with documents
+      const employeeData = {
+        ...updatedEmployee,
+        ...groupedDocuments,
+      };
+
+      return NextResponse.json(employeeData);
     }
 
     // Add support for other entity types here
@@ -204,7 +219,5 @@ export async function PATCH(request, { params }) {
       { error: 'Failed to save changes', details: error.message },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

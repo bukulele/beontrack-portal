@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Circle, Upload, Edit, Eye } from "lucide-react";
+import { Circle, Upload, Eye } from "lucide-react";
 import { useLoader } from "@/app/context/LoaderContext";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import FileUploader from "@/app/components/file-uploader/FileUploader";
@@ -106,14 +106,18 @@ function PortalChecklistItem({
         // Metadata fields - after file input
         ...(item.fileUpload.fields || []),
       ],
-      onSuccess: () => {
-        setFileUploaderOpen(false);
-        loadData();
-      },
-      onError: (error) => {
-        console.error("Upload failed:", error);
-      },
     };
+  };
+
+  // Success handler for file upload
+  const handleUploadSuccess = () => {
+    setFileUploaderOpen(false);
+    loadData();
+  };
+
+  // Error handler for file upload
+  const handleUploadError = (error) => {
+    console.error("Upload failed:", error);
   };
 
   // Render missing indicator
@@ -195,28 +199,6 @@ function PortalChecklistItem({
               </Tooltip>
             </TooltipProvider>
           )}
-
-          {/* Edit button */}
-          {item.actions?.editable && hasData && canEdit && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      // TODO: Open edit modal
-                      console.log("Edit clicked");
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <Edit className="h-4 w-4 text-orange-600" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Edit</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
         </ItemActions>
       </Item>
 
@@ -226,6 +208,8 @@ function PortalChecklistItem({
           config={getFileUploaderConfig()}
           open={fileUploaderOpen}
           onClose={() => setFileUploaderOpen(false)}
+          onSuccess={handleUploadSuccess}
+          onError={handleUploadError}
         />
       )}
 
@@ -240,6 +224,7 @@ function PortalChecklistItem({
           loadData={loadData}
           apiRoute={apiRoute}
           entityType={entityType}
+          entityId={entityId}
         />
       )}
     </>
