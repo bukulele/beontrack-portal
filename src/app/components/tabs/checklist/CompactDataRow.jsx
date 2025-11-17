@@ -16,6 +16,23 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Circle } from "lucide-react";
 import { parse, format, isValid } from "date-fns";
 
+// Convert date range notation to actual years
+const getYearFromRange = (rangeValue) => {
+  const currentYear = new Date().getFullYear();
+
+  if (rangeValue === 'current') {
+    return currentYear;
+  } else if (typeof rangeValue === 'string' && rangeValue.startsWith('current')) {
+    // Handle 'current+5', 'current-16' etc
+    const match = rangeValue.match(/current([+-]\d+)/);
+    if (match) {
+      return currentYear + parseInt(match[1]);
+    }
+  }
+
+  return rangeValue; // Numeric year
+};
+
 /**
  * CompactDataRow - Compact row for inline data field editing
  *
@@ -39,6 +56,12 @@ export function CompactDataRow({
 
     if (fieldType === "checkbox") {
       setValue(initialValue === true ? true : false);
+    } else if (fieldType === "date" && initialValue) {
+      // Convert ISO date string to YYYY-MM-DD format for date inputs
+      const dateValue = typeof initialValue === 'string'
+        ? initialValue.split('T')[0]  // Extract YYYY-MM-DD from ISO string
+        : format(new Date(initialValue), 'yyyy-MM-dd');
+      setValue(dateValue);
     } else if (initialValue !== undefined && initialValue !== null) {
       setValue(initialValue);
     } else {
@@ -92,12 +115,23 @@ export function CompactDataRow({
         );
 
       case "date":
+        // Get date range from field config
+        const dateRange = item.dataField?.dateRange || item.dateRange;
+        const startYear = dateRange?.start
+          ? getYearFromRange(dateRange.start)
+          : 1900;
+        const endYear = dateRange?.end
+          ? getYearFromRange(dateRange.end)
+          : 2100;
+
         return (
           <DatePicker
             value={value ? parse(value, "yyyy-MM-dd", new Date()) : undefined}
             onChange={(date) => {
               handleChange(date && isValid(date) ? format(date, "yyyy-MM-dd") : "");
             }}
+            startYear={startYear}
+            endYear={endYear}
           />
         );
 

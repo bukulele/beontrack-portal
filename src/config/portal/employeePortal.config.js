@@ -39,6 +39,22 @@ export const EMPLOYEE_PORTAL_CONFIG = {
     },
   ],
 
+  // Navigation items for portal tabs
+  navigationItems: [
+    {
+      key: 'application',
+      label: 'General data',
+      route: '/portal/employees/application',
+      statuses: ['new', 'under_review', 'application_on_hold', 'rejected', 'offer_accepted', 'trainee', 'active', 'vacation', 'on_leave', 'wcb', 'resigned', 'terminated', 'suspended'],
+    },
+    {
+      key: 'documents',
+      label: 'Documents',
+      route: '/portal/employees/documents',
+      statuses: ['new', 'under_review', 'application_on_hold', 'rejected', 'offer_accepted', 'trainee', 'active', 'vacation', 'on_leave', 'wcb', 'resigned', 'terminated', 'suspended'],
+    },
+  ],
+
   // Status-based visibility for different sections
   sections: {
     application: {

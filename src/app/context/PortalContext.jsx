@@ -82,20 +82,16 @@ export function PortalProvider({ children, entityType = 'employees' }) {
     try {
       setLoading(true);
 
-      // Merge form changes with current entity data
-      const dataToSave = {
-        ...entityData,
-        ...formChanges,
-      };
-
-      const response = await fetch(`/api/v1/${entityType}/${entityData.id}`, {
+      // Use portal-specific endpoint to update own record
+      const response = await fetch(`/api/portal/${entityType}/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSave),
+        body: JSON.stringify(formChanges),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save changes');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save changes');
       }
 
       // Reload data to get updated values

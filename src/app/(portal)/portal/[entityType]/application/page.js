@@ -124,6 +124,7 @@ function ApplicationPageContent({ entityType }) {
                   placeholder: field.placeholder,
                   selectOptions: field.options,
                   readOnly: field.readOnly,
+                  dateRange: field.dateRange,
                 }}
                 onFieldChange={updateField}
                 value={getFieldValue(field.key)}

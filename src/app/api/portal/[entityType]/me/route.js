@@ -1,8 +1,13 @@
 /**
  * Portal "Me" API
  *
- * Returns the current user's entity data (employee, client, supplier, etc.)
- * based on their session.
+ * GET - Returns the current user's entity data (employee, client, supplier, etc.)
+ * PATCH - Updates the current user's entity data (self-service updates)
+ *
+ * Permission checks:
+ * - User must be authenticated
+ * - portalAccessEnabled must be true
+ * - allowApplicationEdit must be true (for PATCH)
  */
 
 import { NextResponse } from 'next/server';
@@ -68,6 +73,145 @@ export async function GET(request, { params }) {
     console.error('Error fetching entity data:', error);
     return NextResponse.json(
       { error: 'Failed to load your data' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function PATCH(request, { params }) {
+  try {
+    const { entityType } = await params;
+
+    // Get current session
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    const userEmail = session.user.email;
+
+    // Parse request body
+    const updates = await request.json();
+
+    // Find entity by email
+    if (entityType === 'employees') {
+      const employee = await prisma.officeEmployee.findFirst({
+        where: {
+          email: userEmail,
+          isDeleted: false,
+        },
+      });
+
+      if (!employee) {
+        return NextResponse.json(
+          { error: 'Employee record not found' },
+          { status: 404 }
+        );
+      }
+
+      // Check portal access is enabled
+      if (!employee.portalAccessEnabled) {
+        return NextResponse.json(
+          { error: 'Portal access is disabled. Contact support for assistance.' },
+          { status: 403 }
+        );
+      }
+
+      // Check if user is allowed to edit their application
+      if (!employee.allowApplicationEdit) {
+        return NextResponse.json(
+          { error: 'Your application is locked. Contact support to make changes.' },
+          { status: 403 }
+        );
+      }
+
+      // Define which fields are allowed to be updated by portal users
+      const allowedFields = [
+        'firstName',
+        'lastName',
+        'middleName',
+        'preferredName',
+        'dateOfBirth',
+        'gender',
+        'email',
+        'phoneNumber',
+        'emergencyContactName',
+        'emergencyContactPhone',
+        'emergencyContactRelationship',
+        'addressLine1',
+        'addressLine2',
+        'city',
+        'stateProvince',
+        'postalCode',
+        'country',
+      ];
+
+      // Filter updates to only allowed fields and convert date strings to Date objects
+      const filteredUpdates = {};
+      for (const field of allowedFields) {
+        if (updates.hasOwnProperty(field)) {
+          let value = updates[field];
+
+          // Auto-convert date strings (YYYY-MM-DD format) to Date objects
+          // Prisma DateTime fields require Date objects, not strings
+          if (value && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            value = new Date(value);
+          }
+
+          filteredUpdates[field] = value;
+        }
+      }
+
+      console.log('Filtered updates before save:', filteredUpdates);
+
+      // Add audit fields
+      filteredUpdates.updatedAt = new Date();
+      if (session.user.id) {
+        filteredUpdates.updatedById = session.user.id;
+      }
+
+      console.log('Updates with audit fields:', filteredUpdates);
+
+      // Update employee record
+      const updatedEmployee = await prisma.officeEmployee.update({
+        where: { id: employee.id },
+        data: filteredUpdates,
+        include: {
+          profilePhoto: true,
+          activityHistory: {
+            where: { isDeleted: false },
+            orderBy: { startDate: 'desc' },
+          },
+        },
+      });
+
+      console.log('Updated employee data returned:', {
+        id: updatedEmployee.id,
+        dateOfBirth: updatedEmployee.dateOfBirth,
+        firstName: updatedEmployee.firstName,
+      });
+
+      return NextResponse.json(updatedEmployee);
+    }
+
+    // Add support for other entity types here
+    return NextResponse.json(
+      { error: 'Unsupported entity type' },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error('Error updating entity data:', error);
+    return NextResponse.json(
+      { error: 'Failed to save changes', details: error.message },
       { status: 500 }
     );
   } finally {
