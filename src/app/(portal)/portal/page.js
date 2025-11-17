@@ -78,9 +78,7 @@ export default function PortalSignInPage() {
     setLoading(true);
 
     try {
-      // Use Better Auth client to sign in with OTP
-      // This verifies OTP, creates session, and triggers the session.create.after hook
-      // which auto-creates an employee record if one doesn't exist
+      // Step 1: Verify OTP and create session using Better Auth
       const { data, error } = await authClient.signIn.emailOtp({
         email: email.toLowerCase(),
         otp: otp,
@@ -88,6 +86,22 @@ export default function PortalSignInPage() {
 
       if (error) {
         throw new Error(error.message || 'Invalid verification code');
+      }
+
+      // Step 2: Create employee record (portal-specific post-auth logic)
+      const employeeResponse = await fetch('/api/portal/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+        }),
+      });
+
+      const employeeData = await employeeResponse.json();
+
+      if (!employeeResponse.ok || employeeData.error) {
+        console.error('Failed to create employee record:', employeeData.error);
+        // Don't fail the whole sign-in - user is already authenticated
       }
 
       setSuccess('Verification successful! Redirecting...');

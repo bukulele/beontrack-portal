@@ -38,20 +38,36 @@ function ApplicationPageContent({ entityType }) {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+      <div className="min-h-screen bg-background">
+        <PortalHeader />
+        <div className="container mx-auto px-4 py-8">
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <div className="mt-4">
+            <Button onClick={reloadEntityData} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!entityData) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Alert>
-          <AlertDescription>Unable to load your application data.</AlertDescription>
-        </Alert>
+      <div className="min-h-screen bg-background">
+        <PortalHeader />
+        <div className="container mx-auto px-4 py-8">
+          <Alert>
+            <AlertDescription>Unable to load your application data.</AlertDescription>
+          </Alert>
+          <div className="mt-4">
+            <Button onClick={reloadEntityData} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

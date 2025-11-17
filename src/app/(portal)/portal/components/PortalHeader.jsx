@@ -22,10 +22,8 @@ export default function PortalHeader() {
     router.push('/portal');
   };
 
-  if (!entityData) return null;
-
-  // Get status config for color
-  const statusMessage = portalConfig?.statusMessages?.[entityData.status] || entityData.status;
+  // Always show header with at least sign-out button
+  // Even if entityData failed to load
 
   // Dynamic title based on entity type
   const getPortalTitle = () => {
@@ -44,7 +42,7 @@ export default function PortalHeader() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold">{getPortalTitle()}</h1>
-            {user.fullName && (
+            {user?.fullName && (
               <p className="text-sm text-muted-foreground">
                 Welcome, {user.fullName}
               </p>
@@ -52,12 +50,14 @@ export default function PortalHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Status:</span>
-              <Badge variant="outline">
-                {entityData.status.replace(/_/g, ' ').toUpperCase()}
-              </Badge>
-            </div>
+            {entityData?.status && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Status:</span>
+                <Badge variant="outline">
+                  {entityData.status.replace(/_/g, ' ').toUpperCase()}
+                </Badge>
+              </div>
+            )}
 
             <Button
               variant="outline"
