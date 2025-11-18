@@ -1,5 +1,6 @@
 import { UPLOAD_MODES } from "@/config/file-uploader/uploaderSchema";
 import { getMetadataFields } from "@/config/prisma/documentMetadataSchemas";
+import { EMPLOYMENT_TYPE_CHOICES, DEPARTMENT_CHOICES } from "@/config/clientData";
 
 /**
  * Employee Onboarding Checklist Configuration
@@ -18,8 +19,80 @@ export const EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG = {
   // No custom data fields - use OfficeEmployee model fields from API
   customFields: [],
 
-  // Checklist items - Onboarding documents (9 types)
+  // Checklist items - Data fields (5 required) + Onboarding documents (9 types)
   items: [
+    // ========== GENERAL INFORMATION (Data Fields) ==========
+    {
+      key: "hireDate",
+      label: "Hire Date",
+      optional: false,
+      itemType: "data",
+      type: "date",
+      dateRange: { start: 'current-365', end: 'current+30' }, // Allow dates from 1 year ago to 30 days in future
+
+      roles: {
+        view: ["all"],
+        edit: ["recruiting", "admin", "hr"],
+      },
+    },
+
+    {
+      key: "jobTitle",
+      label: "Job Title",
+      optional: false,
+      itemType: "data",
+      type: "text",
+      placeholder: "e.g., Dispatcher, Safety Officer, Payroll Specialist",
+
+      roles: {
+        view: ["all"],
+        edit: ["recruiting", "admin", "hr"],
+      },
+    },
+
+    {
+      key: "department",
+      label: "Department",
+      optional: false,
+      itemType: "data",
+      type: "select",
+      selectOptions: DEPARTMENT_CHOICES,
+
+      roles: {
+        view: ["all"],
+        edit: ["recruiting", "admin", "hr"],
+      },
+    },
+
+    {
+      key: "employmentType",
+      label: "Employment Type",
+      optional: false,
+      itemType: "data",
+      type: "select",
+      selectOptions: EMPLOYMENT_TYPE_CHOICES,
+
+      roles: {
+        view: ["all"],
+        edit: ["recruiting", "admin", "hr"],
+      },
+    },
+
+    {
+      key: "employeeId",
+      label: "Employee ID",
+      optional: false,
+      itemType: "data",
+      type: "text",
+      placeholder: "e.g., EMP-001",
+
+      roles: {
+        view: ["all"],
+        edit: ["recruiting", "admin", "hr"],
+      },
+    },
+
+    // ========== DOCUMENTS ==========
     {
       key: "employment_contract",
       label: "Employment Contract",

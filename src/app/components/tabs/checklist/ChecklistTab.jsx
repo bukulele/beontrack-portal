@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import ChecklistProgress from "./ChecklistProgress";
 import CompactDataRow from "./CompactDataRow";
+import CompactDataRowChecklist from "./CompactDataRowChecklist";
 import CompactFileRow from "./CompactFileRow";
 import CompactModalRow from "./CompactModalRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
@@ -67,23 +68,38 @@ function ChecklistTab({
 
       const itemData = entityData[item.key];
 
-      // Check if item is reviewed
-      if (Array.isArray(itemData) && itemData.length > 0) {
-        const latest = findHighestIdObject(itemData);
-        if (latest.wasReviewed) {
+      // Handle data fields differently from files/modal items
+      if (item.itemType === 'data') {
+        // For data fields: just check if value exists and is non-empty
+        const isEmpty = itemData === null ||
+                       itemData === undefined ||
+                       itemData === '' ||
+                       (Array.isArray(itemData) && itemData.length === 0);
+
+        if (!isEmpty) {
           checkedCount++;
         } else {
-          // File uploaded but not reviewed
-          missing.push({ label: item.label, reason: 'not reviewed' });
+          missing.push({ label: item.label, reason: 'not filled' });
         }
-      } else if (itemData && typeof itemData === 'object' && itemData.wasReviewed) {
-        checkedCount++;
-      } else if (itemData && typeof itemData === 'object' && !itemData.wasReviewed) {
-        // Data exists but not reviewed
-        missing.push({ label: item.label, reason: 'not reviewed' });
       } else {
-        // No data uploaded
-        missing.push({ label: item.label, reason: 'not uploaded' });
+        // For file/modal items: check wasReviewed property
+        if (Array.isArray(itemData) && itemData.length > 0) {
+          const latest = findHighestIdObject(itemData);
+          if (latest.wasReviewed) {
+            checkedCount++;
+          } else {
+            // File uploaded but not reviewed
+            missing.push({ label: item.label, reason: 'not reviewed' });
+          }
+        } else if (itemData && typeof itemData === 'object' && itemData.wasReviewed) {
+          checkedCount++;
+        } else if (itemData && typeof itemData === 'object' && !itemData.wasReviewed) {
+          // Data exists but not reviewed
+          missing.push({ label: item.label, reason: 'not reviewed' });
+        } else {
+          // No data uploaded
+          missing.push({ label: item.label, reason: 'not uploaded' });
+        }
       }
     });
 
@@ -161,7 +177,7 @@ function ChecklistTab({
               <CardContent className="p-0">
                 {/* Custom Fields */}
                 {config.customFields?.map((field) => (
-                  <CompactDataRow
+                  <CompactDataRowChecklist
                     key={field.key}
                     item={field}
                     entityData={entityData}
@@ -187,9 +203,9 @@ function ChecklistTab({
                       />
                     );
                   } else {
-                    // Use CompactDataRow for regular data items
+                    // Use CompactDataRowChecklist for regular data items
                     return (
-                      <CompactDataRow
+                      <CompactDataRowChecklist
                         key={item.key}
                         item={item}
                         entityData={entityData}
