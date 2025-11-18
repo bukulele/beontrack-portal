@@ -18,6 +18,13 @@ export const EMPLOYEE_GENERAL_INFO_CONFIG = {
   // Edit form configuration
   editFormConfig: EMPLOYEE_EDIT_FORM_CONFIG,
 
+  // Checklist configurations for status validation
+  // These checklists gate status transitions (e.g., offer_accepted → active)
+  checklistConfigs: [
+    EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG,
+    EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG,
+  ],
+
   // Image configuration (profile photo)
   image: {
     interactive: true, // Enable interactive photo editing

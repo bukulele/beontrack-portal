@@ -157,6 +157,8 @@ function GeneralInfoTab({
                             entityId={entityId}
                             onStatusChange={loadData}
                             editable={config.statusConfig.editable}
+                            entityData={entityData}
+                            checklistConfigs={config.checklistConfigs}
                           />
                         )}
                         {config.editFormConfig && (
