@@ -1,6 +1,7 @@
 import { UPLOAD_MODES } from "@/config/file-uploader/uploaderSchema";
 import { getMetadataFields } from "@/config/prisma/documentMetadataSchemas";
 import ActivityHistoryModal from "@/app/components/tabs/checklist/ActivityHistoryModal";
+import checkActivityPeriod from "@/app/functions/checkActivityPeriod";
 
 /**
  * Employee Pre-Hiring Checklist Configuration
@@ -207,6 +208,37 @@ export const EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG = {
         view: ["all"],
         edit: ["recruiting", "admin", "portalHr"],
         delete: ["admin"],
+      },
+    },
+
+    {
+      key: "activityHistory",
+      label: "Activity History (last 10 years)",
+      optional: false,
+      itemType: "modal",
+      modalComponent: ActivityHistoryModal,
+
+      // Custom validation function to check for gaps
+      validate: (itemData) => {
+        if (!itemData || !Array.isArray(itemData) || itemData.length === 0) {
+          return false; // No data
+        }
+        const activitiesForCheck = itemData.map(a => ({
+          start_date: a.startDate,
+          end_date: a.tillNow ? null : a.endDate,
+          till_now: a.tillNow,
+        }));
+        const gaps = checkActivityPeriod(activitiesForCheck, 10);
+        return gaps.length === 0; // Valid if no gaps
+      },
+
+      actions: {
+        checkable: true,
+      },
+
+      roles: {
+        view: ["all"],
+        edit: ["all"],
       },
     },
   ],

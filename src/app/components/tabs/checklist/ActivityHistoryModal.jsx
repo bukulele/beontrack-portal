@@ -90,18 +90,28 @@ export function ActivityHistoryModal({
     if (!itemData || !Array.isArray(itemData)) return [];
 
     // Convert API data (camelCase) to internal format
-    return itemData.map(item => ({
-      id: item.id,
-      activityType: item.activityType || item.activity_type || "",
-      description: item.description || "",
-      startDate: item.startDate || item.start_date || "",
-      endDate: item.endDate || item.end_date || "",
-      organizationName: item.organizationName || item.organization_name || "",
-      roleOrPosition: item.roleOrPosition || item.role_or_position || "",
-      location: item.location || "",
-      emailAddress: item.emailAddress || item.email_address || "",
-      tillNow: item.tillNow || item.till_now || false,
-    }));
+    return itemData.map(item => {
+      // Convert ISO date strings to yyyy-MM-dd format
+      const formatDate = (dateValue) => {
+        if (!dateValue) return "";
+        const date = new Date(dateValue);
+        if (!isValid(date)) return "";
+        return format(date, "yyyy-MM-dd");
+      };
+
+      return {
+        id: item.id,
+        activityType: item.activityType || item.activity_type || "",
+        description: item.description || "",
+        startDate: formatDate(item.startDate || item.start_date),
+        endDate: formatDate(item.endDate || item.end_date),
+        organizationName: item.organizationName || item.organization_name || "",
+        roleOrPosition: item.roleOrPosition || item.role_or_position || "",
+        location: item.location || "",
+        emailAddress: item.emailAddress || item.email_address || "",
+        tillNow: item.tillNow || item.till_now || false,
+      };
+    });
   }, [open]); // Only recalculate when modal opens
 
   // Initialize activities from snapshot when modal opens

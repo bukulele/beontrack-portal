@@ -12,26 +12,30 @@ import { PortalProvider, usePortal } from '@/app/context/PortalContext';
 import PortalHeader from '@/app/(portal)/portal/components/PortalHeader';
 import PortalNav from '@/app/(portal)/portal/components/PortalNav';
 import PortalFileSectionAccordion from '@/app/(portal)/portal/components/PortalFileSectionAccordion';
-import PortalActivityHistoryModal from '@/app/(portal)/portal/components/PortalActivityHistoryModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { getPortalConfig } from '@/config/portal/portalConfigs';
-import { Edit } from 'lucide-react';
+import { Edit, Circle } from 'lucide-react';
 
 // Helper component for modal items to avoid hooks in map
 function ModalItemRow({ item, entityData, reloadEntityData, entityType }) {
   const [modalOpen, setModalOpen] = React.useState(false);
   const ModalComponent = item.modalComponent;
   const itemData = entityData[item.key];
-  const hasData = Array.isArray(itemData) ? itemData.length > 0 : !!itemData;
+
+  // Check if data is valid using validate function if provided
+  const isValid = item.validate ? item.validate(itemData) : (Array.isArray(itemData) ? itemData.length > 0 : !!itemData);
+  const showRedDot = !isValid;
 
   return (
     <div className="flex items-center gap-3 py-3 px-4 border-b border-slate-100 dark:border-slate-800">
-      <div className="flex-1">
+      <div className="flex-1 flex items-center gap-1.5">
         <span className="text-sm font-medium">{item.label}</span>
-        {!item.optional && !hasData && (
-          <span className="ml-2 text-red-600 text-xs">Required</span>
+        {showRedDot && (
+          <Circle
+            className={`h-2 w-2 text-red-600 shrink-0 ${item.optional ? '' : 'fill-red-600'}`}
+          />
         )}
       </div>
       <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>

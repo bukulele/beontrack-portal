@@ -53,8 +53,12 @@ export function CompactModalRow({
     ? `${latestItem.reviewedBy.firstName} ${latestItem.reviewedBy.lastName}`.trim() || latestItem.reviewedBy.username
     : "";
 
-  // Check if field is empty
+  // Check if field is empty or invalid
   const isEmpty = (() => {
+    // If item has custom validation function, use it
+    if (item.validate) {
+      return !item.validate(itemData);
+    }
     // For arrays (like activity_history), check if empty
     if (Array.isArray(itemData)) {
       return itemData.length === 0;
@@ -69,7 +73,8 @@ export function CompactModalRow({
   const showRedDot = isEmpty;
 
   // Has data check (for checkbox enablement)
-  const hasData = latestItem !== null;
+  // Data must exist AND be valid (pass validation if validate function exists)
+  const hasData = latestItem !== null && !isEmpty;
 
   // Handle review checkbox
   const handleCheckmark = async (checked) => {

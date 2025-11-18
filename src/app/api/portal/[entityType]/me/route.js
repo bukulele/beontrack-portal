@@ -158,6 +158,8 @@ export async function PATCH(request, { params }) {
         'stateProvince',
         'postalCode',
         'country',
+        'status', // Allow updating status (e.g., for application submission)
+        'allowApplicationEdit', // Allow locking the application after submission
       ];
 
       // Filter updates to only allowed fields and convert date strings to Date objects

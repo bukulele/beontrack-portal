@@ -10,6 +10,7 @@ import { EMPLOYEE_CREATE_FORM_CONFIG } from '@/config/forms/employeeCreateForm.c
 import { EMPLOYEE_PRE_HIRING_CHECKLIST_CONFIG } from '@/config/checklists/employeePreHiringChecklist.config';
 import { EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG } from '@/config/checklists/employeeOnboardingChecklist.config';
 import PortalActivityHistoryModal from '@/app/(portal)/portal/components/PortalActivityHistoryModal';
+import checkActivityPeriod from '@/app/functions/checkActivityPeriod';
 
 export const EMPLOYEE_PORTAL_CONFIG = {
   entityType: 'employees',
@@ -36,6 +37,20 @@ export const EMPLOYEE_PORTAL_CONFIG = {
       optional: false,
       itemType: "modal",
       modalComponent: PortalActivityHistoryModal,
+
+      // Custom validation function to check for gaps
+      validate: (itemData) => {
+        if (!itemData || !Array.isArray(itemData) || itemData.length === 0) {
+          return false; // No data
+        }
+        const activitiesForCheck = itemData.map(a => ({
+          start_date: a.startDate,
+          end_date: a.tillNow ? null : a.endDate,
+          till_now: a.tillNow,
+        }));
+        const gaps = checkActivityPeriod(activitiesForCheck, 10);
+        return gaps.length === 0; // Valid if no gaps
+      },
     },
   ],
 

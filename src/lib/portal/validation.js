@@ -30,9 +30,10 @@ export function validateRequiredFields(entityData, portalConfig) {
     });
   }
 
-  // Check checklist data fields
+  // Check checklist items (data fields and modal items like Activity History)
   if (portalConfig.applicationChecklist?.items) {
     portalConfig.applicationChecklist.items.forEach(item => {
+      // Data fields
       if (item.itemType === 'data' && !item.optional && item.dataField) {
         const value = entityData[item.key];
         // Check for null, undefined, empty string, or whitespace-only string
@@ -43,17 +44,20 @@ export function validateRequiredFields(entityData, portalConfig) {
           missingFields.push(item.label);
         }
       }
-    });
-  }
 
-  // Check document tab items (like Activity History)
-  if (portalConfig.documentTabItems) {
-    portalConfig.documentTabItems.forEach(item => {
-      if (!item.optional && item.itemType === 'modal') {
+      // Modal items (like Activity History)
+      if (item.itemType === 'modal' && !item.optional) {
         const value = entityData[item.key];
-        // For modal items, check if data exists and is non-empty array
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          missingFields.push(item.label);
+        // Use custom validate function if provided
+        if (item.validate) {
+          if (!item.validate(value)) {
+            missingFields.push(item.label);
+          }
+        } else {
+          // Default validation: check if data exists and is non-empty array
+          if (!value || (Array.isArray(value) && value.length === 0)) {
+            missingFields.push(item.label);
+          }
         }
       }
     });
@@ -76,12 +80,13 @@ export function validateRequiredDocuments(entityData, portalConfig) {
       // Check file items that are required
       if (item.itemType === 'file' && !item.optional) {
         const documentKey = item.documentType || item.key;
-        const documents = entityData.documents || [];
+
+        // Documents are grouped by type at the top level of entityData
+        // e.g., entityData.resume, entityData.driver_license, etc.
+        const documentsOfType = entityData[documentKey];
 
         // Check if at least one document of this type exists
-        const hasDocument = documents.some(
-          doc => doc.documentType === documentKey
-        );
+        const hasDocument = Array.isArray(documentsOfType) && documentsOfType.length > 0;
 
         if (!hasDocument) {
           missingDocuments.push(item.label);

@@ -113,7 +113,7 @@ export default function PortalNav() {
       }
 
       // Submit application (change status and lock editing)
-      const response = await fetch(`/api/v1/${entityType}/${entityData.id}`, {
+      const response = await fetch(`/api/portal/${entityType}/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

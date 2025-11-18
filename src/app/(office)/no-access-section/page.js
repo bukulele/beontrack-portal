@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useLoader } from "../context/LoaderContext";
+import { useLoader } from "@/app/context/LoaderContext";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const NoAccess = () => {
   const router = useRouter();
@@ -36,12 +37,11 @@ const NoAccess = () => {
               " You don't have an access to this section at 4Tracks portal. Please contact IT department."
             }
           </p>
-          <Link
-            href="/"
-            className="border-none py-3 px-2 shadow-sm bg-stone-200 rounded font-norma hover:bg-[#b92531] hover:text-white hover:shadow-sm active:bg-orange-600 cursor-pointer"
-          >
-            Return To Portal
-          </Link>
+          <Button asChild>
+            <Link href="/">
+              Return To Portal
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

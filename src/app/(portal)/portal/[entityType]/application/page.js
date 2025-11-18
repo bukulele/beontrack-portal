@@ -133,7 +133,7 @@ function ApplicationPageContent({ entityType }) {
           </CardContent>
         </Card>
 
-        {/* Activity History Only (Documents moved to separate tab) */}
+        {/* Data fields only (Documents and Activity History moved to separate tabs) */}
         <PortalChecklistTab
           config={portalConfig.applicationChecklist}
           entityData={entityData}
@@ -142,6 +142,7 @@ function ApplicationPageContent({ entityType }) {
           entityId={entityData.id}
           readOnly={!canEdit}
           hideFiles={true}
+          hideModals={true}
         />
       </div>
     </div>

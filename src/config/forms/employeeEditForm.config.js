@@ -25,7 +25,6 @@ export const EMPLOYEE_EDIT_FORM_CONFIG = {
       label: "Employee ID",
       type: "text",
       required: true,
-      disabled: true, // Primary identifier - read-only
     },
     {
       key: "firstName",

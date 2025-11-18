@@ -23,11 +23,17 @@ function generateSchema(config) {
       case "date":
         fieldSchema = z.string();
         break;
+      case "checkbox":
+        fieldSchema = z.boolean();
+        break;
       default:
         fieldSchema = z.string();
     }
 
-    if (field.required) {
+    if (field.type === "checkbox") {
+      // Checkboxes are always optional booleans (default to false)
+      fieldSchema = fieldSchema.optional().default(false);
+    } else if (field.required) {
       fieldSchema = fieldSchema.min(1, `${field.label} is required`);
     } else {
       fieldSchema = fieldSchema.optional().or(z.literal(""));
@@ -55,12 +61,18 @@ export default function useEntityForm({
 
   const schema = generateSchema(formConfig);
 
-  // Sanitize entityData: convert null to empty string for form inputs
+  // Sanitize entityData: convert null to appropriate defaults
+  // - Strings: null -> ""
+  // - Booleans: null -> false
   const sanitizedDefaults = Object.fromEntries(
-    Object.entries(entityData).map(([key, value]) => [
-      key,
-      value === null ? "" : value
-    ])
+    Object.entries(entityData).map(([key, value]) => {
+      if (value === null) {
+        // Check if this field is a checkbox in the config
+        const field = formConfig.fields.find(f => f.key === key);
+        return [key, field?.type === 'checkbox' ? false : ""];
+      }
+      return [key, value];
+    })
   );
 
   const form = useForm({

@@ -132,7 +132,7 @@ function ChecklistTab({
     return item.shouldDisplay(entityData);
   });
 
-  const dataItems = visibleItems.filter((item) => item.itemType === "data");
+  const dataItems = visibleItems.filter((item) => item.itemType === "data" || item.itemType === "modal");
   const fileItems = visibleItems.filter((item) => item.itemType === "file");
 
   return (

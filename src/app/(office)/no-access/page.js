@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "@/lib/auth-client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import Button from "../components/button/Button";
-import { useLoader } from "../context/LoaderContext";
+import { Button } from "@/components/ui/button";
+import { useLoader } from "@/app/context/LoaderContext";
 
 const NoAccess = () => {
   const router = useRouter();
@@ -41,11 +41,9 @@ const NoAccess = () => {
               " You don't have an access to 4Tracks portal. Please contact IT department."
             }
           </p>
-          <Button
-            content={"Sign Out"}
-            style={"classicButton"}
-            fn={handleSignOut}
-          />
+          <Button onClick={handleSignOut}>
+            Sign Out
+          </Button>
         </div>
       </div>
     </div>

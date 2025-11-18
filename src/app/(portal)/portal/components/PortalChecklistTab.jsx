@@ -26,7 +26,8 @@ export default function PortalChecklistTab({
   entityType,
   entityId,
   readOnly = false,
-  hideFiles = false, // New prop to hide Documents card
+  hideFiles = false, // Hide Documents card
+  hideModals = false, // Hide modal items (like Activity History)
 }) {
   const { updateField, getFieldValue } = usePortal();
   if (!config || !entityData) {
@@ -46,7 +47,11 @@ export default function PortalChecklistTab({
   });
 
   // Separate items by type
-  const dataItems = visibleItems.filter(item => item.itemType === 'data' || item.itemType === 'modal');
+  const dataItems = visibleItems.filter(item => {
+    if (item.itemType === 'data') return true;
+    if (item.itemType === 'modal' && !hideModals) return true;
+    return false;
+  });
   const fileItems = visibleItems.filter(item => item.itemType === 'file');
 
   return (
@@ -64,6 +69,7 @@ export default function PortalChecklistTab({
                   <CompactModalRow
                     key={item.key}
                     item={item}
+                    modalComponent={item.modalComponent}
                     entityData={entityData}
                     loadData={loadData}
                     entityType={entityType}
