@@ -73,10 +73,10 @@ function StatusBadge({
       }
     });
 
-    // Filter to only allowed transitions (plus current status)
+    // Filter to only allowed transitions (exclude current status)
     const filtered = {};
     for (const [key, label] of Object.entries(allStatusChoices)) {
-      if (allowedList.includes(key) || key === currentStatus) {
+      if (allowedList.includes(key)) {
         filtered[key] = label;
       }
     }
