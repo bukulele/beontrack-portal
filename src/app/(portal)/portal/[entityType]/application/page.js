@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import CompactDataRow from '@/app/components/tabs/checklist/CompactDataRow';
 import { getPortalConfig } from '@/config/portal/portalConfigs';
+import ProfilePhotoDisplay from '@/app/components/tabs/general-info/ProfilePhotoDisplay';
 
 function ApplicationPageContent({ entityType }) {
   const { entityData, loading, error, reloadEntityData, canEdit, updateField, getFieldValue } = usePortal();
@@ -105,6 +106,26 @@ function ApplicationPageContent({ entityType }) {
               Your application is currently locked. Contact support if you need to make changes.
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* Profile Photo */}
+        {portalConfig.image && (
+          <div className="mb-6 flex justify-center">
+            <ProfilePhotoDisplay
+              entityData={entityData}
+              entityType={entityType}
+              entityId={entityData.id}
+              onReload={reloadEntityData}
+              width={portalConfig.image.width}
+              height={portalConfig.image.height}
+              photoSrc={portalConfig.image.src}
+              placeholder={portalConfig.image.placeholder}
+              uploadEndpoint={portalConfig.image.uploadEndpoint(entityData.id)}
+              updateEndpoint={portalConfig.image.updateEndpoint(entityData.id)}
+              photoFieldName={portalConfig.image.photoFieldName}
+              documentType={portalConfig.image.documentType}
+            />
+          </div>
         )}
 
         {/* Personal Information Form */}

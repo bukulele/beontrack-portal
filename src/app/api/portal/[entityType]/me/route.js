@@ -158,6 +158,7 @@ export async function PATCH(request, { params }) {
         'stateProvince',
         'postalCode',
         'country',
+        'profilePhotoId', // Allow updating profile photo reference
         'status', // Allow updating status (e.g., for application submission)
         'allowApplicationEdit', // Allow locking the application after submission
       ];

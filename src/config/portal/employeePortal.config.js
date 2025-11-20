@@ -15,6 +15,26 @@ import checkActivityPeriod from '@/app/functions/checkActivityPeriod';
 export const EMPLOYEE_PORTAL_CONFIG = {
   entityType: 'employees',
 
+  // Image configuration (profile photo)
+  image: {
+    interactive: true, // Enable interactive photo editing
+    src: (entityData) => entityData.profilePhoto?.filePath
+      ? `/api/v1/files/${entityData.profilePhoto.filePath.replace(/^uploads\//, '')}`
+      : null,
+    placeholder: {
+      icon: "User", // Lucide icon name shown when no photo exists
+    },
+    // API endpoints for photo upload/update
+    // Note: Using portal-specific endpoints that bypass ABAC for self-service updates
+    uploadEndpoint: (entityId) => `/api/v1/employees/${entityId}/documents`,
+    updateEndpoint: () => `/api/portal/employees/me`, // Portal self-service endpoint
+    photoFieldName: "profilePhotoId",
+    documentType: "profile_photo",
+    alt: "Profile Photo",
+    width: 200,
+    height: 300,
+  },
+
   // Personal info form - fields visible to applicants
   // Filter from EMPLOYEE_CREATE_FORM_CONFIG to show only applicant-relevant fields
   personalInfoFields: EMPLOYEE_CREATE_FORM_CONFIG.fields.filter(field => {
