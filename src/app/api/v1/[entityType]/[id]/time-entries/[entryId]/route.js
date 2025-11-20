@@ -70,7 +70,6 @@ export async function GET(request, { params }) {
         createdBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
@@ -81,7 +80,6 @@ export async function GET(request, { params }) {
             createdBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -94,7 +92,6 @@ export async function GET(request, { params }) {
             createdBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -102,7 +99,6 @@ export async function GET(request, { params }) {
             approvedBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -115,7 +111,6 @@ export async function GET(request, { params }) {
             decidedBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -284,7 +279,6 @@ export async function PATCH(request, { params }) {
           createdBy: {
             select: {
               id: true,
-              username: true,
               firstName: true,
               lastName: true,
             },

@@ -112,7 +112,6 @@ export async function GET(request, { params }) {
         createdBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
@@ -130,7 +129,6 @@ export async function GET(request, { params }) {
             decidedBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -276,7 +274,6 @@ export async function POST(request, { params }) {
         createdBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },

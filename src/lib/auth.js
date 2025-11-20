@@ -49,15 +49,10 @@ export const auth = betterAuth({
     modelName: "user",
     fields: {
       email: "email",
-      name: "username",
+      name: "firstName", // Map Better Auth's 'name' field to 'firstName' in database
       emailVerified: "emailVerified",
     },
     additionalFields: {
-      firstName: {
-        type: "string",
-        required: false,
-        input: true,
-      },
       lastName: {
         type: "string",
         required: false,

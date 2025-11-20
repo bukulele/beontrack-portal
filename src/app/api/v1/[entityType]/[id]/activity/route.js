@@ -87,7 +87,6 @@ export async function GET(request, { params }) {
           performedBy: {
             select: {
               id: true,
-              username: true,
               firstName: true,
               lastName: true,
               email: true,

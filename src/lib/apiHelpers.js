@@ -29,7 +29,6 @@ export async function fetchGroupedDocuments(entityType, entityId) {
       uploadedBy: {
         select: {
           id: true,
-          username: true,
           firstName: true,
           lastName: true,
         },
@@ -37,7 +36,6 @@ export async function fetchGroupedDocuments(entityType, entityId) {
       reviewedBy: {
         select: {
           id: true,
-          username: true,
           firstName: true,
           lastName: true,
         },
@@ -79,7 +77,6 @@ export async function fetchActivityLogs(entityType, entityId, limit = 50) {
       performedBy: {
         select: {
           id: true,
-          username: true,
           firstName: true,
           lastName: true,
         },

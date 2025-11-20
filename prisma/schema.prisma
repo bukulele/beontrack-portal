@@ -10,7 +10,6 @@ datasource db {
 
 model User {
   id                      String            @id @default(uuid()) @db.Uuid
-  username                String            @unique @db.VarChar(150)
   email                   String            @unique @db.VarChar(254)
   passwordHash            String?           @map("password_hash") @db.VarChar(255)
   firstName               String?           @map("first_name") @db.VarChar(150)
@@ -47,8 +46,8 @@ model User {
 model OfficeEmployee {
   id                    String            @id @default(uuid()) @db.Uuid
   employeeId            String?           @unique @map("employee_id") @db.VarChar(50)
-  firstName             String            @map("first_name") @db.VarChar(100)
-  lastName              String            @map("last_name") @db.VarChar(100)
+  firstName             String?           @map("first_name") @db.VarChar(100)
+  lastName              String?           @map("last_name") @db.VarChar(100)
   email                 String?           @db.VarChar(254)
   phoneNumber           String?           @map("phone_number") @db.VarChar(20)
   emergencyContactName  String?           @map("emergency_contact_name") @db.VarChar(200)
@@ -79,8 +78,8 @@ model OfficeEmployee {
   remarksComments       String?           @map("remarks_comments")
   statusNote            String?           @map("status_note")
   canCheckinRemotely    Boolean           @default(false) @map("can_checkin_remotely")
-  allowApplicationEdit  Boolean           @default(true) @map("allow_application_edit")
   portalAccessEnabled   Boolean           @default(true) @map("portal_access_enabled")
+  allowApplicationEdit  Boolean           @default(true) @map("allow_application_edit")
   userId                String?           @map("user_id") @db.Uuid
   activityHistory       ActivityHistory[] @relation("EmployeeActivityHistory")
   createdBy             User              @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
@@ -111,7 +110,7 @@ model Document {
   entityType            String           @map("entity_type") @db.VarChar(50)
   entityId              String           @map("entity_id") @db.Uuid
   reviewedBy            User?            @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
-  uploadedBy            User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
+  uploadedBy            User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
   employeeProfilePhotos OfficeEmployee[] @relation("EmployeeProfilePhoto")
 
   @@index([entityType, entityId])
@@ -158,7 +157,7 @@ model ActivityLog {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   entityType    String   @map("entity_type") @db.VarChar(50)
   entityId      String   @map("entity_id") @db.Uuid
-  performedBy   User     @relation("ActivityLogPerformedBy", fields: [performedById], references: [id], onDelete: Cascade)
+  performedBy   User     @relation("ActivityLogPerformedBy", fields: [performedById], references: [id])
 
   @@index([entityType, entityId])
   @@map("activity_logs")
@@ -328,7 +327,7 @@ model TimeEntry {
   amendments       TimeAmendment[]
   approvals        TimeApproval[]
   breaks           TimeBreak[]
-  createdBy        User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy        User            @relation("TimeEntryCreatedBy", fields: [createdById], references: [id])
 
   @@index([entityType, entityId, clockInTime])
   @@index([status, clockInTime])
@@ -350,7 +349,7 @@ model TimeBreak {
   createdById    String    @map("created_by_id") @db.Uuid
   isDeleted      Boolean   @default(false) @map("is_deleted")
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdBy      User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy      User      @relation("TimeBreakCreatedBy", fields: [createdById], references: [id])
   timeEntry      TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
 
   @@index([timeEntryId])
@@ -374,7 +373,7 @@ model TimeAmendment {
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById      String        @map("created_by_id") @db.Uuid
   approvedBy       User?         @relation("TimeAmendmentApprovedBy", fields: [approvedById], references: [id])
-  createdBy        User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy        User          @relation("TimeAmendmentCreatedBy", fields: [createdById], references: [id])
   timeEntry        TimeEntry     @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
 
   @@index([timeEntryId, createdAt])
@@ -393,7 +392,7 @@ model TimeApproval {
   comments      String?
   decidedAt     DateTime         @map("decided_at") @db.Timestamptz(6)
   decidedById   String           @map("decided_by_id") @db.Uuid
-  decidedBy     User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id], onDelete: Cascade)
+  decidedBy     User             @relation("TimeApprovalDecidedBy", fields: [decidedById], references: [id])
   timeEntry     TimeEntry        @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
 
   @@index([timeEntryId])
@@ -422,7 +421,7 @@ model HoursAdjustment {
   isDeleted       Boolean        @default(false) @map("is_deleted")
   deletedAt       DateTime?      @map("deleted_at") @db.Timestamptz(6)
   approvedBy      User?          @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id])
-  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy       User           @relation("AdjustmentCreatedBy", fields: [createdById], references: [id])
 
   @@index([entityType, entityId, payPeriodStart])
   @@index([payPeriodStart])
@@ -446,8 +445,6 @@ model WorkRule {
   @@index([jurisdiction, effectiveDate])
   @@map("work_rules")
 }
-
-// PortalConfig removed - now using JavaScript config files in src/config/portal/
 
 enum EmployeeStatus {
   new
@@ -477,7 +474,6 @@ enum DocumentType {
   sin_ssn
   direct_deposit
   tax_forms
-  employment_application
   resume
   background_check_consent
   employment_contract

@@ -25,50 +25,71 @@ export default function PortalSignInPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleSendOTP = async (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     setLoading(true);
 
     try {
-      // Use Better Auth client directly
-      const { data, error } = await authClient.emailOtp.sendVerificationOtp({
-        email: email.toLowerCase(),
-        type: 'sign-in',
+      // Check if user exists
+      const checkResponse = await fetch('/api/portal/auth/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase() }),
       });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to send verification code');
+      const checkData = await checkResponse.json();
+
+      if (!checkData.exists) {
+        // User doesn't exist - show error
+        setError('No account found with this email. Please contact HR to get access.');
+        setLoading(false);
+        return;
       }
 
-      // In development, fetch the OTP code
-      if (process.env.NODE_ENV === 'development') {
-        try {
-          const otpResponse = await fetch('/api/portal/auth/get-dev-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email.toLowerCase() }),
-          });
-
-          if (otpResponse.ok) {
-            const otpData = await otpResponse.json();
-            setSuccess(`Verification code sent! Use code: ${otpData.otp} (dev mode)`);
-            setStep('otp');
-            return;
-          }
-        } catch (otpErr) {
-          console.error('Failed to fetch dev OTP:', otpErr);
-        }
-      }
-
-      setSuccess('Verification code sent! Check your email.');
-      setStep('otp');
+      // User exists - send OTP
+      await sendOTP();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to verify email');
     } finally {
       setLoading(false);
     }
+  };
+
+  const sendOTP = async () => {
+    // Use Better Auth client directly
+    const { data, error } = await authClient.emailOtp.sendVerificationOtp({
+      email: email.toLowerCase(),
+      type: 'sign-in',
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Failed to send verification code');
+    }
+
+    // In development, fetch the OTP code
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const otpResponse = await fetch('/api/portal/auth/get-dev-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.toLowerCase() }),
+        });
+
+        if (otpResponse.ok) {
+          const otpData = await otpResponse.json();
+          setSuccess(`Verification code sent! Use code: ${otpData.otp} (dev mode)`);
+          setStep('otp');
+          return;
+        }
+      } catch (otpErr) {
+        console.error('Failed to fetch dev OTP:', otpErr);
+      }
+    }
+
+    setSuccess('Verification code sent! Check your email.');
+    setStep('otp');
   };
 
   const handleVerifyOTP = async (e) => {
@@ -78,7 +99,7 @@ export default function PortalSignInPage() {
     setLoading(true);
 
     try {
-      // Step 1: Verify OTP and create session using Better Auth
+      // Verify OTP and create session using Better Auth
       const { data, error } = await authClient.signIn.emailOtp({
         email: email.toLowerCase(),
         otp: otp,
@@ -88,26 +109,12 @@ export default function PortalSignInPage() {
         throw new Error(error.message || 'Invalid verification code');
       }
 
-      // Step 2: Create employee record (portal-specific post-auth logic)
-      const employeeResponse = await fetch('/api/portal/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.toLowerCase(),
-        }),
-      });
-
-      const employeeData = await employeeResponse.json();
-
-      if (!employeeResponse.ok || employeeData.error) {
-        console.error('Failed to create employee record:', employeeData.error);
-        // Don't fail the whole sign-in - user is already authenticated
-      }
-
       setSuccess('Verification successful! Redirecting...');
 
       // Redirect to application page
-      router.push('/portal/employees/application');
+      setTimeout(() => {
+        router.push('/portal/employees/application');
+      }, 500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -116,7 +123,9 @@ export default function PortalSignInPage() {
   };
 
   const handleBack = () => {
-    setStep('email');
+    if (step === 'otp') {
+      setStep('email');
+    }
     setOtp('');
     setError('');
     setSuccess('');
@@ -130,14 +139,13 @@ export default function PortalSignInPage() {
             Applicant Portal
           </CardTitle>
           <CardDescription className="text-center">
-            {step === 'email'
-              ? 'Enter your email to get started'
-              : 'Enter the verification code sent to your email'}
+            {step === 'email' && 'Enter your email to receive a verification code'}
+            {step === 'otp' && 'Enter the verification code sent to your email'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {step === 'email' ? (
-            <form onSubmit={handleSendOTP} className="space-y-4">
+          {step === 'email' && (
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -158,25 +166,21 @@ export default function PortalSignInPage() {
                 </Alert>
               )}
 
-              {success && (
-                <Alert>
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
-
               <Button
                 type="submit"
                 className="w-full"
                 disabled={loading || !email}
               >
-                {loading ? 'Sending...' : 'Send Verification Code'}
+                {loading ? 'Checking...' : 'Continue'}
               </Button>
 
               <div className="text-sm text-center text-muted-foreground">
-                New applicant? We'll create your account automatically.
+                Don't have access yet? Contact HR to get started.
               </div>
             </form>
-          ) : (
+          )}
+
+          {step === 'otp' && (
             <form onSubmit={handleVerifyOTP} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="otp">Verification Code</Label>
@@ -230,7 +234,7 @@ export default function PortalSignInPage() {
               <Button
                 type="button"
                 variant="link"
-                onClick={handleSendOTP}
+                onClick={() => sendOTP()}
                 disabled={loading}
                 className="w-full text-sm"
               >

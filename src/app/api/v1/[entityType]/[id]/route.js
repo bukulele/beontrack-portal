@@ -66,7 +66,6 @@ export async function GET(request, { params }) {
             uploadedBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -79,7 +78,6 @@ export async function GET(request, { params }) {
             reviewedBy: {
               select: {
                 id: true,
-                username: true,
                 firstName: true,
                 lastName: true,
               },
@@ -93,7 +91,6 @@ export async function GET(request, { params }) {
         createdBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
@@ -101,7 +98,6 @@ export async function GET(request, { params }) {
         updatedBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
@@ -302,7 +298,6 @@ export async function PATCH(request, { params }) {
         createdBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
@@ -310,7 +305,6 @@ export async function PATCH(request, { params }) {
         updatedBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },

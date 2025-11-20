@@ -100,7 +100,6 @@ export async function PATCH(request, { params }) {
         reviewedBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },

@@ -17,6 +17,13 @@ import {
  */
 
 export const EMPLOYEE_CREATE_FORM_CONFIG = {
+  // Quick mode configuration (portal account creation)
+  quickMode: {
+    enabled: true,
+    fields: ['email', 'firstName', 'lastName'],
+    requiredFields: ['email'],
+  },
+
   fields: [
     // ========================================
     // Identity Section

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Loader2, AlertCircle } from "lucide-react";
 import EntityForm from "../entity-edit-dialog/EntityForm";
 import useEntityCreateForm from "./useEntityCreateForm";
@@ -32,11 +35,37 @@ export function EntityCreateDialog({
   formConfig,
   onSuccess,
 }) {
+  // Quick Account mode state (only if config supports it)
+  const hasQuickMode = formConfig?.quickMode?.enabled;
+  const [isQuickMode, setIsQuickMode] = useState(hasQuickMode);
+
+  // Filter form config based on mode
+  const getActiveConfig = () => {
+    if (!hasQuickMode || !isQuickMode) {
+      return formConfig; // Complete mode or no quick mode support
+    }
+
+    // Quick mode: Filter fields and adjust validation
+    const { fields: quickFields, requiredFields } = formConfig.quickMode;
+    return {
+      ...formConfig,
+      fields: formConfig.fields
+        .filter(field => quickFields.includes(field.key))
+        .map(field => ({
+          ...field,
+          required: requiredFields.includes(field.key),
+        }))
+    };
+  };
+
+  const activeConfig = getActiveConfig();
+
   const { form, handleSubmit, isLoading, error } = useEntityCreateForm({
     entityType,
-    formConfig,
+    formConfig: activeConfig,
     onSuccess,
     onClose,
+    isQuickMode: hasQuickMode && isQuickMode,
   });
 
   // Capitalize entity type for display
@@ -67,17 +96,33 @@ export function EntityCreateDialog({
         )}
 
         <div className="flex-1 overflow-y-auto pr-2">
-          <EntityForm form={form} formConfig={formConfig} />
+          <EntityForm form={form} formConfig={activeConfig} />
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create {entityTypeLabel}
-          </Button>
+        <div className="flex justify-between items-center gap-4 pt-4 border-t">
+          {hasQuickMode && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id="quick-mode"
+                checked={isQuickMode}
+                onCheckedChange={setIsQuickMode}
+                disabled={isLoading}
+              />
+              <Label htmlFor="quick-mode" className="cursor-pointer">
+                {isQuickMode ? 'Quick Account' : 'Complete Form'}
+              </Label>
+            </div>
+          )}
+
+          <div className="flex gap-2 ml-auto">
+            <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create {entityTypeLabel}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

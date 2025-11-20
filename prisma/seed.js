@@ -35,7 +35,8 @@ async function fullSeed() {
   console.log('👤 Creating admin user...');
   const signUpResult = await auth.api.signUpEmail({
     body: {
-      name: 'admin',
+      name: 'ADMIN', // Maps to firstName in DB
+      lastName: 'USER',
       email: 'admin@example.com',
       password: 'admin123',
     },
@@ -45,8 +46,6 @@ async function fullSeed() {
   const adminUser = await prisma.user.update({
     where: { email: 'admin@example.com' },
     data: {
-      firstName: 'Admin',
-      lastName: 'User',
       isActive: true,
       isStaff: true,
       isSuperuser: true,

@@ -119,7 +119,6 @@ export async function GET(request, { params }) {
           createdBy: {
             select: {
               id: true,
-              username: true,
               firstName: true,
               lastName: true,
             },
@@ -127,7 +126,6 @@ export async function GET(request, { params }) {
           updatedBy: {
             select: {
               id: true,
-              username: true,
               firstName: true,
               lastName: true,
             },
@@ -171,9 +169,11 @@ export async function GET(request, { params }) {
  * Create a new entity with authorization checks
  */
 export async function POST(request, { params }) {
+  // Next.js 16: params is now a Promise
+  const resolvedParams = await params;
+  const entityType = resolvedParams.entityType;
+
   try {
-    // Next.js 16: params is now a Promise
-    const { entityType } = await params;
 
     // Validate entity type
     if (!VALID_ENTITY_TYPES.includes(entityType)) {
@@ -194,22 +194,39 @@ export async function POST(request, { params }) {
 
     // Entity-specific validation (for employees)
     if (entityType === 'employees') {
-      const { employeeId, firstName, lastName } = body;
-      if (!employeeId || !firstName || !lastName) {
-        return createErrorResponse(
-          400,
-          'Validation Error',
-          'Missing required fields: employeeId, firstName, lastName'
-        );
-      }
+      const { email, employeeId, firstName, lastName } = body;
 
-      // Check if employeeId already exists
-      const existingEntity = await prisma[modelName].findUnique({
-        where: { employeeId },
-      });
+      // Detect quick mode: only email/firstName/lastName provided (minimal fields)
+      const isQuickMode = email && !employeeId &&
+        Object.keys(body).filter(k => body[k] != null).length <= 3;
 
-      if (existingEntity) {
-        return createErrorResponse(400, 'Validation Error', 'Employee ID already exists');
+      if (isQuickMode) {
+        // Quick mode validation: only email required
+        if (!email) {
+          return createErrorResponse(
+            400,
+            'Validation Error',
+            'Email is required for quick account creation'
+          );
+        }
+      } else {
+        // Complete mode validation: employeeId, firstName, lastName required
+        if (!employeeId || !firstName || !lastName) {
+          return createErrorResponse(
+            400,
+            'Validation Error',
+            'Missing required fields: employeeId, firstName, lastName'
+          );
+        }
+
+        // Check if employeeId already exists (only in complete mode)
+        const existingEntity = await prisma[modelName].findUnique({
+          where: { employeeId },
+        });
+
+        if (existingEntity) {
+          return createErrorResponse(400, 'Validation Error', 'Employee ID already exists');
+        }
       }
     }
 
@@ -251,7 +268,6 @@ export async function POST(request, { params }) {
         createdBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
@@ -259,13 +275,38 @@ export async function POST(request, { params }) {
         updatedBy: {
           select: {
             id: true,
-            username: true,
             firstName: true,
             lastName: true,
           },
         },
       },
     });
+
+    // For employees: Create linked User account for portal access (if email provided)
+    if (entityType === 'employees' && entity.email) {
+      try {
+        const portalUser = await prisma.user.create({
+          data: {
+            email: entity.email.toLowerCase(),
+            firstName: entity.firstName || '',
+            lastName: entity.lastName || '',
+            emailVerified: true,
+            isActive: true,
+          },
+        });
+
+        // Link the user to the employee
+        await prisma[modelName].update({
+          where: { id: entity.id },
+          data: { userId: portalUser.id },
+        });
+
+        console.log(`✓ Created portal user account for ${entity.email}`);
+      } catch (userError) {
+        console.error('Failed to create portal user:', userError);
+        // Continue - employee is created, but portal access will need to be set up manually
+      }
+    }
 
     // Create activity log
     await prisma.activityLog.create({
