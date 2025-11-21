@@ -32,7 +32,7 @@ export const EMPLOYEE_CREATE_FORM_CONFIG = {
       key: "employeeId",
       label: "Employee ID",
       type: "text",
-      required: true,
+      required: false,
       readOnly: true, // Read-only - assigned by HR
       placeholder: "Assigned by HR",
     },

@@ -54,14 +54,9 @@ export default function useEntityCreateForm({
 
   const schema = generateSchema(formConfig);
 
-  // Get default values from config (with defaults for specific fields)
+  // Get default values from config - all fields default to empty string
   const defaultValues = formConfig.fields.reduce((acc, field) => {
-    // Set default for status field if it exists
-    if (field.key === "status") {
-      acc[field.key] = "new";
-    } else {
-      acc[field.key] = "";
-    }
+    acc[field.key] = "";
     return acc;
   }, {});
 
