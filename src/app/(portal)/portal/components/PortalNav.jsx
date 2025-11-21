@@ -22,9 +22,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { usePortal } from '@/app/context/PortalContext';
 import { getValidationSummary } from '@/lib/portal/validation';
 import { getPortalConfig } from '@/config/portal/portalConfigs';
+import SignatureComponent from '@/app/components/signature/SignatureComponent';
+import Image from 'next/image';
 
 export default function PortalNav() {
   const pathname = usePathname();
@@ -45,6 +53,8 @@ export default function PortalNav() {
   const [submitting, setSubmitting] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [signatureComplete, setSignatureComplete] = useState(false);
 
   if (loading || !portalConfig || !entityData) {
     return null;
@@ -79,7 +89,18 @@ export default function PortalNav() {
 
   // Validate application completeness (using current data including unsaved changes)
   const validation = getValidationSummary(currentData, portalConfig);
-  const canSubmit = validation.isValid && currentStatus === 'new' && canEdit;
+
+  // Check if consent documents are required and if signature exists
+  const requiresSignature = portalConfig.consentDocuments?.some(doc =>
+    doc.required && doc.appliesToStatuses.includes(currentStatus)
+  );
+  const hasSignature = entityData.signature && entityData.signatureDate;
+
+  // Can submit only if validation passes, has signature (if required), and status is 'new'
+  const canSubmit = validation.isValid &&
+    (!requiresSignature || hasSignature || signatureComplete) &&
+    currentStatus === 'new' &&
+    canEdit;
 
   // Handle save progress
   const handleSave = async () => {
@@ -94,6 +115,14 @@ export default function PortalNav() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Handle signature complete
+  const handleSignatureComplete = (data) => {
+    setSignatureComplete(true);
+    setShowConsentModal(false);
+    // Optionally show a success message
+    alert('Signature saved successfully! You can now submit your application.');
   };
 
   // Handle submit application
@@ -139,6 +168,13 @@ export default function PortalNav() {
     }
   };
 
+  // Get the first required consent document for current status
+  const consentDocument = portalConfig.consentDocuments?.find(doc =>
+    doc.required && doc.appliesToStatuses.includes(currentStatus)
+  );
+
+  const consentContent = consentDocument?.content?.(currentData);
+
   // Show buttons only when user can edit
   const showButtons = canEdit;
 
@@ -180,6 +216,16 @@ export default function PortalNav() {
                 >
                   {saving ? 'Saving...' : 'Save Progress'}
                 </Button>
+
+                {/* Sign Document button (only for new applications that require signature) */}
+                {currentStatus === 'new' && requiresSignature && !hasSignature && !signatureComplete && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowConsentModal(true)}
+                  >
+                    Sign Document
+                  </Button>
+                )}
 
                 {/* Submit Application button (only for new applications) */}
                 {currentStatus === 'new' && (
@@ -225,6 +271,69 @@ export default function PortalNav() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Consent Document Modal */}
+      <Dialog open={showConsentModal} onOpenChange={setShowConsentModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {consentContent && (
+            <>
+              <DialogHeader>
+                {consentContent.header?.showLogo && (
+                  <div className="flex justify-center mb-4">
+                    <Image
+                      src="/logo.png"
+                      alt="Company Logo"
+                      width={280}
+                      height={65}
+                    />
+                  </div>
+                )}
+                <DialogTitle className="text-center text-2xl">
+                  {consentContent.header?.title || consentDocument?.title}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                {/* Render consent document content */}
+                {consentContent.body?.map((section, index) => {
+                  if (section.type === 'applicantInfo') {
+                    return (
+                      <div key={index} className="space-y-1">
+                        {section.fields.map((field, fieldIndex) => (
+                          <p key={fieldIndex} className="text-sm">
+                            <span className="font-semibold">{field.label}:</span> {field.value}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  if (section.type === 'paragraph') {
+                    return (
+                      <p key={index} className="text-sm leading-relaxed">
+                        {section.text}
+                      </p>
+                    );
+                  }
+
+                  return null;
+                })}
+
+                {/* Signature Component */}
+                <div className="mt-6 border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Sign Below</h3>
+                  <SignatureComponent
+                    entityId={entityData.id}
+                    entityType={entityType}
+                    onSignatureComplete={handleSignatureComplete}
+                    onCancel={() => setShowConsentModal(false)}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

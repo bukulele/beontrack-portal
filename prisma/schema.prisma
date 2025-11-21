@@ -81,6 +81,8 @@ model OfficeEmployee {
   portalAccessEnabled   Boolean           @default(true) @map("portal_access_enabled")
   allowApplicationEdit  Boolean           @default(true) @map("allow_application_edit")
   userId                String?           @map("user_id") @db.Uuid
+  signature             String?           @db.Text
+  signatureDate         DateTime?         @map("signature_date") @db.Timestamptz(6)
   activityHistory       ActivityHistory[] @relation("EmployeeActivityHistory")
   createdBy             User              @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   profilePhoto          Document?         @relation("EmployeeProfilePhoto", fields: [profilePhotoId], references: [id])

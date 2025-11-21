@@ -82,10 +82,8 @@ export default function useEntityCreateForm({
           .map(([key, value]) => [key, value || null])
       );
 
-      // Add default status if not provided
-      if (!cleanedData.status) {
-        cleanedData.status = "new";
-      }
+      // Remove status field - backend will set it to 'new' automatically
+      delete cleanedData.status;
 
       const response = await fetch(`/api/v1/${entityType}`, {
         method: "POST",

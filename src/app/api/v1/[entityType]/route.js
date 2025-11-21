@@ -194,32 +194,19 @@ export async function POST(request, { params }) {
 
     // Entity-specific validation (for employees)
     if (entityType === 'employees') {
-      const { email, employeeId, firstName, lastName } = body;
+      const { email, employeeId } = body;
 
-      // Detect quick mode: only email/firstName/lastName provided (minimal fields)
-      const isQuickMode = email && !employeeId &&
-        Object.keys(body).filter(k => body[k] != null).length <= 3;
+      // Email is always required
+      if (!email) {
+        return createErrorResponse(
+          400,
+          'Validation Error',
+          'Email is required'
+        );
+      }
 
-      if (isQuickMode) {
-        // Quick mode validation: only email required
-        if (!email) {
-          return createErrorResponse(
-            400,
-            'Validation Error',
-            'Email is required for quick account creation'
-          );
-        }
-      } else {
-        // Complete mode validation: employeeId, firstName, lastName required
-        if (!employeeId || !firstName || !lastName) {
-          return createErrorResponse(
-            400,
-            'Validation Error',
-            'Missing required fields: employeeId, firstName, lastName'
-          );
-        }
-
-        // Check if employeeId already exists (only in complete mode)
+      // Check if employeeId already exists (only if provided)
+      if (employeeId) {
         const existingEntity = await prisma[modelName].findUnique({
           where: { employeeId },
         });
@@ -255,7 +242,7 @@ export async function POST(request, { params }) {
         employmentType: body.employmentType || null,
         officeLocation: body.officeLocation || null,
         dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
-        status: body.status || 'new',
+        status: 'new',
         createdById: user.id,
         updatedById: user.id,
       };

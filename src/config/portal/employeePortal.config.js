@@ -126,6 +126,48 @@ export const EMPLOYEE_PORTAL_CONFIG = {
     terminated: 'Your employment has ended.',
     suspended: 'Your access is temporarily suspended. Contact HR for more information.',
   },
+
+  // Consent documents configuration
+  consentDocuments: [
+    {
+      key: 'background_check_consent',
+      title: 'Consent for Personal Investigation',
+      required: true,
+      appliesToStatuses: ['new'], // Only shown during application submission
+      content: (entityData) => ({
+        header: {
+          showLogo: true,
+          title: 'Consent for Personal Investigation',
+        },
+        body: [
+          {
+            type: 'applicantInfo',
+            fields: [
+              { label: 'Name', value: `${entityData.firstName || ''} ${entityData.lastName || ''}`.trim() },
+              { label: 'Date', value: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
+              { label: 'Email', value: entityData.email || '' },
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: 'I hereby consent to a personal investigation being carried out by 4Tracks Ltd. to verify the information provided in my employment application and to conduct background checks. I understand that this information will be used solely for the purpose of evaluating my application for employment.',
+          },
+          {
+            type: 'paragraph',
+            text: 'I have listed your company as a previous employer within the last 10 years from date of this application with 4TRACKS LTD.',
+          },
+          {
+            type: 'paragraph',
+            text: 'I authorize you to release the following information to 4TRACKS LTD. for the purpose of investigation as required by the above regulations.',
+          },
+          {
+            type: 'paragraph',
+            text: 'You are released from any and all liability which may result from furnishing such information.',
+          },
+        ],
+      }),
+    },
+  ],
 };
 
 export default EMPLOYEE_PORTAL_CONFIG;
