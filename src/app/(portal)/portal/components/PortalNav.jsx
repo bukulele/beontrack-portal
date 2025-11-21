@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -29,7 +30,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { usePortal } from '@/app/context/PortalContext';
-import { getValidationSummary } from '@/lib/portal/validation';
+import { getValidationSummary, validateRequiredFields, validateRequiredDocuments } from '@/lib/portal/validation';
 import { getPortalConfig } from '@/config/portal/portalConfigs';
 import SignatureComponent from '@/app/components/signature/SignatureComponent';
 import Image from 'next/image';
@@ -186,15 +187,37 @@ export default function PortalNav() {
             {/* Navigation tabs */}
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="h-12">
-                {visibleNavItems.map(item => (
-                  <TabsTrigger
-                    key={item.key}
-                    value={item.key}
-                    className="px-6"
-                  >
-                    {item.label}
-                  </TabsTrigger>
-                ))}
+                {visibleNavItems.map(item => {
+                  // Calculate validation for this specific tab using existing validation functions
+                  let missingCount = 0;
+
+                  if (item.key === 'application') {
+                    // Application tab shows fields
+                    const missingFields = validateRequiredFields(currentData, portalConfig);
+                    missingCount = missingFields.length;
+                  } else if (item.key === 'documents') {
+                    // Documents tab shows documents
+                    const missingDocuments = validateRequiredDocuments(currentData, portalConfig);
+                    missingCount = missingDocuments.length;
+                  }
+
+                  return (
+                    <TabsTrigger
+                      key={item.key}
+                      value={item.key}
+                      className="px-6"
+                    >
+                      <span className="flex items-center gap-2">
+                        {item.label}
+                        {missingCount > 0 && (
+                          <Badge variant="destructive" className="ml-1 rounded-full h-5 min-w-5 px-1.5 py-0 text-xs font-normal">
+                            {missingCount}
+                          </Badge>
+                        )}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
             </Tabs>
 
