@@ -14,6 +14,7 @@ import Image from "next/image";
 import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
 import RelatedEntityDropdown from "./RelatedEntityDropdown";
 import MapDialog from "../timecard/MapDialog";
+import { usePermission } from "@/lib/permissions/hooks";
 
 /**
  * GeneralInfoTab - Full-featured general information tab
@@ -43,6 +44,9 @@ function GeneralInfoTab({
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [mapCoordinates, setMapCoordinates] = useState("");
   const [mapLocation, setMapLocation] = useState("");
+
+  // Check permissions
+  const { can: canEdit } = usePermission(entityType, 'update');
 
   // Icon mapping for custom actions
   const iconMap = {
@@ -161,7 +165,7 @@ function GeneralInfoTab({
                             checklistConfigs={config.checklistConfigs}
                           />
                         )}
-                        {config.editFormConfig && (
+                        {config.editFormConfig && canEdit && (
                           <Button
                             variant="ghost"
                             size="icon"

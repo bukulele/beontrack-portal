@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
@@ -11,6 +11,7 @@ import TimeCardTab from "@/app/components/tabs/timecard/TimeCardTab";
 import SubEntitiesTab from "@/app/components/tabs/sub-entities/SubEntitiesTab";
 import ActivityLogTab from "@/app/components/tabs/activity-log/ActivityLogTab";
 import { EmployeeContext } from "@/app/context/EmployeeContext";
+import { useCurrentUser } from "@/lib/permissions/hooks";
 
 /**
  * Context mapping for dynamic context access
@@ -50,9 +51,38 @@ function UniversalCard({ config, onLightboxChange }) {
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
 
+  // Get current user for role-based filtering
+  const { user, roles } = useCurrentUser();
+
   // Additional contexts - currently empty as legacy contexts have been removed
   // TODO: Re-implement when needed for the new architecture
   const additionalContexts = {};
+
+  // Filter tabs based on employee status and user roles
+  const visibleTabs = useMemo(() => {
+    if (!config.tabs) return [];
+
+    return config.tabs.filter(tab => {
+      // Check status visibility
+      if (tab.visibleForStatuses && tab.visibleForStatuses !== "all" && entityData?.status) {
+        if (!tab.visibleForStatuses.includes(entityData.status)) {
+          return false;
+        }
+      }
+
+      // Check role permissions
+      if (tab.requiredRoles && tab.requiredRoles[0] !== "all" && roles) {
+        const hasRequiredRole = tab.requiredRoles.some(requiredRole =>
+          roles.includes(requiredRole)
+        );
+        if (!hasRequiredRole) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [config.tabs, entityData?.status, roles]);
 
   // Handle entity navigation from list tabs
   const handleEntityClick = (entityId, entityType) => {
@@ -159,7 +189,7 @@ function UniversalCard({ config, onLightboxChange }) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
         {/* Tab Navigation - Fixed at top */}
         <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent border-b shrink-0">
-          {config.tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
@@ -171,7 +201,7 @@ function UniversalCard({ config, onLightboxChange }) {
         </TabsList>
 
         {/* Tab Content */}
-        {config.tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <TabsContent
             key={tab.id}
             value={tab.id}

@@ -12,6 +12,7 @@ import { useSession } from "@/lib/auth-client";
 import { useLoader } from "@/app/context/LoaderContext";
 import { SettingsContext } from "@/app/context/SettingsContext";
 import { validateStatusTransition } from "@/app/functions/validateChecklistCompletion";
+import { useCurrentUser } from "@/lib/permissions/hooks";
 
 /**
  * StatusBadge - Editable status badge component
@@ -47,6 +48,9 @@ function StatusBadge({
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoader();
   const { statusSettings } = useContext(SettingsContext);
+
+  // Check if user has permission to change status (update permission required)
+  const { can: canChangeStatus } = usePermission(entityType, 'update');
 
   // Update when current status changes
   useEffect(() => {
@@ -177,7 +181,7 @@ function StatusBadge({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger disabled={!editable}>
+      <DropdownMenuTrigger disabled={!editable || !canChangeStatus}>
         <Badge
           className="text-white hover:opacity-80 cursor-pointer"
           style={{ backgroundColor: statusColor }}

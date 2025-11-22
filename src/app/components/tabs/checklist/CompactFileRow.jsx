@@ -22,6 +22,7 @@ import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import FileUploader from "@/app/components/file-uploader/FileUploader";
 import ViewFilesModal from "./ViewFilesModal";
 import { UPLOAD_MODES } from "@/config/file-uploader/uploaderSchema";
+import { usePermission } from "@/lib/permissions/hooks";
 
 /**
  * CompactFileRow - Compact row for file-based checklist items
@@ -68,9 +69,8 @@ export function CompactFileRow({
     : "";
 
   // Role-based permissions
-  // WORKAROUND: Auth system not implemented yet - allow all actions
-  const canEdit = true;
-  const canDelete = true;
+  const { can: canEdit } = usePermission(entityType, 'update');
+  const { can: canDelete } = usePermission(entityType, 'delete');
 
   // Handle checkmark toggle
   const handleCheckmark = async (checked) => {

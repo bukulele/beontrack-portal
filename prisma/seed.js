@@ -31,30 +31,139 @@ async function main() {
 
 async function fullSeed() {
 
-  // Create admin user using Better Auth API (handles password hashing and account creation)
-  console.log('👤 Creating admin user...');
-  const signUpResult = await auth.api.signUpEmail({
-    body: {
-      name: 'ADMIN', // Maps to firstName in DB
-      lastName: 'USER',
-      email: 'admin@example.com',
-      password: 'admin123',
-    },
-  });
+  // Create test users for each role (demo purposes)
+  console.log('👤 Creating test users...');
 
-  // Update the user with additional fields
-  const adminUser = await prisma.user.update({
-    where: { email: 'admin@example.com' },
-    data: {
-      isActive: true,
-      isStaff: true,
-      isSuperuser: true,
-      emailVerified: true,
+  const testUsers = [
+    {
+      email: 'admin@example.com',
+      password: 'demo1234',
+      firstName: 'Admin',
+      lastName: 'User',
       department: 'Administration',
-      location: 'Vancouver Office',
+      location: 'Head Office',
+      isSuperuser: true,
+      role: 'admin',
+      jobTitle: 'System Administrator',
+      employeeId: 'ADM-001',
     },
-  });
-  console.log(`   ✓ Created admin user: ${adminUser.email}`);
+    {
+      email: 'production.manager@example.com',
+      password: 'demo1234',
+      firstName: 'Production',
+      lastName: 'Manager',
+      department: 'Assembly',
+      location: 'Factory Floor A',
+      isSuperuser: false,
+      role: 'productionManager',
+      jobTitle: 'Production Manager',
+      employeeId: 'PM-001',
+    },
+    {
+      email: 'production.worker@example.com',
+      password: 'demo1234',
+      firstName: 'Production',
+      lastName: 'Worker',
+      department: 'Assembly',
+      location: 'Factory Floor A',
+      isSuperuser: false,
+      role: 'productionWorker',
+      jobTitle: 'Assembly Line Operator',
+      employeeId: 'PW-001',
+    },
+    {
+      email: 'quality.control@example.com',
+      password: 'demo1234',
+      firstName: 'Quality',
+      lastName: 'Inspector',
+      department: 'QA',
+      location: 'Quality Lab',
+      isSuperuser: false,
+      role: 'qualityControl',
+      jobTitle: 'Quality Control Inspector',
+      employeeId: 'QC-001',
+    },
+    {
+      email: 'maintenance@example.com',
+      password: 'demo1234',
+      firstName: 'Maintenance',
+      lastName: 'Technician',
+      department: 'Maintenance',
+      location: 'Maintenance Shop',
+      isSuperuser: false,
+      role: 'maintenance',
+      jobTitle: 'Maintenance Technician',
+      employeeId: 'MT-001',
+    },
+    {
+      email: 'hr@example.com',
+      password: 'demo1234',
+      firstName: 'HR',
+      lastName: 'Manager',
+      department: 'Administration',
+      location: 'Head Office',
+      isSuperuser: false,
+      role: 'humanResources',
+      jobTitle: 'HR Manager',
+      employeeId: 'HR-001',
+    },
+    {
+      email: 'finance@example.com',
+      password: 'demo1234',
+      firstName: 'Finance',
+      lastName: 'Controller',
+      department: 'Administration',
+      location: 'Head Office',
+      isSuperuser: false,
+      role: 'finance',
+      jobTitle: 'Finance Controller',
+      employeeId: 'FIN-001',
+    },
+    {
+      email: 'safety@example.com',
+      password: 'demo1234',
+      firstName: 'Safety',
+      lastName: 'Officer',
+      department: 'Administration',
+      location: 'Head Office',
+      isSuperuser: false,
+      role: 'safetyCompliance',
+      jobTitle: 'Safety & Compliance Officer',
+      employeeId: 'SAF-001',
+    },
+  ];
+
+  const createdUsers = {};
+
+  for (const userData of testUsers) {
+    // Create user via Better Auth
+    await auth.api.signUpEmail({
+      body: {
+        name: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+      },
+    });
+
+    // Update with additional fields
+    const user = await prisma.user.update({
+      where: { email: userData.email },
+      data: {
+        isActive: true,
+        isStaff: true,
+        isSuperuser: userData.isSuperuser,
+        emailVerified: true,
+        department: userData.department,
+        location: userData.location,
+      },
+    });
+
+    createdUsers[userData.role] = { user, userData };
+    console.log(`   ✓ Created user: ${user.email} (${userData.role})`);
+  }
+
+  const adminUser = createdUsers.admin.user;
 
   // Create employee status configurations
   console.log('🎨 Creating employee status configurations...');
@@ -152,39 +261,35 @@ async function fullSeed() {
   const roles = [
     {
       name: 'admin',
-      description: 'Full system access - can manage all resources and settings',
+      description: 'System administrator with full access to all features and settings',
     },
     {
-      name: 'payroll',
-      description: 'Payroll staff - can view and edit employee payroll information',
+      name: 'productionManager',
+      description: 'Production Manager - oversees production operations, equipment, and production employees',
     },
     {
-      name: 'payrollManager',
-      description: 'Payroll manager - full payroll access including reports and approvals',
+      name: 'productionWorker',
+      description: 'Production Worker - factory floor workers with limited self-service access',
     },
     {
-      name: 'safety',
-      description: 'Safety department - manages incidents, violations, and safety records',
+      name: 'qualityControl',
+      description: 'Quality Control - manages quality assurance, inspections, and supplier quality issues',
     },
     {
-      name: 'dispatch',
-      description: 'Dispatch team - manages schedules, assignments, and operations',
+      name: 'maintenance',
+      description: 'Maintenance - manages equipment maintenance, repairs, and service orders',
     },
     {
-      name: 'recruiting',
-      description: 'Recruiting team - manages applicants and hiring process',
+      name: 'humanResources',
+      description: 'Human Resources - manages employee lifecycle, recruiting, onboarding, and compliance',
     },
     {
-      name: 'planner',
-      description: 'Planning team - manages routes, schedules, and logistics',
+      name: 'finance',
+      description: 'Finance - manages payroll, invoicing, payments, and financial reporting',
     },
     {
-      name: 'shop',
-      description: 'Shop/maintenance team - manages equipment, repairs, and inventory',
-    },
-    {
-      name: 'hr',
-      description: 'HR department - manages employees, benefits, and policies',
+      name: 'safetyCompliance',
+      description: 'Safety & Compliance - manages workplace safety, incidents, violations, and regulatory compliance',
     },
   ];
 
@@ -208,88 +313,79 @@ async function fullSeed() {
       conditions: null, // All records
     },
 
-    // Payroll - Can view/edit employee payroll info
+    // Production Manager - Full access to production employees
     {
-      role: 'payroll',
-      entityType: 'employees',
-      actions: ['read', 'update'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'hireDate', 'department', 'jobTitle', 'status'],
-        denied: ['terminationDate', 'reasonForLeaving', 'remarksComments'],
-      },
-      conditions: null,
-    },
-
-    // Payroll Manager - Full payroll access
-    {
-      role: 'payrollManager',
-      entityType: 'employees',
-      actions: ['read', 'update'],
-      fields: null,
-      conditions: null,
-    },
-
-    // Safety - Read-only employee info
-    {
-      role: 'safety',
-      entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
-      },
-      conditions: null,
-    },
-
-    // Dispatch - Read employee info
-    {
-      role: 'dispatch',
-      entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status', 'officeLocation'],
-      },
-      conditions: null,
-    },
-
-    // Recruiting - Manage applicants and recruiting phase
-    {
-      role: 'recruiting',
-      entityType: 'employees',
-      actions: ['create', 'read', 'update'],
-      fields: null,
-      conditions: {
-        status: { in: ['new', 'under_review', 'application_on_hold', 'rejected', 'offer_accepted', 'trainee'] },
-      },
-    },
-
-    // Planner - Read employee info
-    {
-      role: 'planner',
-      entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
-      },
-      conditions: null,
-    },
-
-    // Shop - Limited employee info
-    {
-      role: 'shop',
-      entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'employeeId'],
-      },
-      conditions: null,
-    },
-
-    // HR - Full employee management
-    {
-      role: 'hr',
+      role: 'productionManager',
       entityType: 'employees',
       actions: ['create', 'read', 'update', 'delete'],
       fields: null,
+      conditions: null,
+    },
+
+    // Production Worker - Own record only (self-service)
+    {
+      role: 'productionWorker',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'status', 'department', 'jobTitle', 'hireDate'],
+      },
+      conditions: {
+        userId: { eq: '${user.id}' }, // Own record only
+      },
+    },
+
+    // Quality Control - Read access to employees
+    {
+      role: 'qualityControl',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status', 'jobTitle'],
+      },
+      conditions: null,
+    },
+
+    // Maintenance - Limited employee info
+    {
+      role: 'maintenance',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'employeeId', 'department', 'phoneNumber'],
+      },
+      conditions: null,
+    },
+
+    // Human Resources - Full employee management
+    {
+      role: 'humanResources',
+      entityType: 'employees',
+      actions: ['create', 'read', 'update', 'delete'],
+      fields: null,
+      conditions: null,
+    },
+
+    // Finance - Payroll-related fields only
+    {
+      role: 'finance',
+      entityType: 'employees',
+      actions: ['read', 'update'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'hireDate', 'department', 'jobTitle', 'status', 'employmentType'],
+        denied: ['terminationDate', 'reasonForLeaving', 'remarksComments', 'statusNote'],
+      },
+      conditions: null,
+    },
+
+    // Safety & Compliance - Read-only employee info
+    {
+      role: 'safetyCompliance',
+      entityType: 'employees',
+      actions: ['read'],
+      fields: {
+        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status', 'jobTitle', 'hireDate'],
+      },
       conditions: null,
     },
   ];
@@ -307,33 +403,66 @@ async function fullSeed() {
   }
   console.log(`   ✓ Created ${permissions.length} permissions`);
 
-  // Assign admin role to admin user
-  await prisma.userRole.create({
-    data: {
-      userId: adminUser.id,
-      roleId: createdRoles.admin.id,
-    },
-  });
-  console.log(`   ✓ Assigned admin role to admin user`);
+  // Assign roles to all test users
+  console.log('🔗 Assigning roles to test users...');
+  for (const [roleName, { user }] of Object.entries(createdUsers)) {
+    await prisma.userRole.create({
+      data: {
+        userId: user.id,
+        roleId: createdRoles[roleName].id,
+      },
+    });
+    console.log(`   ✓ Assigned ${roleName} role to ${user.email}`);
+  }
+
+  // Create employee records for all test users
+  console.log('👔 Creating employee records for test users...');
+  for (const [roleName, { user, userData }] of Object.entries(createdUsers)) {
+    const employee = await prisma.officeEmployee.create({
+      data: {
+        employeeId: userData.employeeId,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: user.email,
+        phoneNumber: '+1-555-0100',
+        department: userData.department,
+        jobTitle: userData.jobTitle,
+        officeLocation: userData.location,
+        employmentType: 'full_time',
+        status: 'active',
+        hireDate: new Date('2024-01-01'),
+        createdById: adminUser.id,
+        updatedById: adminUser.id,
+        userId: user.id, // Link to portal user
+        portalAccessEnabled: true,
+        canCheckinRemotely: ['productionWorker', 'productionManager'].includes(roleName),
+      },
+    });
+    console.log(`   ✓ Created employee record: ${employee.employeeId} (${userData.firstName} ${userData.lastName})`);
+  }
 
   console.log('');
   console.log('✅ Database seeding completed successfully!');
   console.log('');
   console.log('📊 Summary:');
-  console.log(`   - Users: 1 (admin)`);
-  console.log(`   - Employees: 0 (no sample data - create via portal)`);
+  console.log(`   - Users: ${testUsers.length} test users`);
+  console.log(`   - Employees: ${testUsers.length} employee records`);
   console.log(`   - Status Configs: ${statusConfigs.length}`);
   console.log(`   - Status Transitions: ${transitions.length}`);
   console.log(`   - Roles: ${roles.length}`);
   console.log(`   - Permissions: ${permissions.length}`);
   console.log('');
-  console.log('🔑 Admin Login Credentials:');
-  console.log(`   - Email: admin@example.com`);
-  console.log(`   - Password: admin123`);
+  console.log('🔑 Test User Login Credentials (all passwords: demo1234):');
   console.log('');
+  testUsers.forEach(u => {
+    console.log(`   ${u.jobTitle}:`);
+    console.log(`   - Email: ${u.email}`);
+    console.log(`   - Role: ${u.role}`);
+    console.log('');
+  });
   console.log('🌐 Portal Access:');
-  console.log(`   - Sign in at: /portal`);
-  console.log(`   - Portal config: JavaScript files in src/config/portal/`);
+  console.log(`   - Office portal: /`);
+  console.log(`   - Employee portal: /portal`);
   console.log('');
   console.log('🔍 View data in Prisma Studio: npm run db:studio');
   console.log('');
