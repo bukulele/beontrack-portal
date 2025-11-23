@@ -17,7 +17,7 @@
  * - Special pages: Direct routes
  *
  * Role names match database roles from Better Auth:
- * - admin, payroll, payrollManager, safety, dispatch, recruiting, planner, shop, hr
+ * - admin, productionManager, productionWorker, qualityControl, maintenance, humanResources, finance, safetyCompliance
  */
 export const MENU_SECTIONS = [
   // ============================================
@@ -34,9 +34,8 @@ export const MENU_SECTIONS = [
         route: "/table?entity=employees",
         roles: [
           "admin",
-          "payroll",
-          "payrollManager",
-          "hr"
+          "humanResources",
+          "finance"
         ]
       },
       {
@@ -46,13 +45,10 @@ export const MENU_SECTIONS = [
         route: "/table?entity=drivers",
         roles: [
           "admin",
-          "dispatch",
-          "planner",
-          "payroll",
-          "recruiting",
-          "safety",
-          "shop",
-          "hr"
+          "productionManager",
+          "humanResources",
+          "finance",
+          "safetyCompliance"
         ]
       },
       {
@@ -62,10 +58,9 @@ export const MENU_SECTIONS = [
         route: "/all-drivers-data",
         roles: [
           "admin",
-          "payroll",
-          "recruiting",
-          "safety",
-          "hr"
+          "humanResources",
+          "finance",
+          "safetyCompliance"
         ],
         hasIndicator: true,
       },
@@ -76,7 +71,8 @@ export const MENU_SECTIONS = [
         route: "/expiring-driver-docs",
         roles: [
           "admin",
-          "safety"
+          "humanResources",
+          "safetyCompliance"
         ]
       },
       {
@@ -86,7 +82,8 @@ export const MENU_SECTIONS = [
         route: "/table?entity=wcb",
         roles: [
           "admin",
-          "safety"
+          "humanResources",
+          "safetyCompliance"
         ]
       },
       {
@@ -96,7 +93,8 @@ export const MENU_SECTIONS = [
         route: "/table?entity=incidents",
         roles: [
           "admin",
-          "safety"
+          "safetyCompliance",
+          "qualityControl"
         ]
       },
     ]
@@ -116,9 +114,9 @@ export const MENU_SECTIONS = [
         route: "/equipment-production", // Placeholder route
         roles: [
           "admin",
-          "safety",
-          "shop",
-          "planner"
+          "maintenance",
+          "productionManager",
+          "qualityControl"
         ]
       },
       {
@@ -128,7 +126,8 @@ export const MENU_SECTIONS = [
         route: "/equipment-reports", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "maintenance",
+          "productionManager"
         ]
       },
       {
@@ -138,8 +137,8 @@ export const MENU_SECTIONS = [
         route: "/equipment-accidents", // Placeholder route
         roles: [
           "admin",
-          "safety",
-          "shop"
+          "maintenance",
+          "safetyCompliance"
         ]
       },
       {
@@ -149,7 +148,8 @@ export const MENU_SECTIONS = [
         route: "/equipment-issues", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "maintenance",
+          "qualityControl"
         ]
       },
       {
@@ -159,7 +159,7 @@ export const MENU_SECTIONS = [
         route: "/equipment-service-orders", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "maintenance"
         ]
       },
     ]
@@ -179,7 +179,8 @@ export const MENU_SECTIONS = [
         route: "/suppliers", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "maintenance",
+          "finance"
         ]
       },
       {
@@ -189,7 +190,8 @@ export const MENU_SECTIONS = [
         route: "/suppliers/purchase-orders", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "maintenance",
+          "finance"
         ]
       },
       {
@@ -199,7 +201,7 @@ export const MENU_SECTIONS = [
         route: "/suppliers/deliveries", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "maintenance"
         ]
       },
       {
@@ -209,7 +211,7 @@ export const MENU_SECTIONS = [
         route: "/suppliers/invoices", // Placeholder route
         roles: [
           "admin",
-          "payroll"
+          "finance"
         ]
       },
       {
@@ -219,7 +221,7 @@ export const MENU_SECTIONS = [
         route: "/suppliers/payments", // Placeholder route
         roles: [
           "admin",
-          "payroll"
+          "finance"
         ]
       },
       {
@@ -228,7 +230,8 @@ export const MENU_SECTIONS = [
         icon: "TrendingUp",
         route: "/suppliers/performance", // Placeholder route
         roles: [
-          "admin"
+          "admin",
+          "qualityControl"
         ]
       },
       {
@@ -237,7 +240,8 @@ export const MENU_SECTIONS = [
         icon: "FileSignature",
         route: "/suppliers/contracts", // Placeholder route
         roles: [
-          "admin"
+          "admin",
+          "finance"
         ]
       },
       {
@@ -247,7 +251,7 @@ export const MENU_SECTIONS = [
         route: "/suppliers/quality-issues", // Placeholder route
         roles: [
           "admin",
-          "shop"
+          "qualityControl"
         ]
       },
       {
@@ -256,7 +260,8 @@ export const MENU_SECTIONS = [
         icon: "CalendarX",
         route: "/suppliers/expiring-docs", // Placeholder route
         roles: [
-          "admin"
+          "admin",
+          "finance"
         ]
       },
     ]
@@ -276,7 +281,7 @@ export const MENU_SECTIONS = [
         route: "/customers", // Placeholder route
         roles: [
           "admin",
-          "planner"
+          "productionManager"
         ]
       },
       {
@@ -286,8 +291,7 @@ export const MENU_SECTIONS = [
         route: "/customers/orders", // Placeholder route
         roles: [
           "admin",
-          "planner",
-          "dispatch"
+          "productionManager"
         ]
       },
       {
@@ -297,7 +301,8 @@ export const MENU_SECTIONS = [
         route: "/customers/claims", // Placeholder route
         roles: [
           "admin",
-          "safety"
+          "safetyCompliance",
+          "qualityControl"
         ]
       },
       {
@@ -307,7 +312,7 @@ export const MENU_SECTIONS = [
         route: "/customers/quotes", // Placeholder route
         roles: [
           "admin",
-          "planner"
+          "productionManager"
         ]
       },
       {
@@ -317,7 +322,7 @@ export const MENU_SECTIONS = [
         route: "/customers/invoices", // Placeholder route
         roles: [
           "admin",
-          "payroll"
+          "finance"
         ]
       },
     ]
@@ -326,10 +331,16 @@ export const MENU_SECTIONS = [
 
 /**
  * Get menu items visible to user based on their roles
- * @param {string[]} userRoles - Array of user role names from Better Auth (e.g., ['admin', 'payroll'])
+ * @param {string[]} userRoles - Array of user role names from Better Auth (e.g., ['admin', 'humanResources'])
+ * @param {boolean} isSuperuser - Whether user is a superuser (has all access)
  * @returns {object[]} Filtered menu sections with visible items
  */
-export const getVisibleMenuSections = (userRoles) => {
+export const getVisibleMenuSections = (userRoles, isSuperuser = false) => {
+  // Superuser sees all menu items
+  if (isSuperuser) {
+    return MENU_SECTIONS;
+  }
+
   if (!userRoles || userRoles.length === 0) {
     return [];
   }
