@@ -94,11 +94,6 @@ function LoginForm() {
                 autoComplete="current-password"
               />
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              <p>Test account:</p>
-              <p>Email: admin@example.com</p>
-              <p>Password: admin123</p>
-            </div>
           </CardContent>
           <CardFooter>
             <Button
