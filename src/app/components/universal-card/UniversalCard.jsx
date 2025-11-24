@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
@@ -11,6 +11,9 @@ import TimeCardTab from "@/app/components/tabs/timecard/TimeCardTab";
 import SubEntitiesTab from "@/app/components/tabs/sub-entities/SubEntitiesTab";
 import ActivityLogTab from "@/app/components/tabs/activity-log/ActivityLogTab";
 import { EmployeeContext } from "@/app/context/EmployeeContext";
+import { usePermissions, useCurrentUser } from "@/lib/permissions/hooks";
+import { canAccessTab, getDocumentPermissions } from "@/config/entities/employees.config";
+import { getDocumentCapabilities } from "@/lib/permissions/types";
 
 /**
  * Context mapping for dynamic context access
@@ -36,19 +39,59 @@ const CONTEXT_MAP = {
  * @param {Function} onLightboxChange - Callback when lightbox state changes
  */
 function UniversalCard({ config, onLightboxChange }) {
-  // Determine which tab to open initially
-  const initialTabId = config.initialTab || config.defaultTab || config.tabs[0]?.id;
-  const [activeTab, setActiveTab] = useState(initialTabId);
-
-  // Get width and height from config
-  const width = config.width || "w-[1024px]";
-  const height = config.height || "h-[95vh]";
-
   // Access context data dynamically based on config.entity.contextProvider
   const ContextToUse = CONTEXT_MAP[config.entity.contextProvider];
   const context = useContext(ContextToUse);
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
+
+  // Get current user info for role-based checks
+  const { roles: userRoles = [], isSuperuser = false } = useCurrentUser();
+
+  // Get permissions for this entity (still needed for CRUD operations and document management)
+  const permissions = usePermissions(config.entity.type);
+
+  // Get document permissions using the helper function
+  const documentPermissions = useMemo(() => {
+    if (config.entity.type === 'employees') {
+      // Use employees config helper
+      return getDocumentPermissions(permissions);
+    } else {
+      // For other entities, use generic helper from types.js
+      return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
+    }
+  }, [permissions, config.entity.type]);
+
+  // Filter tabs based on roles
+  const visibleTabs = useMemo(() => {
+    if (!config.tabs) return [];
+
+    return config.tabs.filter(tab => {
+      // For employees entity, use simple role-based access
+      if (config.entity.type === 'employees') {
+        return canAccessTab(tab.id, userRoles, isSuperuser);
+      }
+
+      // For other entities, show all tabs if user has read permission
+      // (can be extended per entity as needed)
+      return permissions.canRead || permissions.isSuperuser;
+    });
+  }, [config.tabs, config.entity.type, userRoles, isSuperuser, permissions]);
+
+  // Determine which tab to open initially (must be a visible tab)
+  const initialTabId = useMemo(() => {
+    const requestedTab = config.initialTab || config.defaultTab;
+    const requestedTabVisible = visibleTabs.find(t => t.id === requestedTab);
+
+    // Use requested tab if visible, otherwise first visible tab
+    return requestedTabVisible ? requestedTab : visibleTabs[0]?.id;
+  }, [config.initialTab, config.defaultTab, visibleTabs]);
+
+  const [activeTab, setActiveTab] = useState(initialTabId);
+
+  // Get width and height from config
+  const width = config.width || "w-[1024px]";
+  const height = config.height || "h-[95vh]";
 
   // Additional contexts - currently empty as legacy contexts have been removed
   // TODO: Re-implement when needed for the new architecture
@@ -154,12 +197,26 @@ function UniversalCard({ config, onLightboxChange }) {
     }
   };
 
+  // Show message if no tabs are visible
+  if (visibleTabs.length === 0) {
+    return (
+      <Card className={`${width} ${height} flex flex-col overflow-hidden`}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="text-center">
+            <p className="text-lg font-medium">No Access</p>
+            <p className="text-sm mt-2">You do not have permission to view any tabs for this entity.</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className={`${width} ${height} flex flex-col overflow-hidden`}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
         {/* Tab Navigation - Fixed at top */}
         <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent border-b shrink-0">
-          {config.tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
@@ -171,7 +228,7 @@ function UniversalCard({ config, onLightboxChange }) {
         </TabsList>
 
         {/* Tab Content */}
-        {config.tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <TabsContent
             key={tab.id}
             value={tab.id}

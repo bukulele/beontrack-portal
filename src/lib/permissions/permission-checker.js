@@ -163,11 +163,23 @@ export class PermissionChecker {
       return {};
     }
 
+    // System fields that must ALWAYS be included regardless of permissions
+    const SYSTEM_FIELDS = ['id', 'createdAt', 'updatedAt'];
+
     // Apply most permissive field filter (union of all allowed fields)
     const allFields = Object.keys(obj);
     const accessibleFields = this.getAccessibleFields(action, entityType, allFields);
 
     const filtered = {};
+
+    // Always include system fields first
+    SYSTEM_FIELDS.forEach(field => {
+      if (field in obj) {
+        filtered[field] = obj[field];
+      }
+    });
+
+    // Then add accessible fields
     accessibleFields.forEach(field => {
       if (field in obj) {
         filtered[field] = obj[field];

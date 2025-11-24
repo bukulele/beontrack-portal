@@ -14,25 +14,25 @@ This application uses a modern database-driven ABAC (Attribute-Based Access Cont
 
 ### 2. Production Manager
 - **Description**: Oversees production operations, equipment, and production employees
-- **Access Level**: Full CRUD on employees, time entries, adjustments
+- **Access Level**: Read-only access to office employees (general info, no documents)
 - **Typical Users**: Production supervisors, plant managers
 - **Employee ID Pattern**: PM-XXX
 
 ### 3. Production Worker
 - **Description**: Factory floor workers with limited self-service access
-- **Access Level**: Read-only access to own employee information (limited fields)
+- **Access Level**: No access to office employees system
 - **Typical Users**: Assembly line operators, machine operators
 - **Employee ID Pattern**: PW-XXX
 
 ### 4. Quality Control
 - **Description**: Manages quality assurance, inspections, and supplier quality issues
-- **Access Level**: Read-only employee info (for quality tracking purposes)
+- **Access Level**: Read-only access to office employees (general info, no documents)
 - **Typical Users**: QA inspectors, quality engineers
 - **Employee ID Pattern**: QC-XXX
 
 ### 5. Maintenance
 - **Description**: Manages equipment maintenance, repairs, and service orders
-- **Access Level**: Read-only employee info (for equipment assignments)
+- **Access Level**: No access to office employees system
 - **Typical Users**: Maintenance technicians, equipment specialists
 - **Employee ID Pattern**: MT-XXX
 
@@ -44,36 +44,67 @@ This application uses a modern database-driven ABAC (Attribute-Based Access Cont
 
 ### 7. Finance
 - **Description**: Manages payroll, invoicing, payments, and financial reporting
-- **Access Level**: Read/Update employees, Full CRUD on time entries and adjustments
+- **Access Level**: Read-only employees (with documents), Read/Update time entries, Full CRUD on adjustments
 - **Typical Users**: Payroll specialists, accountants, finance controllers
 - **Employee ID Pattern**: FIN-XXX
 
 ### 8. Safety & Compliance
 - **Description**: Manages workplace safety, incidents, violations, and regulatory compliance
-- **Access Level**: Read-only employee info (for safety tracking)
+- **Access Level**: Full access except delete - can create, view all, edit checklists/notes, manage documents
 - **Typical Users**: Safety officers, compliance managers
 - **Employee ID Pattern**: SAF-XXX
 
 ## Permission Matrix
 
-| Role | Employees | Time Entries | Adjustments |
-|------|-----------|--------------|-------------|
+### Entity CRUD Permissions
+
+| Role | Employees CRUD | Time Entries | Adjustments |
+|------|----------------|--------------|-------------|
 | Admin | Full CRUD | Full CRUD | Full CRUD |
-| Production Manager | Full CRUD | Create, Read, Update | Create, Read |
-| Production Worker | Read (limited fields) | - | - |
-| Quality Control | Read (limited fields) | - | - |
-| Maintenance | Read (limited fields) | - | - |
+| Production Manager | Read only | - | - |
+| Production Worker | No access | - | - |
+| Quality Control | Read only | - | - |
+| Maintenance | No access | - | - |
 | Human Resources | Full CRUD | Full CRUD | Full CRUD |
-| Finance | Read, Update | Read, Update | Full CRUD |
-| Safety & Compliance | Read (limited fields) | - | - |
+| Finance | Read only | Read, Update | Full CRUD |
+| Safety & Compliance | Create, Read, Update (no delete) | - | - |
+
+### Document Permissions
+
+| Role | View | Upload | Edit | Delete |
+|------|------|--------|------|--------|
+| Admin | ✓ | ✓ | ✓ | ✓ |
+| Production Manager | ✗ | ✗ | ✗ | ✗ |
+| Production Worker | ✗ | ✗ | ✗ | ✗ |
+| Quality Control | ✗ | ✗ | ✗ | ✗ |
+| Maintenance | ✗ | ✗ | ✗ | ✗ |
+| Human Resources | ✓ | ✓ | ✓ | ✓ |
+| Finance | ✓ | ✗ | ✗ | ✗ |
+| Safety & Compliance | ✓ | ✓ | ✓ | ✓ |
+
+### Tab-Level Access (Employee Card Tabs)
+
+Employee cards have 5 tabs: General Info, Pre-Hiring, Onboarding, Notes, Time Card
+
+| Role | General Info | Pre-Hiring | Onboarding | Notes | Time Card |
+|------|--------------|------------|------------|-------|-----------|
+| Admin | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Production Manager | ✓ (no docs) | ✗ | ✗ | ✗ | ✗ |
+| Production Worker | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Quality Control | ✓ (no docs) | ✗ | ✗ | ✗ | ✗ |
+| Maintenance | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Human Resources | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Finance | ✓ (with docs) | ✗ | ✗ | ✗ | ✓ |
+| Safety & Compliance | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+**Notes**:
+- Production Manager & Quality Control see General Info tab but document sections are hidden
+- Finance sees document sections in read-only mode
+- Pre-Hiring and Onboarding tabs require document management permissions (view + upload)
 
 ### Field-Level Permissions
 
-**Production Worker** - Allowed fields:
-- firstName, lastName, email, phoneNumber, employeeId, status
-
-**Quality Control, Maintenance, Safety & Compliance** - Allowed fields:
-- firstName, lastName, email, phoneNumber, employeeId, department, status
+All roles with employee access have full field access (null in database = all fields). No field-level restrictions are currently applied.
 
 ## Test User Credentials
 
@@ -163,7 +194,14 @@ Menu items use role arrays for navigation visibility only (not for entity CRUD):
   label: "Office Employees",
   icon: "UserTie",
   route: "/table?entity=employees",
-  roles: ["admin", "humanResources", "finance"]
+  roles: [
+    "admin",
+    "humanResources",
+    "productionManager",
+    "qualityControl",
+    "finance",
+    "safetyCompliance"
+  ]
 }
 
 // Superuser bypass

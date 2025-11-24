@@ -112,10 +112,10 @@ export const createTimeCardConfig = (entityType) => ({
   // Role-based permissions
   roles: {
     // Who can edit time entries
-    edit: ["payrollManager", "admin"],
+    edit: ["finance", "humanResources", "admin"],
 
     // Who can see third-party login warnings
-    viewThirdPartyWarnings: ["payrollManager", "admin"],
+    viewThirdPartyWarnings: ["finance", "humanResources", "admin"],
   },
 });
 

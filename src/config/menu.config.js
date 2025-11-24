@@ -35,7 +35,10 @@ export const MENU_SECTIONS = [
         roles: [
           "admin",
           "humanResources",
-          "finance"
+          "productionManager",
+          "qualityControl",
+          "finance",
+          "safetyCompliance"
         ]
       },
       {

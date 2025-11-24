@@ -9,6 +9,8 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
+import { authorizeRequest, authorizeRecordAccess } from '@/lib/api-auth';
 
 const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
 
@@ -18,9 +20,6 @@ const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
  */
 export async function PATCH(request, { params }) {
   try {
-    // TODO: Add permission checking using Better Auth + ABAC
-    // For now, authentication is handled by middleware
-
     // Next.js 16: params is now a Promise
     const { entityType, id, documentId } = await params;
 
@@ -29,6 +28,29 @@ export async function PATCH(request, { params }) {
       return NextResponse.json(
         { error: `Invalid entity type: ${entityType}` },
         { status: 400 }
+      );
+    }
+
+    // Authorization: Check if user has document_edit permission
+    const authResult = await authorizeRequest(request, entityType, 'document_edit');
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized - you do not have permission to edit documents' },
+        { status: authResult.status || 401 }
+      );
+    }
+
+    // Check record-level access (ABAC conditions)
+    const recordAuthResult = await authorizeRecordAccess(
+      authResult.session,
+      entityType,
+      'document_edit',
+      id
+    );
+    if (!recordAuthResult.authorized) {
+      return NextResponse.json(
+        { error: recordAuthResult.error || 'Access denied to edit documents for this record' },
+        { status: 403 }
       );
     }
 
@@ -54,21 +76,16 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Find or create user for testing
-    let user = await prisma.user.findUnique({
-      where: { email: 'admin@example.com' },
+    // Get user from session (already validated by authorization)
+    const user = await prisma.user.findUnique({
+      where: { email: authResult.session.user.email },
     });
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: 'admin@example.com',
-          username: 'admin',
-          passwordHash: '',
-          firstName: 'Admin',
-          lastName: 'User',
-        },
-      });
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
     }
 
     // Track old values for activity log
@@ -163,9 +180,6 @@ export async function PATCH(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
-    // TODO: Add permission checking using Better Auth + ABAC
-    // For now, authentication is handled by middleware
-
     // Next.js 16: params is now a Promise
     const { entityType, id, documentId } = await params;
 
@@ -174,6 +188,29 @@ export async function DELETE(request, { params }) {
       return NextResponse.json(
         { error: `Invalid entity type: ${entityType}` },
         { status: 400 }
+      );
+    }
+
+    // Authorization: Check if user has document_delete permission
+    const authResult = await authorizeRequest(request, entityType, 'document_delete');
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized - you do not have permission to delete documents' },
+        { status: authResult.status || 401 }
+      );
+    }
+
+    // Check record-level access (ABAC conditions)
+    const recordAuthResult = await authorizeRecordAccess(
+      authResult.session,
+      entityType,
+      'document_delete',
+      id
+    );
+    if (!recordAuthResult.authorized) {
+      return NextResponse.json(
+        { error: recordAuthResult.error || 'Access denied to delete documents for this record' },
+        { status: 403 }
       );
     }
 
@@ -196,22 +233,16 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Find or create user (same workaround as upload)
-    let user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    // Get user from session (already validated by authorization)
+    const user = await prisma.user.findUnique({
+      where: { email: authResult.session.user.email },
     });
 
     if (!user) {
-      console.warn('[DEV WORKAROUND] Auto-creating user for:', session.user.email);
-      user = await prisma.user.create({
-        data: {
-          email: session.user.email,
-          username: session.user.email.split('@')[0],
-          passwordHash: '',
-          firstName: session.user.name?.split(' ')[0] || '',
-          lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
-        },
-      });
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
     }
 
     // Soft delete the document

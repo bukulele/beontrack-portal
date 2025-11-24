@@ -9,6 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authorizeRequest, authorizeRecordAccess } from '@/lib/api-auth';
 
 // Supported entity types (only employees have activity history for now)
 const VALID_ENTITY_TYPES = ['employees'];
@@ -24,9 +25,6 @@ const ENTITY_MODELS = {
  */
 export async function GET(request, { params }) {
   try {
-    // TODO: Add permission checking using Better Auth + ABAC
-    // For now, authentication is handled by middleware
-
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;
 
@@ -35,6 +33,29 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         { error: `Invalid entity type: ${entityType}. Activity history only supports: ${VALID_ENTITY_TYPES.join(', ')}` },
         { status: 400 }
+      );
+    }
+
+    // Authorization: Activity history requires read permission on parent entity
+    const authResult = await authorizeRequest(request, entityType, 'read');
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: authResult.status || 401 }
+      );
+    }
+
+    // Check record-level access (ABAC conditions)
+    const recordAuthResult = await authorizeRecordAccess(
+      authResult.session,
+      entityType,
+      'read',
+      id
+    );
+    if (!recordAuthResult.authorized) {
+      return NextResponse.json(
+        { error: recordAuthResult.error || 'Access denied to this record' },
+        { status: 403 }
       );
     }
 
@@ -95,9 +116,6 @@ export async function GET(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
-    // TODO: Add permission checking using Better Auth + ABAC
-    // For now, authentication is handled by middleware
-
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;
 
@@ -106,6 +124,29 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         { error: `Invalid entity type: ${entityType}. Activity history only supports: ${VALID_ENTITY_TYPES.join(', ')}` },
         { status: 400 }
+      );
+    }
+
+    // Authorization: Creating activity history requires update permission
+    const authResult = await authorizeRequest(request, entityType, 'update');
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized - you do not have permission to create activity history' },
+        { status: authResult.status || 401 }
+      );
+    }
+
+    // Check record-level access (ABAC conditions)
+    const recordAuthResult = await authorizeRecordAccess(
+      authResult.session,
+      entityType,
+      'update',
+      id
+    );
+    if (!recordAuthResult.authorized) {
+      return NextResponse.json(
+        { error: recordAuthResult.error || 'Access denied to create activity history for this record' },
+        { status: 403 }
       );
     }
 

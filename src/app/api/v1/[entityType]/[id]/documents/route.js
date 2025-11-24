@@ -13,6 +13,7 @@ import { prisma } from '@/lib/prisma';
 import { saveUploadedFile } from '@/lib/fileUpload';
 import { auth } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { authorizeRequest, authorizeRecordAccess } from '@/lib/api-auth';
 
 // Supported entity types
 const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
@@ -31,9 +32,6 @@ const ENTITY_MODELS = {
  */
 export async function GET(request, { params }) {
   try {
-    // TODO: Add permission checking using Better Auth + ABAC
-    // For now, authentication is handled by middleware
-
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;
 
@@ -42,6 +40,29 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         { error: `Invalid entity type: ${entityType}` },
         { status: 400 }
+      );
+    }
+
+    // Authorization: Check if user has document_view permission
+    const authResult = await authorizeRequest(request, entityType, 'document_view');
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: authResult.status || 401 }
+      );
+    }
+
+    // Check record-level access (ABAC conditions)
+    const recordAuthResult = await authorizeRecordAccess(
+      authResult.session,
+      entityType,
+      'document_view',
+      id
+    );
+    if (!recordAuthResult.authorized) {
+      return NextResponse.json(
+        { error: recordAuthResult.error || 'Access denied to this record' },
+        { status: 403 }
       );
     }
 
@@ -106,9 +127,6 @@ export async function GET(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
-    // TODO: Add permission checking using Better Auth + ABAC
-    // For now, authentication is handled by middleware
-
     // Next.js 16: params is now a Promise
     const { entityType, id } = await params;
 
@@ -117,6 +135,29 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         { error: `Invalid entity type: ${entityType}` },
         { status: 400 }
+      );
+    }
+
+    // Authorization: Check if user has document_upload permission
+    const authResult = await authorizeRequest(request, entityType, 'document_upload');
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized - you do not have permission to upload documents' },
+        { status: authResult.status || 401 }
+      );
+    }
+
+    // Check record-level access (ABAC conditions)
+    const recordAuthResult = await authorizeRecordAccess(
+      authResult.session,
+      entityType,
+      'document_upload',
+      id
+    );
+    if (!recordAuthResult.authorized) {
+      return NextResponse.json(
+        { error: recordAuthResult.error || 'Access denied to upload documents for this record' },
+        { status: 403 }
       );
     }
 

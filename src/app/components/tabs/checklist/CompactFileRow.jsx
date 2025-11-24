@@ -43,6 +43,7 @@ export function CompactFileRow({
   entityType,
   entityId,
   apiRoute,
+  documentPermissions, // REQUIRED: Must be passed from parent
 }) {
   const [fileUploaderOpen, setFileUploaderOpen] = useState(false);
   const [viewFilesOpen, setViewFilesOpen] = useState(false);
@@ -67,10 +68,17 @@ export function CompactFileRow({
     ? `${latestItem.reviewedBy.firstName} ${latestItem.reviewedBy.lastName}`.trim() || latestItem.reviewedBy.username
     : "";
 
-  // Role-based permissions
-  // WORKAROUND: Auth system not implemented yet - allow all actions
-  const canEdit = true;
-  const canDelete = true;
+  // Document permissions from parent (ChecklistTab)
+  if (!documentPermissions) {
+    console.error('CompactFileRow: documentPermissions prop is required but not provided');
+    return (
+      <div className="px-3 py-1.5 text-sm text-red-600">
+        Error: Document permissions not configured
+      </div>
+    );
+  }
+
+  const { canView, canUpload, canEdit, canDelete } = documentPermissions;
 
   // Handle checkmark toggle
   const handleCheckmark = async (checked) => {
@@ -204,8 +212,8 @@ export function CompactFileRow({
 
         {/* Action buttons */}
         <ButtonGroup>
-          {/* Upload button */}
-          {item.actions?.uploadable && (
+          {/* Upload button - only show if user has upload permission */}
+          {item.actions?.uploadable && canUpload && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -222,27 +230,29 @@ export function CompactFileRow({
             </TooltipProvider>
           )}
 
-          {/* View files button - always visible */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setViewFilesOpen(true)}
-                  disabled={!hasData}
-                >
-                  <FontAwesomeIcon icon={faEye} className="text-gray-600" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {hasData ? "View all versions" : "No files uploaded"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* View files button - only show if user has view permission */}
+          {canView && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setViewFilesOpen(true)}
+                    disabled={!hasData}
+                  >
+                    <FontAwesomeIcon icon={faEye} className="text-gray-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {hasData ? "View all versions" : "No files uploaded"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
-          {/* Checkbox */}
-          {item.actions?.checkable && (
+          {/* Checkbox - only show if user has edit permission */}
+          {item.actions?.checkable && canEdit && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -267,8 +277,8 @@ export function CompactFileRow({
         </ButtonGroup>
       </div>
 
-      {/* File Uploader Modal */}
-      {fileUploaderOpen && (
+      {/* File Uploader Modal - only render if user can upload */}
+      {fileUploaderOpen && canUpload && (
         <FileUploader
           config={getFileUploaderConfig()}
           open={fileUploaderOpen}

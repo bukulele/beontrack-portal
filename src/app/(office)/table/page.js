@@ -16,6 +16,7 @@ import UniversalCard from "@/app/components/universal-card/UniversalCard";
 import { EntityCreateDialog } from "@/app/components/entity-create-dialog/EntityCreateDialog";
 import { getEntityConfig, isValidEntityType } from "@/config/entities";
 import CustomToolbar from "@/app/components/table/CustomToolbar";
+import { usePermissions } from "@/lib/permissions/hooks";
 
 // Context providers
 import { SettingsProvider } from "@/app/context/SettingsContext";
@@ -72,12 +73,18 @@ function TablePageContent() {
   const isValid = isValidEntityType(entityType);
   const entityConfig = getEntityConfig(entityType);
 
+  // Get permissions for this entity
+  const permissions = usePermissions(entityType);
+
   // State
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // CRITICAL: Check if user has permission to access this page
+  const hasAccess = permissions.canRead || permissions.isSuperuser;
 
   // Handle redirect on mount if no entity param
   useEffect(() => {
@@ -164,6 +171,24 @@ function TablePageContent() {
     );
   }
 
+  // Show access denied if user doesn't have permission (after loading completes)
+  if (!loading && !hasAccess) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              You do not have permission to view {entityType}.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Sidebar Trigger (Keyboard shortcut: Cmd+B / Ctrl+B) */}
@@ -196,7 +221,8 @@ function TablePageContent() {
                 slotProps={{
                   toolbar: {
                     onRefresh: fetchData,
-                    onAdd: entityConfig.createFormConfig ? handleOpenCreateDialog : null,
+                    onAdd: (permissions.canCreate && entityConfig.createFormConfig) ? handleOpenCreateDialog : null,
+                    entityType: entityType,
                   },
                   headerFilterCell: {
                     InputComponentProps: {

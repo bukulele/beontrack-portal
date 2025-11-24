@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, AlertCircle } from "lucide-react";
 import EntityForm from "../entity-edit-dialog/EntityForm";
 import useEntityCreateForm from "./useEntityCreateForm";
+import { usePermissions } from "@/lib/permissions/hooks";
 
 /**
  * EntityCreateDialog - Modal dialog for creating new entities
@@ -35,6 +36,9 @@ export function EntityCreateDialog({
   formConfig,
   onSuccess,
 }) {
+  // Permission check
+  const permissions = usePermissions(entityType);
+
   // Quick Account mode state (only if config supports it)
   const hasQuickMode = formConfig?.quickMode?.enabled;
   const [isQuickMode, setIsQuickMode] = useState(hasQuickMode);
@@ -77,6 +81,25 @@ export function EntityCreateDialog({
     form.reset();
     onClose();
   };
+
+  // Check if user has permission to create
+  if (!permissions.canCreate && !permissions.isSuperuser) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Permission Denied</DialogTitle>
+            <DialogDescription>
+              You do not have permission to create {entityTypeLabel.toLowerCase()} entities.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button onClick={handleClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

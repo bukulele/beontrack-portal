@@ -323,83 +323,66 @@ async function fullSeed() {
 
   // Define permissions for each role
   const permissions = [
+    // ============================================
+    // EMPLOYEES ENTITY PERMISSIONS
+    // ============================================
+
     // Admin - Full access to everything
     {
       role: 'admin',
       entityType: 'employees',
-      actions: ['create', 'read', 'update', 'delete'],
+      actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'],
       fields: null,
       conditions: null,
     },
 
-    // Production Manager - Full access to production employees
+    // Production Manager - View only (General tab, NO documents)
     {
       role: 'productionManager',
       entityType: 'employees',
-      actions: ['create', 'read', 'update', 'delete'],
+      actions: ['read'],
       fields: null,
       conditions: null,
     },
 
-    // Production Worker - Read-only self-service access
-    {
-      role: 'productionWorker',
-      entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'status'],
-      },
-      conditions: null,
-    },
+    // Production Worker - NO ACCESS to office system
+    // Production workers are factory floor employees and should not access office data
 
-    // Quality Control - Read employee info for quality tracking
+    // Quality Control - View only (same as Production Manager, NO documents)
     {
       role: 'qualityControl',
       entityType: 'employees',
       actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
-      },
+      fields: null,
       conditions: null,
     },
 
-    // Maintenance - Read employee info for equipment assignments
-    {
-      role: 'maintenance',
-      entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
-      },
-      conditions: null,
-    },
+    // Maintenance - NO ACCESS to employees section
 
-    // Human Resources - Full employee lifecycle management
+    // Human Resources - Full employee lifecycle management + full document access
     {
       role: 'humanResources',
       entityType: 'employees',
-      actions: ['create', 'read', 'update', 'delete'],
+      actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'],
       fields: null,
       conditions: null,
     },
 
-    // Finance - Payroll and financial data access
+    // Finance - View only + timecard editing (update on time_entries, not employees)
     {
       role: 'finance',
       entityType: 'employees',
-      actions: ['read', 'update'],
+      actions: ['read', 'document_view'],
       fields: null,
       conditions: null,
     },
 
-    // Safety & Compliance - Read employee info for safety tracking
+    // Safety & Compliance - Full control except delete (create, view all, edit checklists/notes/status, manage documents)
     {
       role: 'safetyCompliance',
       entityType: 'employees',
-      actions: ['read'],
-      fields: {
-        allowed: ['firstName', 'lastName', 'email', 'phoneNumber', 'employeeId', 'department', 'status'],
-      },
+      actions: ['create', 'read', 'update', 'document_view', 'document_upload', 'document_edit', 'document_delete'],
+      fields: null,
       conditions: null,
     },
 
@@ -425,13 +408,6 @@ async function fullSeed() {
       fields: null,
       conditions: null,
     },
-    {
-      role: 'productionManager',
-      entityType: 'time_entries',
-      actions: ['create', 'read', 'update'],
-      fields: null,
-      conditions: null,
-    },
 
     // Adjustments permissions - for timecard adjustments
     {
@@ -452,13 +428,6 @@ async function fullSeed() {
       role: 'finance',
       entityType: 'adjustments',
       actions: ['create', 'read', 'update', 'delete'],
-      fields: null,
-      conditions: null,
-    },
-    {
-      role: 'productionManager',
-      entityType: 'adjustments',
-      actions: ['create', 'read'],
       fields: null,
       conditions: null,
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Card,
@@ -18,6 +18,9 @@ import CompactModalRow from "./CompactModalRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import { useLoader } from "@/app/context/LoaderContext";
 import { SettingsContext } from "@/app/context/SettingsContext";
+import { usePermissions } from "@/lib/permissions/hooks";
+import { getDocumentPermissions } from "@/config/entities/employees.config";
+import { getDocumentCapabilities } from "@/lib/permissions/types";
 
 /**
  * ChecklistTab - Universal checklist tab component
@@ -48,6 +51,18 @@ function ChecklistTab({
   const [allowedNextStatuses, setAllowedNextStatuses] = useState([]);
   const { startLoading, stopLoading } = useLoader();
   const { statusSettings } = useContext(SettingsContext);
+
+  // Get permissions for this entity
+  const permissions = usePermissions(entityType);
+
+  // Get document permissions
+  const documentPermissions = useMemo(() => {
+    if (entityType === 'employees') {
+      return getDocumentPermissions(permissions);
+    } else {
+      return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
+    }
+  }, [permissions, entityType]);
 
   // Calculate progress whenever entity data changes
   useEffect(() => {
@@ -235,6 +250,7 @@ function ChecklistTab({
                     loadData={loadData}
                     entityType={entityType}
                     entityId={entityId}
+                    documentPermissions={documentPermissions}
                   />
                 ))}
               </CardContent>

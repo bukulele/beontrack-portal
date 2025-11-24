@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import Image from "next/image";
 import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
 import RelatedEntityDropdown from "./RelatedEntityDropdown";
 import MapDialog from "../timecard/MapDialog";
+import { usePermissions } from "@/lib/permissions/hooks";
+import { getDocumentPermissions } from "@/config/entities/employees.config";
+import { getDocumentCapabilities } from "@/lib/permissions/types";
 
 /**
  * GeneralInfoTab - Full-featured general information tab
@@ -43,6 +46,18 @@ function GeneralInfoTab({
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [mapCoordinates, setMapCoordinates] = useState("");
   const [mapLocation, setMapLocation] = useState("");
+
+  // Get permissions for this entity
+  const permissions = usePermissions(entityType);
+
+  // Get document permissions
+  const documentPermissions = useMemo(() => {
+    if (entityType === 'employees') {
+      return getDocumentPermissions(permissions);
+    } else {
+      return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
+    }
+  }, [permissions, entityType]);
 
   // Icon mapping for custom actions
   const iconMap = {
@@ -192,8 +207,8 @@ function GeneralInfoTab({
               </Card>
             ))}
 
-            {/* File Sections */}
-            {config.fileSections?.map((section, sectionIndex) => (
+            {/* File Sections - Only show if user has document view permission */}
+            {documentPermissions.canView && config.fileSections?.map((section, sectionIndex) => (
               <FileSectionAccordion
                 key={sectionIndex}
                 section={section}
@@ -202,6 +217,7 @@ function GeneralInfoTab({
                 loadData={loadData}
                 entityType={entityType}
                 entityId={entityId}
+                canView={documentPermissions.canView}
               />
             ))}
 
