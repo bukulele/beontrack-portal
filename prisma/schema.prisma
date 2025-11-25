@@ -39,6 +39,8 @@ model User {
   timeBreaksCreated       TimeBreak[]       @relation("TimeBreakCreatedBy")
   timeEntriesCreated      TimeEntry[]       @relation("TimeEntryCreatedBy")
   roles                   UserRole[]
+  wcbClaimsCreated        WcbClaim[]        @relation("WcbClaimCreatedBy")
+  wcbClaimsUpdated        WcbClaim[]        @relation("WcbClaimUpdatedBy")
 
   @@map("users")
 }
@@ -88,6 +90,7 @@ model OfficeEmployee {
   profilePhoto          Document?         @relation("EmployeeProfilePhoto", fields: [profilePhotoId], references: [id])
   updatedBy             User              @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   portalUser            User?             @relation("EmployeePortalUser", fields: [userId], references: [id])
+  wcbClaims             WcbClaim[]        @relation("EmployeeWcbClaims")
 
   @@map("office_employees")
 }
@@ -448,6 +451,74 @@ model WorkRule {
   @@map("work_rules")
 }
 
+/// WCB Claims - Workers' Compensation Board Claims Management
+/// Tracks workplace injury/illness claims with bidirectional entity linking
+model WcbClaim {
+  id                  String         @id @default(uuid()) @db.Uuid
+  claimNumber         String         @unique @map("claim_number") @db.VarChar(50)
+  wcbClaimNumber      String?        @map("wcb_claim_number") @db.VarChar(50)
+  status              WcbClaimStatus @default(new)
+
+  // Incident details
+  incidentDate        DateTime       @map("incident_date") @db.Timestamptz(6)
+  location            String?        @db.VarChar(255)
+  province            String         @db.VarChar(2)
+  incidentDetails     String         @map("incident_details")
+
+  // Injury information
+  injuryType          String?        @map("injury_type") @db.VarChar(100)
+  bodyPartAffected    String?        @map("body_part_affected") @db.VarChar(100)
+  severityLevel       String?        @map("severity_level") @db.VarChar(50)
+
+  // Medical information
+  reportedToDoctor    Boolean        @default(false) @map("reported_to_doctor")
+  firstContactDate    DateTime?      @map("first_contact_date") @db.Date
+  doctorName          String?        @map("doctor_name") @db.VarChar(255)
+  doctorPhone         String?        @map("doctor_phone") @db.VarChar(20)
+  medicalFacility     String?        @map("medical_facility") @db.VarChar(255)
+
+  // WCB contact
+  wcbContactName      String?        @map("wcb_contact_name") @db.VarChar(255)
+  wcbContactPhone     String?        @map("wcb_contact_phone") @db.VarChar(20)
+  wcbContactEmail     String?        @map("wcb_contact_email") @db.VarChar(254)
+
+  // Return to work
+  expectedReturnDate  DateTime?      @map("expected_return_date") @db.Date
+  actualReturnDate    DateTime?      @map("actual_return_date") @db.Date
+  lostTimeDays        Int?           @default(0) @map("lost_time_days")
+
+  // Financial
+  estimatedCost       Decimal?       @map("estimated_cost") @db.Decimal(12, 2)
+  actualCost          Decimal?       @map("actual_cost") @db.Decimal(12, 2)
+
+  // Notes
+  statusNote          String?        @map("status_note")
+  remarksComments     String?        @map("remarks_comments")
+
+  // Generic entity linking
+  entityType          String         @map("entity_type") @db.VarChar(50)
+  entityId            String         @map("entity_id") @db.Uuid
+
+  // Audit fields
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById         String         @map("created_by_id") @db.Uuid
+  updatedById         String         @map("updated_by_id") @db.Uuid
+  isDeleted           Boolean        @default(false) @map("is_deleted")
+  deletedAt           DateTime?      @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations
+  createdBy           User            @relation("WcbClaimCreatedBy", fields: [createdById], references: [id])
+  updatedBy           User            @relation("WcbClaimUpdatedBy", fields: [updatedById], references: [id])
+  employee            OfficeEmployee? @relation("EmployeeWcbClaims", fields: [entityId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([incidentDate])
+  @@index([province])
+  @@map("wcb_claims")
+}
+
 enum EmployeeStatus {
   new
   under_review
@@ -488,12 +559,16 @@ enum DocumentType {
   immigration_documents
   other_documents
   profile_photo
+  wcb_worker_report
+  wcb_employer_report
+  wcb_medical_report
 }
 
 enum EntityType {
   employees
   time_entries
   adjustments
+  wcb_claims
 }
 
 enum ActivityType {
@@ -567,4 +642,12 @@ enum AdjustmentType {
   bonus_hours
   penalty_deduction
   other
+}
+
+enum WcbClaimStatus {
+  new
+  submitted
+  accepted
+  denied
+  closed
 }

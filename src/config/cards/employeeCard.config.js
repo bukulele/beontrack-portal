@@ -3,15 +3,21 @@ import { EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG } from "@/config/checklists/employ
 import { EMPLOYEE_GENERAL_INFO_CONFIG } from "@/config/cards/employeeGeneralInfo.config";
 import { employeeLogConfig } from "@/config/cards/employeeLog.config";
 import { employeeTimeCardConfig } from "@/config/tabs/timecard/timeCard.config";
+import { EMPLOYEE_WCB_CLAIMS_TAB_CONFIG } from "@/config/tabs/wcbClaims/employeeWcbClaimsTab.config";
+import { canAccessTab, getDocumentPermissions } from "@/config/entities/employees.config";
 
 /**
  * Employee Card Configuration for Universal Card System
  *
  * Updated for Prisma schema - PRISMA_MIGRATION_PLAN.md Phase 4
- * 5 tabs: general-info + pre-hiring + onboarding + notes + timecard
+ * 6 tabs: general-info + pre-hiring + onboarding + wcb-claims + notes + timecard
  */
 
 export const EMPLOYEE_CARD_CONFIG = {
+  // Helper functions for permissions and access control
+  canAccessTab,
+  getDocumentPermissions,
+
   // Entity metadata
   entity: {
     type: "employees",
@@ -27,7 +33,7 @@ export const EMPLOYEE_CARD_CONFIG = {
   // Default tab to open
   defaultTab: "general-info",
 
-  // Tabs configuration - 5 tabs (general + pre-hiring + onboarding + notes + timecard)
+  // Tabs configuration - 6 tabs (general + pre-hiring + onboarding + wcb-claims + notes + timecard)
   tabs: [
     {
       id: "general-info",
@@ -46,6 +52,12 @@ export const EMPLOYEE_CARD_CONFIG = {
       label: "Onboarding",
       type: "checklist",
       config: EMPLOYEE_ONBOARDING_CHECKLIST_CONFIG,
+    },
+    {
+      id: "wcb-claims",
+      label: "WCB Claims",
+      type: "list",
+      config: EMPLOYEE_WCB_CLAIMS_TAB_CONFIG,
     },
     {
       id: "notes",

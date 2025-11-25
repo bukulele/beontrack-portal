@@ -11,10 +11,11 @@
  * Simple role-based mapping: which roles can access which tabs.
  * For each tab, list the roles that are allowed to see it.
  *
- * Employee card has 5 tabs:
+ * Employee card has 6 tabs:
  * - general-info: Employee overview with documents (read-only view)
  * - pre-hiring: Pre-hiring checklist
  * - onboarding: Onboarding checklist
+ * - wcb-claims: WCB claims list
  * - notes: Internal notes
  * - timecard: Time tracking and payroll
  */
@@ -43,6 +44,16 @@ export const TAB_PERMISSIONS = {
       'admin',
       'humanResources',
       'safetyCompliance',
+    ],
+  },
+
+  'wcb-claims': {
+    allowedRoles: [
+      'admin',
+      'humanResources',
+      'safetyCompliance',
+      'productionManager',
+      'finance',
     ],
   },
 

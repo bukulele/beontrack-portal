@@ -88,7 +88,7 @@ function GeneralInfoTab({
         <div className="p-4">
           <div className="flex gap-4">
           {/* Left Side - Image */}
-          {config.image && (
+          {config.image && config.image.enabled !== false && (
             <div className="flex flex-col gap-4 w-64 shrink-0">
               {/* Use ProfilePhotoDisplay for interactive photo editing if configured */}
               {config.image.interactive ? (

@@ -11,8 +11,8 @@ import TimeCardTab from "@/app/components/tabs/timecard/TimeCardTab";
 import SubEntitiesTab from "@/app/components/tabs/sub-entities/SubEntitiesTab";
 import ActivityLogTab from "@/app/components/tabs/activity-log/ActivityLogTab";
 import { EmployeeContext } from "@/app/context/EmployeeContext";
+import { WcbClaimContext } from "@/app/context/WcbClaimContext";
 import { usePermissions, useCurrentUser } from "@/lib/permissions/hooks";
-import { canAccessTab, getDocumentPermissions } from "@/config/entities/employees.config";
 import { getDocumentCapabilities } from "@/lib/permissions/types";
 
 /**
@@ -21,6 +21,7 @@ import { getDocumentCapabilities } from "@/lib/permissions/types";
  */
 const CONTEXT_MAP = {
   EmployeeProvider: EmployeeContext,
+  WcbClaimProvider: WcbClaimContext,
   // List contexts for referenced data
 };
 
@@ -51,32 +52,31 @@ function UniversalCard({ config, onLightboxChange }) {
   // Get permissions for this entity (still needed for CRUD operations and document management)
   const permissions = usePermissions(config.entity.type);
 
-  // Get document permissions using the helper function
+  // Get document permissions using the helper function from config
   const documentPermissions = useMemo(() => {
-    if (config.entity.type === 'employees') {
-      // Use employees config helper
-      return getDocumentPermissions(permissions);
-    } else {
-      // For other entities, use generic helper from types.js
-      return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
+    // If config provides a helper function, use it
+    if (config.getDocumentPermissions && typeof config.getDocumentPermissions === 'function') {
+      return config.getDocumentPermissions(permissions);
     }
-  }, [permissions, config.entity.type]);
+
+    // Otherwise, use generic helper from types.js
+    return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
+  }, [permissions, config]);
 
   // Filter tabs based on roles
   const visibleTabs = useMemo(() => {
     if (!config.tabs) return [];
 
     return config.tabs.filter(tab => {
-      // For employees entity, use simple role-based access
-      if (config.entity.type === 'employees') {
-        return canAccessTab(tab.id, userRoles, isSuperuser);
+      // If config provides a tab access helper, use it
+      if (config.canAccessTab && typeof config.canAccessTab === 'function') {
+        return config.canAccessTab(tab.id, userRoles, isSuperuser);
       }
 
-      // For other entities, show all tabs if user has read permission
-      // (can be extended per entity as needed)
+      // Otherwise, show all tabs if user has read permission
       return permissions.canRead || permissions.isSuperuser;
     });
-  }, [config.tabs, config.entity.type, userRoles, isSuperuser, permissions]);
+  }, [config, userRoles, isSuperuser, permissions]);
 
   // Determine which tab to open initially (must be a visible tab)
   const initialTabId = useMemo(() => {

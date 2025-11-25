@@ -7,18 +7,142 @@
  */
 
 /**
+ * Get metadata fields for WCB Claims documents
+ * @param {string} documentType - DocumentType enum value
+ * @returns {Array} Array of field definitions
+ */
+function getWcbClaimMetadataFields(documentType) {
+  const schemas = {
+    wcb_worker_report: [
+      {
+        name: 'formNumber',
+        type: 'text',
+        label: 'Form Number',
+        placeholder: 'Form 6 or C060',
+        required: false
+      },
+      {
+        name: 'submissionDate',
+        type: 'date',
+        label: 'Submission Date',
+        dateRange: { start: 'current-730', end: 'current' },
+        required: true
+      },
+      {
+        name: 'workerSignature',
+        type: 'text',
+        label: 'Signed By',
+        placeholder: 'Worker name',
+        required: false
+      },
+      {
+        name: 'comment',
+        type: 'textarea',
+        label: 'Comment',
+        placeholder: 'Additional notes'
+      },
+    ],
+    wcb_employer_report: [
+      {
+        name: 'formNumber',
+        type: 'text',
+        label: 'Form Number',
+        placeholder: 'Form 7',
+        required: false
+      },
+      {
+        name: 'submissionDate',
+        type: 'date',
+        label: 'Submission Date',
+        dateRange: { start: 'current-730', end: 'current' },
+        required: true
+      },
+      {
+        name: 'preparedBy',
+        type: 'text',
+        label: 'Prepared By',
+        placeholder: 'Name of person who completed form',
+        required: true
+      },
+      {
+        name: 'reportDate',
+        type: 'date',
+        label: 'Report Date',
+        dateRange: { start: 'current-730', end: 'current' },
+        required: true
+      },
+      {
+        name: 'comment',
+        type: 'textarea',
+        label: 'Comment',
+        placeholder: 'Additional notes'
+      },
+    ],
+    wcb_medical_report: [
+      {
+        name: 'formNumber',
+        type: 'text',
+        label: 'Form Number',
+        placeholder: 'Form 8',
+        required: false
+      },
+      {
+        name: 'providerName',
+        type: 'text',
+        label: 'Healthcare Provider Name',
+        placeholder: 'Physician or clinic name',
+        required: true
+      },
+      {
+        name: 'reportDate',
+        type: 'date',
+        label: 'Report Date',
+        dateRange: { start: 'current-730', end: 'current' },
+        required: true
+      },
+      {
+        name: 'treatmentDate',
+        type: 'date',
+        label: 'Treatment Date',
+        dateRange: { start: 'current-730', end: 'current' },
+        required: false
+      },
+      {
+        name: 'diagnosis',
+        type: 'textarea',
+        label: 'Diagnosis Summary',
+        placeholder: 'Brief summary (details in document)',
+        required: false
+      },
+      {
+        name: 'comment',
+        type: 'textarea',
+        label: 'Comment',
+        placeholder: 'Additional notes'
+      },
+    ],
+  };
+
+  return schemas[documentType] || [];
+}
+
+/**
  * Get metadata field definitions for a specific document type (GENERIC - entity-aware)
  * @param {string} documentType - DocumentType enum value from Prisma schema
  * @param {string} entityType - Entity type (employee, truck, driver, equipment)
  * @returns {Array} Array of field definitions for file upload forms
  */
 export function getMetadataFields(documentType, entityType) {
-  // For now, only employees schemas exist
-  // Future: Add schemas.trucks, schemas.drivers, schemas.equipment
+  // Entity-specific schemas
+  if (entityType === 'wcb_claims') {
+    return getWcbClaimMetadataFields(documentType);
+  }
+
   if (entityType !== 'employees') {
     console.warn(`No metadata schemas defined for entityType: ${entityType}`);
     return [];
   }
+
   const schemas = {
     // Identity & Work Authorization
     government_id: [
@@ -165,6 +289,11 @@ export function getAllDocumentTypes() {
     // Other
     { value: 'immigration_documents', label: 'Immigration Documents' },
     { value: 'other_documents', label: 'Other Documents' },
+
+    // WCB Claims
+    { value: 'wcb_worker_report', label: 'WCB Worker Report (Form 6/C060)' },
+    { value: 'wcb_employer_report', label: 'WCB Employer Report (Form 7)' },
+    { value: 'wcb_medical_report', label: 'WCB Healthcare Provider Report (Form 8)' },
   ];
 }
 

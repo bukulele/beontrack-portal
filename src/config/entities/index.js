@@ -12,12 +12,15 @@
 
 // Table definitions
 import { OFFICE_TABLE_FIELDS_SAFETY } from "@/data/tables/employees";
+import { WCB_CLAIMS_TABLE_FIELDS } from "@/data/tables/wcbClaims";
 
 // Card configurations
 import { EMPLOYEE_CARD_CONFIG } from "@/config/cards/employeeCard.config";
+import { WCB_CLAIM_CARD_CONFIG } from "@/config/cards/wcbClaimCard.config";
 
 // Form configurations
 import { EMPLOYEE_CREATE_FORM_CONFIG } from "@/config/forms/employeeCreateForm.config";
+import { WCB_CLAIM_CREATE_FORM_CONFIG } from "@/config/forms/wcbClaimCreateForm.config";
 
 /**
  * Entity type configurations
@@ -34,6 +37,15 @@ export const ENTITY_CONFIGS = {
     apiEndpoint: "/api/v1/employees",
     idField: "id",
     dialogTitle: "Employee Details",
+  },
+  wcb_claims: {
+    name: "WCB Claims",
+    columns: WCB_CLAIMS_TABLE_FIELDS,
+    cardConfig: WCB_CLAIM_CARD_CONFIG,
+    createFormConfig: WCB_CLAIM_CREATE_FORM_CONFIG,
+    apiEndpoint: "/api/v1/wcb_claims",
+    idField: "id",
+    dialogTitle: "WCB Claim Details",
   },
 };
 

@@ -17,10 +17,11 @@ async function main() {
   // Check what data already exists
   const userCount = await prisma.user.count();
 
-  // If database has users already, skip seeding
+  // If database has users already, only seed missing permissions
   if (userCount > 0) {
-    console.log('⚠️  Database already seeded. Skipping.');
+    console.log('⚠️  Database has users. Checking for missing permissions...');
     console.log(`   Users: ${userCount}`);
+    await seedMissingPermissions();
     return;
   }
 
@@ -274,6 +275,54 @@ async function fullSeed() {
   }
   console.log(`   ✓ Created ${transitions.length} status transitions`);
 
+  // Create WCB Claims status configurations
+  console.log('📋 Creating WCB Claims status configurations...');
+  const wcbStatusConfigs = [
+    { code: 'new', label: 'New', color: '#3B82F6', order: 1 },
+    { code: 'submitted', label: 'Submitted to WCB', color: '#F59E0B', order: 2 },
+    { code: 'accepted', label: 'Accepted', color: '#22C55E', order: 3 },
+    { code: 'denied', label: 'Denied', color: '#EF4444', order: 4 },
+    { code: 'closed', label: 'Closed', color: '#64748B', order: 5 },
+  ];
+
+  const createdWcbConfigs = {};
+  for (const config of wcbStatusConfigs) {
+    const statusConfig = await prisma.statusConfig.create({
+      data: {
+        entityType: 'wcb_claims',
+        statusCode: config.code,
+        statusLabel: config.label,
+        color: config.color,
+        sortOrder: config.order,
+      },
+    });
+    createdWcbConfigs[config.code] = statusConfig.id;
+  }
+  console.log(`   ✓ Created ${wcbStatusConfigs.length} WCB status configurations`);
+
+  // Create WCB Claims status transitions
+  console.log('🔄 Creating WCB Claims status transitions...');
+  const wcbTransitions = [
+    ['new', 'submitted'],
+    ['new', 'closed'],
+    ['submitted', 'accepted'],
+    ['submitted', 'denied'],
+    ['submitted', 'closed'],
+    ['accepted', 'closed'],
+    ['denied', 'submitted'],  // Can resubmit if denied
+    ['denied', 'closed'],
+  ];
+
+  for (const [from, to] of wcbTransitions) {
+    await prisma.statusTransition.create({
+      data: {
+        fromStatusId: createdWcbConfigs[from],
+        toStatusId: createdWcbConfigs[to],
+      },
+    });
+  }
+  console.log(`   ✓ Created ${wcbTransitions.length} WCB status transitions`);
+
   // Create roles and permissions
   console.log('🔐 Creating authorization roles and permissions...');
 
@@ -431,6 +480,55 @@ async function fullSeed() {
       fields: null,
       conditions: null,
     },
+
+    // ============================================
+    // WCB CLAIMS ENTITY PERMISSIONS
+    // ============================================
+
+    // Admin - Full access
+    {
+      role: 'admin',
+      entityType: 'wcb_claims',
+      actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'],
+      fields: null,
+      conditions: null,
+    },
+
+    // Human Resources - Full management
+    {
+      role: 'humanResources',
+      entityType: 'wcb_claims',
+      actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'],
+      fields: null,
+      conditions: null,
+    },
+
+    // Safety & Compliance - Full management (primary WCB owners)
+    {
+      role: 'safetyCompliance',
+      entityType: 'wcb_claims',
+      actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'],
+      fields: null,
+      conditions: null,
+    },
+
+    // Production Manager - View only
+    {
+      role: 'productionManager',
+      entityType: 'wcb_claims',
+      actions: ['read', 'document_view'],
+      fields: null,
+      conditions: null,
+    },
+
+    // Finance - View only (for cost tracking)
+    {
+      role: 'finance',
+      entityType: 'wcb_claims',
+      actions: ['read', 'document_view'],
+      fields: null,
+      conditions: null,
+    },
   ];
 
   for (const permData of permissions) {
@@ -479,6 +577,89 @@ async function fullSeed() {
   console.log(`   - Portal config: JavaScript files in src/config/portal/`);
   console.log('');
   console.log('🔍 View data in Prisma Studio: npm run db:studio');
+  console.log('');
+}
+
+async function seedMissingPermissions() {
+  console.log('🔍 Checking for missing permissions...');
+
+  // Get all existing roles
+  const roles = await prisma.role.findMany();
+  const roleMap = Object.fromEntries(roles.map(r => [r.name, r]));
+
+  // Define all permissions that should exist
+  const requiredPermissions = [
+    // Admin permissions
+    { role: 'admin', entityType: 'employees', actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'] },
+    { role: 'admin', entityType: 'wcb_claims', actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'] },
+    { role: 'admin', entityType: 'time_entries', actions: ['create', 'read', 'update', 'delete'] },
+    { role: 'admin', entityType: 'adjustments', actions: ['create', 'read', 'update', 'delete'] },
+
+    // HR permissions
+    { role: 'humanResources', entityType: 'employees', actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'] },
+    { role: 'humanResources', entityType: 'wcb_claims', actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'] },
+    { role: 'humanResources', entityType: 'time_entries', actions: ['create', 'read', 'update', 'delete'] },
+    { role: 'humanResources', entityType: 'adjustments', actions: ['create', 'read', 'update', 'delete'] },
+
+    // Safety & Compliance permissions
+    { role: 'safetyCompliance', entityType: 'employees', actions: ['create', 'read', 'update', 'document_view', 'document_upload', 'document_edit', 'document_delete'] },
+    { role: 'safetyCompliance', entityType: 'wcb_claims', actions: ['create', 'read', 'update', 'delete', 'document_view', 'document_upload', 'document_edit', 'document_delete'] },
+
+    // Production Manager permissions
+    { role: 'productionManager', entityType: 'employees', actions: ['read'] },
+    { role: 'productionManager', entityType: 'wcb_claims', actions: ['read', 'document_view'] },
+
+    // Finance permissions
+    { role: 'finance', entityType: 'employees', actions: ['read', 'document_view'] },
+    { role: 'finance', entityType: 'wcb_claims', actions: ['read', 'document_view'] },
+    { role: 'finance', entityType: 'time_entries', actions: ['read', 'update'] },
+    { role: 'finance', entityType: 'adjustments', actions: ['read', 'update'] },
+
+    // Quality Control permissions
+    { role: 'qualityControl', entityType: 'employees', actions: ['read'] },
+  ];
+
+  let added = 0;
+  let skipped = 0;
+
+  for (const perm of requiredPermissions) {
+    const role = roleMap[perm.role];
+    if (!role) {
+      console.log(`   ⚠️  Role '${perm.role}' not found, skipping...`);
+      skipped++;
+      continue;
+    }
+
+    // Check if permission already exists
+    const existing = await prisma.permission.findFirst({
+      where: {
+        roleId: role.id,
+        entityType: perm.entityType,
+      }
+    });
+
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
+    // Create missing permission
+    await prisma.permission.create({
+      data: {
+        roleId: role.id,
+        entityType: perm.entityType,
+        actions: perm.actions,
+        fields: null,
+        conditions: null,
+      }
+    });
+
+    console.log(`   ✓ Added: ${perm.role} → ${perm.entityType} (${perm.actions.length} actions)`);
+    added++;
+  }
+
+  console.log('');
+  console.log(`✅ Permission check complete: ${added} added, ${skipped} already existed`);
   console.log('');
 }
 

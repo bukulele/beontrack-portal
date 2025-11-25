@@ -5,10 +5,10 @@ CREATE TYPE "EmployeeStatus" AS ENUM ('new', 'under_review', 'application_on_hol
 CREATE TYPE "EmploymentType" AS ENUM ('full_time', 'part_time', 'contract');
 
 -- CreateEnum
-CREATE TYPE "DocumentType" AS ENUM ('government_id', 'work_authorization', 'sin_ssn', 'direct_deposit', 'tax_forms', 'resume', 'background_check_consent', 'employment_contract', 'company_policies', 'confidentiality_agreement', 'benefits_enrollment', 'professional_certifications', 'education_verification', 'safety_training', 'immigration_documents', 'other_documents', 'profile_photo');
+CREATE TYPE "DocumentType" AS ENUM ('government_id', 'work_authorization', 'sin_ssn', 'direct_deposit', 'tax_forms', 'resume', 'background_check_consent', 'employment_contract', 'company_policies', 'confidentiality_agreement', 'benefits_enrollment', 'professional_certifications', 'education_verification', 'safety_training', 'immigration_documents', 'other_documents', 'profile_photo', 'wcb_worker_report', 'wcb_employer_report', 'wcb_medical_report');
 
 -- CreateEnum
-CREATE TYPE "EntityType" AS ENUM ('employees', 'time_entries', 'adjustments');
+CREATE TYPE "EntityType" AS ENUM ('employees', 'time_entries', 'adjustments', 'wcb_claims');
 
 -- CreateEnum
 CREATE TYPE "ActivityType" AS ENUM ('employment', 'education', 'unemployment', 'self_employed', 'military_service', 'other');
@@ -33,6 +33,9 @@ CREATE TYPE "ApprovalDecision" AS ENUM ('approved', 'rejected', 'needs_correctio
 
 -- CreateEnum
 CREATE TYPE "AdjustmentType" AS ENUM ('manual_correction', 'comp_time', 'pto_adjustment', 'holiday_pay', 'bonus_hours', 'penalty_deduction', 'other');
+
+-- CreateEnum
+CREATE TYPE "WcbClaimStatus" AS ENUM ('new', 'submitted', 'accepted', 'denied', 'closed');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -384,6 +387,46 @@ CREATE TABLE "work_rules" (
     CONSTRAINT "work_rules_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "wcb_claims" (
+    "id" UUID NOT NULL,
+    "claim_number" VARCHAR(50) NOT NULL,
+    "wcb_claim_number" VARCHAR(50),
+    "status" "WcbClaimStatus" NOT NULL DEFAULT 'new',
+    "incident_date" TIMESTAMPTZ(6) NOT NULL,
+    "location" VARCHAR(255),
+    "province" VARCHAR(2) NOT NULL,
+    "incident_details" TEXT NOT NULL,
+    "injury_type" VARCHAR(100),
+    "body_part_affected" VARCHAR(100),
+    "severity_level" VARCHAR(50),
+    "reported_to_doctor" BOOLEAN NOT NULL DEFAULT false,
+    "first_contact_date" DATE,
+    "doctor_name" VARCHAR(255),
+    "doctor_phone" VARCHAR(20),
+    "medical_facility" VARCHAR(255),
+    "wcb_contact_name" VARCHAR(255),
+    "wcb_contact_phone" VARCHAR(20),
+    "wcb_contact_email" VARCHAR(254),
+    "expected_return_date" DATE,
+    "actual_return_date" DATE,
+    "lost_time_days" INTEGER DEFAULT 0,
+    "estimated_cost" DECIMAL(12,2),
+    "actual_cost" DECIMAL(12,2),
+    "status_note" TEXT,
+    "remarks_comments" TEXT,
+    "entity_type" VARCHAR(50) NOT NULL,
+    "entity_id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_by_id" UUID NOT NULL,
+    "updated_by_id" UUID NOT NULL,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+    "deleted_at" TIMESTAMPTZ(6),
+
+    CONSTRAINT "wcb_claims_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
@@ -495,6 +538,21 @@ CREATE INDEX "hours_adjustments_pay_period_start_idx" ON "hours_adjustments"("pa
 -- CreateIndex
 CREATE INDEX "work_rules_jurisdiction_effective_date_idx" ON "work_rules"("jurisdiction", "effective_date");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "wcb_claims_claim_number_key" ON "wcb_claims"("claim_number");
+
+-- CreateIndex
+CREATE INDEX "wcb_claims_entity_type_entity_id_idx" ON "wcb_claims"("entity_type", "entity_id");
+
+-- CreateIndex
+CREATE INDEX "wcb_claims_status_idx" ON "wcb_claims"("status");
+
+-- CreateIndex
+CREATE INDEX "wcb_claims_incident_date_idx" ON "wcb_claims"("incident_date");
+
+-- CreateIndex
+CREATE INDEX "wcb_claims_province_idx" ON "wcb_claims"("province");
+
 -- AddForeignKey
 ALTER TABLE "office_employees" ADD CONSTRAINT "office_employees_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -572,3 +630,9 @@ ALTER TABLE "hours_adjustments" ADD CONSTRAINT "hours_adjustments_approved_by_id
 
 -- AddForeignKey
 ALTER TABLE "hours_adjustments" ADD CONSTRAINT "hours_adjustments_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "wcb_claims" ADD CONSTRAINT "wcb_claims_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "wcb_claims" ADD CONSTRAINT "wcb_claims_updated_by_id_fkey" FOREIGN KEY ("updated_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

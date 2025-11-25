@@ -11,11 +11,12 @@ import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // Supported entity types
-const VALID_ENTITY_TYPES = ['employees'];
+const VALID_ENTITY_TYPES = ['employees', 'wcb_claims'];
 
 // Map entity types to Prisma models
 const ENTITY_MODELS = {
   employees: 'officeEmployee',
+  wcb_claims: 'wcbClaim',
 };
 
 /**

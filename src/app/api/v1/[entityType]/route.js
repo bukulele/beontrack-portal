@@ -18,11 +18,12 @@ import {
 } from '@/lib/api-auth';
 
 // Supported entity types
-const VALID_ENTITY_TYPES = ['employees'];
+const VALID_ENTITY_TYPES = ['employees', 'wcb_claims'];
 
 // Map entity types to Prisma models
 const ENTITY_MODELS = {
   employees: 'officeEmployee',
+  wcb_claims: 'wcbClaim',
 };
 
 /**
@@ -93,6 +94,37 @@ export async function GET(request, { params }) {
       }
     }
 
+    // Entity-specific filters (for wcb_claims)
+    if (entityType === 'wcb_claims') {
+      // Search filter (claimNumber, wcbClaimNumber, injuryType)
+      if (search) {
+        where.OR = [
+          { claimNumber: { contains: search, mode: 'insensitive' } },
+          { wcbClaimNumber: { contains: search, mode: 'insensitive' } },
+          { injuryType: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      // Status filter
+      if (status) {
+        where.status = status;
+      }
+
+      // Province filter
+      const province = searchParams.get('province');
+      if (province) {
+        where.province = province;
+      }
+
+      // Entity filter (filter by linked entity)
+      const linkedEntityType = searchParams.get('linkedEntityType');
+      const linkedEntityId = searchParams.get('linkedEntityId');
+      if (linkedEntityType && linkedEntityId) {
+        where.entityType = linkedEntityType;
+        where.entityId = linkedEntityId;
+      }
+    }
+
     // Build orderBy clause
     const orderBy = {
       [sortBy]: sortOrder,
@@ -101,6 +133,35 @@ export async function GET(request, { params }) {
     // Calculate skip
     const skip = (page - 1) * limit;
 
+    // Build include clause (entity-specific)
+    const include = {
+      createdBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      updatedBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    };
+
+    // Add profilePhoto for employees only
+    if (entityType === 'employees') {
+      include.profilePhoto = {
+        select: {
+          id: true,
+          filePath: true,
+          fileName: true,
+        },
+      };
+    }
+
     // Execute queries in parallel
     const [entities, totalCount] = await Promise.all([
       prisma[modelName].findMany({
@@ -108,29 +169,7 @@ export async function GET(request, { params }) {
         skip,
         take: limit,
         orderBy,
-        include: {
-          profilePhoto: {
-            select: {
-              id: true,
-              filePath: true,
-              fileName: true,
-            },
-          },
-          createdBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-          updatedBy: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
+        include,
       }),
       prisma[modelName].count({ where }),
     ]);
@@ -217,6 +256,36 @@ export async function POST(request, { params }) {
       }
     }
 
+    // Entity-specific validation (for wcb_claims)
+    if (entityType === 'wcb_claims') {
+      const { incidentDate, province, entityType: linkedEntityType, entityId: linkedEntityId, incidentDetails } = body;
+
+      // Required fields validation
+      if (!incidentDate) {
+        return createErrorResponse(400, 'Validation Error', 'Incident date is required');
+      }
+      if (!province) {
+        return createErrorResponse(400, 'Validation Error', 'Province is required');
+      }
+      if (!linkedEntityType || !linkedEntityId) {
+        return createErrorResponse(400, 'Validation Error', 'Linked entity (entityType and entityId) is required');
+      }
+      if (!incidentDetails) {
+        return createErrorResponse(400, 'Validation Error', 'Incident details are required');
+      }
+
+      // Check if claimNumber already exists (only if provided)
+      if (body.claimNumber) {
+        const existingClaim = await prisma[modelName].findUnique({
+          where: { claimNumber: body.claimNumber },
+        });
+
+        if (existingClaim) {
+          return createErrorResponse(400, 'Validation Error', 'Claim number already exists');
+        }
+      }
+    }
+
     // Build entity data (entity-specific for employees)
     let entityData = {};
 
@@ -243,6 +312,61 @@ export async function POST(request, { params }) {
         officeLocation: body.officeLocation || null,
         dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
         status: 'new',
+        createdById: user.id,
+        updatedById: user.id,
+      };
+    }
+
+    if (entityType === 'wcb_claims') {
+      // Generate claim number if not provided
+      const claimNumber = body.claimNumber || `WCB-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      entityData = {
+        claimNumber,
+        wcbClaimNumber: body.wcbClaimNumber || null,
+        status: 'new',
+
+        // Incident details (required)
+        incidentDate: new Date(body.incidentDate),
+        location: body.location || null,
+        province: body.province,
+        incidentDetails: body.incidentDetails,
+
+        // Generic entity linking (required)
+        entityType: body.entityType,
+        entityId: body.entityId,
+
+        // Injury details (optional)
+        injuryType: body.injuryType || null,
+        bodyPartAffected: body.bodyPartAffected || null,
+        severityLevel: body.severityLevel || null,
+
+        // Medical information (optional)
+        reportedToDoctor: body.reportedToDoctor !== undefined ? body.reportedToDoctor : false,
+        firstContactDate: body.firstContactDate ? new Date(body.firstContactDate) : null,
+        doctorName: body.doctorName || null,
+        doctorPhone: body.doctorPhone || null,
+        medicalFacility: body.medicalFacility || null,
+
+        // WCB contact (optional)
+        wcbContactName: body.wcbContactName || null,
+        wcbContactPhone: body.wcbContactPhone || null,
+        wcbContactEmail: body.wcbContactEmail || null,
+
+        // Return to work (optional)
+        expectedReturnDate: body.expectedReturnDate ? new Date(body.expectedReturnDate) : null,
+        actualReturnDate: body.actualReturnDate ? new Date(body.actualReturnDate) : null,
+        lostTimeDays: body.lostTimeDays !== undefined ? parseInt(body.lostTimeDays) : 0,
+
+        // Financial (optional)
+        estimatedCost: body.estimatedCost !== undefined ? parseFloat(body.estimatedCost) : null,
+        actualCost: body.actualCost !== undefined ? parseFloat(body.actualCost) : null,
+
+        // Notes (optional)
+        statusNote: body.statusNote || null,
+        remarksComments: body.remarksComments || null,
+
+        // Audit fields
         createdById: user.id,
         updatedById: user.id,
       };
@@ -295,13 +419,20 @@ export async function POST(request, { params }) {
       }
     }
 
-    // Create activity log
+    // Create activity log with entity-specific display value
+    let displayValue = entity.id;
+    if (entityType === 'employees') {
+      displayValue = `${entity.firstName} ${entity.lastName}`;
+    } else if (entityType === 'wcb_claims') {
+      displayValue = `Claim ${entity.claimNumber}`;
+    }
+
     await prisma.activityLog.create({
       data: {
         entityType,
         entityId: entity.id,
         actionType: 'created',
-        newValue: entityType === 'employees' ? `${entity.firstName} ${entity.lastName}` : entity.id,
+        newValue: displayValue,
         performedById: user.id,
       },
     });

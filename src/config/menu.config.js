@@ -82,11 +82,13 @@ export const MENU_SECTIONS = [
         id: "employees-wcb",
         label: "WCB Claims",
         icon: "FileWarning",
-        route: "/table?entity=wcb",
+        route: "/table?entity=wcb_claims",
         roles: [
           "admin",
           "humanResources",
-          "safetyCompliance"
+          "safetyCompliance",
+          "productionManager",
+          "finance"
         ]
       },
       {

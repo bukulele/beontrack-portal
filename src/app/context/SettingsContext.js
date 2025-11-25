@@ -11,6 +11,7 @@ export const SettingsProvider = ({ children }) => {
     // Map of entityType (plural, used in app) to API endpoint (may be singular)
     const entityTypeMapping = {
       'employees': 'employee', // App uses 'employees', API uses 'employee'
+      'wcb_claims': 'wcb_claims', // App uses 'wcb_claims', API uses 'wcb_claims'
     };
 
     Object.entries(entityTypeMapping).forEach(([entityType, apiEndpoint]) => {

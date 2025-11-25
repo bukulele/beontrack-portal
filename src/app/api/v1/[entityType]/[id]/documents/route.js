@@ -16,11 +16,12 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { authorizeRequest, authorizeRecordAccess } from '@/lib/api-auth';
 
 // Supported entity types
-const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment'];
+const VALID_ENTITY_TYPES = ['employees', 'trucks', 'drivers', 'equipment', 'wcb_claims'];
 
 // Map entity types to Prisma models (for validation)
 const ENTITY_MODELS = {
   employees: 'officeEmployee',
+  wcb_claims: 'wcbClaim',
   // trucks: 'truck',        // TODO: Add when Truck model exists
   // drivers: 'driver',      // TODO: Add when Driver model exists
   // equipment: 'equipment', // TODO: Add when Equipment model exists

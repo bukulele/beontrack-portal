@@ -21,6 +21,7 @@ import { usePermissions } from "@/lib/permissions/hooks";
 // Context providers
 import { SettingsProvider } from "@/app/context/SettingsContext";
 import { EmployeeProvider } from "@/app/context/EmployeeContext";
+import { WcbClaimProvider } from "@/app/context/WcbClaimContext";
 
 /**
  * Unified Table Page
@@ -50,6 +51,7 @@ function EntityContextWrapper({ entityType, entityId, children }) {
   // Determine which context provider(s) to use based on entity type
   const ContextProvider = {
     employees: EmployeeProvider,
+    wcb_claims: WcbClaimProvider,
   }[entityType];
 
   if (!ContextProvider) {
@@ -59,6 +61,7 @@ function EntityContextWrapper({ entityType, entityId, children }) {
   // Standard entity providers use the same prop name pattern
   const idProp = {
     employees: "employeeId",
+    wcb_claims: "claimId",
   }[entityType];
 
   return <ContextProvider {...{ [idProp]: entityId }}>{children}</ContextProvider>;

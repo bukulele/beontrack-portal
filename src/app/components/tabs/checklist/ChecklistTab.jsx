@@ -18,7 +18,7 @@ import CompactModalRow from "./CompactModalRow";
 import findHighestIdObject from "@/app/functions/findHighestIdObject";
 import { useLoader } from "@/app/context/LoaderContext";
 import { SettingsContext } from "@/app/context/SettingsContext";
-import { usePermissions } from "@/lib/permissions/hooks";
+import { usePermissions, useCurrentUser } from "@/lib/permissions/hooks";
 import { getDocumentPermissions } from "@/config/entities/employees.config";
 import { getDocumentCapabilities } from "@/lib/permissions/types";
 
@@ -54,15 +54,15 @@ function ChecklistTab({
 
   // Get permissions for this entity
   const permissions = usePermissions(entityType);
+  const currentUser = useCurrentUser();
 
-  // Get document permissions
+  // Get document permissions - use same logic for all entities
   const documentPermissions = useMemo(() => {
-    if (entityType === 'employees') {
-      return getDocumentPermissions(permissions);
-    } else {
-      return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
-    }
-  }, [permissions, entityType]);
+    // Get actions for this specific entity
+    const entityPerms = currentUser.permissions.filter(p => p.entityType === entityType);
+    const actions = entityPerms.flatMap(p => p.actions);
+    return getDocumentCapabilities(actions, currentUser.isSuperuser);
+  }, [entityType, currentUser]);
 
   // Calculate progress whenever entity data changes
   useEffect(() => {

@@ -21,11 +21,12 @@ import {
 import { fetchGroupedDocuments, fetchActivityLogs } from '@/lib/apiHelpers';
 
 // Supported entity types
-const VALID_ENTITY_TYPES = ['employees'];
+const VALID_ENTITY_TYPES = ['employees', 'wcb_claims'];
 
 // Map entity types to Prisma models
 const ENTITY_MODELS = {
   employees: 'officeEmployee',
+  wcb_claims: 'wcbClaim',
 };
 
 /**
@@ -51,58 +52,82 @@ export async function GET(request, { params }) {
     const { checker } = authResult;
     const modelName = ENTITY_MODELS[entityType];
 
+    // Build include clause based on entity type
+    const include = {
+      createdBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      updatedBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    };
+
+    // Entity-specific includes
+    if (entityType === 'employees') {
+      include.profilePhoto = {
+        select: {
+          id: true,
+          filePath: true,
+          fileName: true,
+          mimeType: true,
+          fileSize: true,
+          createdAt: true,
+          uploadedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      };
+      include.activityHistory = {
+        where: { isDeleted: false },
+        include: {
+          reviewedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: [
+          { startDate: 'desc' },
+          { createdAt: 'desc' },
+        ],
+      };
+      include.wcbClaims = {
+        select: {
+          id: true,
+          claimNumber: true,
+          wcbClaimNumber: true,
+          status: true,
+          incidentDate: true,
+          injuryType: true,
+          bodyPartAffected: true,
+          severityLevel: true,
+          province: true,
+          createdAt: true,
+        },
+        orderBy: {
+          incidentDate: 'desc',
+        },
+      };
+    }
+
     // Fetch entity with relations
     const entity = await prisma[modelName].findUnique({
       where: { id },
-      include: {
-        profilePhoto: {
-          select: {
-            id: true,
-            filePath: true,
-            fileName: true,
-            mimeType: true,
-            fileSize: true,
-            createdAt: true,
-            uploadedBy: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-        activityHistory: {
-          where: { isDeleted: false },
-          include: {
-            reviewedBy: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: [
-            { startDate: 'desc' },
-            { createdAt: 'desc' },
-          ],
-        },
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        updatedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
+      include,
     });
 
     // Check if entity exists and not soft-deleted
