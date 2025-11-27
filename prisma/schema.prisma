@@ -90,7 +90,7 @@ model OfficeEmployee {
   profilePhoto          Document?         @relation("EmployeeProfilePhoto", fields: [profilePhotoId], references: [id])
   updatedBy             User              @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   portalUser            User?             @relation("EmployeePortalUser", fields: [userId], references: [id])
-  wcbClaims             WcbClaim[]        @relation("EmployeeWcbClaims")
+  // Removed wcbClaims relation - WCB claims now use generic entityType + entityId linking
 
   @@map("office_employees")
 }
@@ -510,7 +510,7 @@ model WcbClaim {
   // Relations
   createdBy           User            @relation("WcbClaimCreatedBy", fields: [createdById], references: [id])
   updatedBy           User            @relation("WcbClaimUpdatedBy", fields: [updatedById], references: [id])
-  employee            OfficeEmployee? @relation("EmployeeWcbClaims", fields: [entityId], references: [id])
+  // Removed hardcoded employee relation - use generic entityType + entityId instead
 
   @@index([entityType, entityId])
   @@index([status])

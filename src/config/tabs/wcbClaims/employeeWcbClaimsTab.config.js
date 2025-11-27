@@ -45,13 +45,8 @@ export const EMPLOYEE_WCB_CLAIMS_TAB_CONFIG = {
       return `${date} • ${province}`;
     },
 
-    // Badge: Status
-    badge: (claim) => {
-      return {
-        text: claim.status || 'new',
-        variant: getStatusVariant(claim.status),
-      };
-    },
+    // Badge: Status code (ListRow will get color from SettingsContext)
+    badge: (claim) => claim.status,
   },
 
   // Click handler configuration
@@ -74,19 +69,5 @@ export const EMPLOYEE_WCB_CLAIMS_TAB_CONFIG = {
   // Related entity type (for navigation)
   relatedEntityType: 'wcb_claims',
 };
-
-/**
- * Helper: Get badge variant based on status
- */
-function getStatusVariant(status) {
-  const statusMap = {
-    'new': 'default',
-    'submitted': 'warning',
-    'accepted': 'success',
-    'denied': 'destructive',
-    'closed': 'secondary',
-  };
-  return statusMap[status] || 'default';
-}
 
 export default EMPLOYEE_WCB_CLAIMS_TAB_CONFIG;

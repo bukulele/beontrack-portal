@@ -1,3 +1,5 @@
+import { CANADIAN_PROVINCES } from "@/config/clientData";
+
 /**
  * WCB Claim Edit Form Configuration
  *
@@ -31,21 +33,7 @@ export const WCB_CLAIM_EDIT_FORM_CONFIG = {
       label: "Province",
       type: "select",
       required: true,
-      options: {
-        AB: "Alberta",
-        BC: "British Columbia",
-        MB: "Manitoba",
-        NB: "New Brunswick",
-        NL: "Newfoundland and Labrador",
-        NS: "Nova Scotia",
-        NT: "Northwest Territories",
-        NU: "Nunavut",
-        ON: "Ontario",
-        PE: "Prince Edward Island",
-        QC: "Quebec",
-        SK: "Saskatchewan",
-        YT: "Yukon",
-      },
+      options: CANADIAN_PROVINCES,
     },
 
     // ========================================
@@ -109,7 +97,7 @@ export const WCB_CLAIM_EDIT_FORM_CONFIG = {
     {
       key: "reportedToDoctor",
       label: "Reported to Doctor",
-      type: "boolean",
+      type: "checkbox",
       required: false,
     },
     {

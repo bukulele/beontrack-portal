@@ -29,6 +29,18 @@ const ENTITY_MODELS = {
   wcb_claims: 'wcbClaim',
 };
 
+// Generic field selections for linked entities
+const LINKED_ENTITY_FIELDS = {
+  employees: {
+    id: true,
+    employeeId: true,
+    firstName: true,
+    lastName: true,
+    email: true,
+    department: true,
+  },
+};
+
 /**
  * GET /api/v1/{entityType}/{id}
  * Get single entity with all relations and ABAC field filtering
@@ -105,23 +117,6 @@ export async function GET(request, { params }) {
           { createdAt: 'desc' },
         ],
       };
-      include.wcbClaims = {
-        select: {
-          id: true,
-          claimNumber: true,
-          wcbClaimNumber: true,
-          status: true,
-          incidentDate: true,
-          injuryType: true,
-          bodyPartAffected: true,
-          severityLevel: true,
-          province: true,
-          createdAt: true,
-        },
-        orderBy: {
-          incidentDate: 'desc',
-        },
-      };
     }
 
     // Fetch entity with relations
@@ -133,6 +128,57 @@ export async function GET(request, { params }) {
     // Check if entity exists and not soft-deleted
     if (!entity || entity.isDeleted) {
       return createErrorResponse(404, 'Not Found', `${entityType} not found`);
+    }
+
+    // Generic linked entity loading (for child entities that link to parents)
+    if (entity.entityType && entity.entityId) {
+      const linkedModelName = ENTITY_MODELS[entity.entityType];
+      const fieldSelection = LINKED_ENTITY_FIELDS[entity.entityType];
+
+      if (linkedModelName && fieldSelection && prisma[linkedModelName]) {
+        try {
+          const linkedEntity = await prisma[linkedModelName].findUnique({
+            where: { id: entity.entityId },
+            select: fieldSelection,
+          });
+          entity.linkedEntity = linkedEntity;
+        } catch (error) {
+          console.error(`Failed to load linked entity:`, error);
+          // Don't fail the whole request if linked entity fails
+        }
+      }
+    }
+
+    // Load WCB claims for employees (manual query since relation removed)
+    if (entityType === 'employees') {
+      try {
+        const wcbClaims = await prisma.wcbClaim.findMany({
+          where: {
+            entityType: 'employees',
+            entityId: id,
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            claimNumber: true,
+            wcbClaimNumber: true,
+            status: true,
+            incidentDate: true,
+            injuryType: true,
+            bodyPartAffected: true,
+            severityLevel: true,
+            province: true,
+            createdAt: true,
+          },
+          orderBy: {
+            incidentDate: 'desc',
+          },
+        });
+        entity.wcbClaims = wcbClaims;
+      } catch (error) {
+        console.error('Failed to load WCB claims:', error);
+        entity.wcbClaims = [];
+      }
     }
 
     // Check if user can access this specific record (ABAC)
@@ -308,34 +354,59 @@ export async function PATCH(request, { params }) {
       }
     }
 
+    // Build include clause based on entity type
+    const include = {
+      createdBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      updatedBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    };
+
+    // Entity-specific includes
+    if (entityType === 'employees') {
+      include.profilePhoto = {
+        select: {
+          id: true,
+          filePath: true,
+          fileName: true,
+        },
+      };
+    }
+
     // Update entity
     const updatedEntity = await prisma[modelName].update({
       where: { id },
       data: updateData,
-      include: {
-        profilePhoto: {
-          select: {
-            id: true,
-            filePath: true,
-            fileName: true,
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        updatedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
+      include,
     });
+
+    // Generic linked entity loading (for child entities that link to parents)
+    if (updatedEntity.entityType && updatedEntity.entityId) {
+      const linkedModelName = ENTITY_MODELS[updatedEntity.entityType];
+      const fieldSelection = LINKED_ENTITY_FIELDS[updatedEntity.entityType];
+
+      if (linkedModelName && fieldSelection && prisma[linkedModelName]) {
+        try {
+          const linkedEntity = await prisma[linkedModelName].findUnique({
+            where: { id: updatedEntity.entityId },
+            select: fieldSelection,
+          });
+          updatedEntity.linkedEntity = linkedEntity;
+        } catch (error) {
+          console.error(`Failed to load linked entity:`, error);
+        }
+      }
+    }
 
     // Create activity log entries
     if (activityLogs.length > 0) {

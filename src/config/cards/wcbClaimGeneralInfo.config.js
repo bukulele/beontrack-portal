@@ -5,8 +5,19 @@
  */
 
 import { WCB_CLAIM_EDIT_FORM_CONFIG } from "@/config/forms/wcbClaimEditForm.config";
+import { WCB_CLAIM_MEDICAL_CHECKLIST_CONFIG } from "@/config/checklists/wcbClaimMedicalChecklist.config";
+import { WCB_CLAIM_DOCUMENTS_CHECKLIST_CONFIG } from "@/config/checklists/wcbClaimDocumentsChecklist.config";
+import { generateFileSectionsFromChecklists } from "@/lib/configUtils";
 
 export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
+  // Edit form configuration
+  editFormConfig: WCB_CLAIM_EDIT_FORM_CONFIG,
+
+  // Checklist configurations for status validation
+  checklistConfigs: [
+    WCB_CLAIM_MEDICAL_CHECKLIST_CONFIG,
+    WCB_CLAIM_DOCUMENTS_CHECKLIST_CONFIG,
+  ],
   // Linked entity configuration - shows which employee/driver this claim is for
   linkedEntity: {
     enabled: true,
@@ -40,19 +51,29 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Claim Information',
       fields: [
         {
-          name: 'claimNumber',
+          key: 'linkedEntity',
+          label: 'Employee',
+          type: 'text',
+          readOnly: true,
+          formatter: (value) => {
+            if (!value) return 'Not set';
+            return `${value.firstName} ${value.lastName} (${value.employeeId})`;
+          },
+        },
+        {
+          key: 'claimNumber',
           label: 'Internal Claim #',
           type: 'text',
           required: true,
         },
         {
-          name: 'wcbClaimNumber',
+          key: 'wcbClaimNumber',
           label: 'WCB Claim #',
           type: 'text',
           placeholder: 'Assigned by WCB',
         },
         {
-          name: 'province',
+          key: 'province',
           label: 'Province',
           type: 'select',
           options: [
@@ -79,7 +100,7 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Incident Information',
       fields: [
         {
-          name: 'incidentDate',
+          key: 'incidentDate',
           label: 'Incident Date',
           type: 'datetime',
           required: true,
@@ -95,13 +116,13 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
           },
         },
         {
-          name: 'location',
+          key: 'location',
           label: 'Incident Location',
           type: 'text',
           placeholder: 'e.g., Shop Bay 3, Highway 2 North, etc.',
         },
         {
-          name: 'incidentDetails',
+          key: 'incidentDetails',
           label: 'Incident Description',
           type: 'textarea',
           required: true,
@@ -114,19 +135,19 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Injury Details',
       fields: [
         {
-          name: 'injuryType',
+          key: 'injuryType',
           label: 'Injury Type',
           type: 'text',
           placeholder: 'e.g., Back strain, Laceration, Fracture',
         },
         {
-          name: 'bodyPartAffected',
+          key: 'bodyPartAffected',
           label: 'Body Part Affected',
           type: 'text',
           placeholder: 'e.g., Lower back, Right hand, Left knee',
         },
         {
-          name: 'severityLevel',
+          key: 'severityLevel',
           label: 'Injury Severity',
           type: 'select',
           options: [
@@ -143,12 +164,31 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Medical Information',
       fields: [
         {
-          name: 'doctorName',
+          key: 'reportedToDoctor',
+          label: 'Reported to Doctor',
+          type: 'boolean',
+          formatter: (value) => (value ? 'Yes' : 'No'),
+        },
+        {
+          key: 'firstContactDate',
+          label: 'First Medical Contact Date',
+          type: 'date',
+          formatter: (value) => {
+            if (!value) return 'Not set';
+            return new Date(value).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            });
+          },
+        },
+        {
+          key: 'doctorName',
           label: 'Physician Name',
           type: 'text',
         },
         {
-          name: 'doctorPhone',
+          key: 'doctorPhone',
           label: 'Physician Phone',
           type: 'tel',
           formatter: (value) => {
@@ -162,6 +202,11 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
             return value;
           },
         },
+        {
+          key: 'medicalFacility',
+          label: 'Medical Facility',
+          type: 'text',
+        },
       ],
     },
     {
@@ -169,12 +214,12 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'WCB Contact Information',
       fields: [
         {
-          name: 'wcbContactName',
+          key: 'wcbContactName',
           label: 'WCB Adjuster Name',
           type: 'text',
         },
         {
-          name: 'wcbContactPhone',
+          key: 'wcbContactPhone',
           label: 'WCB Adjuster Phone',
           type: 'tel',
           formatter: (value) => {
@@ -188,7 +233,7 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
           },
         },
         {
-          name: 'wcbContactEmail',
+          key: 'wcbContactEmail',
           label: 'WCB Adjuster Email',
           type: 'email',
         },
@@ -199,8 +244,21 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Return to Work',
       fields: [
         {
-          name: 'actualReturnDate',
-          label: 'Return to Work Date',
+          key: 'expectedReturnDate',
+          label: 'Expected Return Date',
+          type: 'date',
+          formatter: (value) => {
+            if (!value) return 'Not set';
+            return new Date(value).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            });
+          },
+        },
+        {
+          key: 'actualReturnDate',
+          label: 'Actual Return Date',
           type: 'date',
           formatter: (value) => {
             if (!value) return 'Not applicable';
@@ -211,6 +269,15 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
             });
           },
         },
+        {
+          key: 'lostTimeDays',
+          label: 'Lost Time Days',
+          type: 'number',
+          formatter: (value) => {
+            if (value === null || value === undefined) return '0';
+            return value.toString();
+          },
+        },
       ],
     },
     {
@@ -218,7 +285,7 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Financial Impact',
       fields: [
         {
-          name: 'estimatedCost',
+          key: 'estimatedCost',
           label: 'Estimated Cost',
           type: 'currency',
           formatter: (value) => {
@@ -230,7 +297,7 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
           },
         },
         {
-          name: 'actualCost',
+          key: 'actualCost',
           label: 'Total Cost',
           type: 'currency',
           formatter: (value) => {
@@ -243,35 +310,35 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
         },
       ],
     },
-  ],
-
-  // File viewing sections (read-only document display)
-  fileSections: [
     {
-      id: 'worker-report',
-      title: 'Worker Report (Form 6/C060)',
-      documentType: 'wcb_worker_report',
-      description: "Worker's account of the incident and injury",
-      allowMultiple: true,
-    },
-    {
-      id: 'employer-report',
-      title: 'Employer Report (Form 7)',
-      documentType: 'wcb_employer_report',
-      description: "Employer's incident report and investigation",
-      allowMultiple: true,
-    },
-    {
-      id: 'medical-report',
-      title: 'Healthcare Provider Report (Form 8)',
-      documentType: 'wcb_medical_report',
-      description: "Medical provider's assessment and treatment plan",
-      allowMultiple: true,
+      id: 'notes',
+      title: 'Notes',
+      fields: [
+        {
+          key: 'statusNote',
+          label: 'Status Note',
+          type: 'textarea',
+        },
+        {
+          key: 'remarksComments',
+          label: 'Remarks / Comments',
+          type: 'textarea',
+        },
+      ],
     },
   ],
 
-  // Edit form configuration
-  editFormConfig: WCB_CLAIM_EDIT_FORM_CONFIG,
+  // File viewing sections - generated from checklists (single source of truth)
+  fileSections: generateFileSectionsFromChecklists(
+    [WCB_CLAIM_MEDICAL_CHECKLIST_CONFIG, WCB_CLAIM_DOCUMENTS_CHECKLIST_CONFIG],
+    {
+      "WCB Required Forms": [
+        'wcb_worker_report',
+        'wcb_employer_report',
+        'wcb_medical_report',
+      ],
+    }
+  ),
 };
 
 export default WCB_CLAIM_GENERAL_INFO_CONFIG;
