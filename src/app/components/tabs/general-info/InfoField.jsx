@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -10,7 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Copy, Mail, Phone, MessageCircle } from "lucide-react";
+import { Copy, Mail, Phone, MessageCircle, ExternalLink } from "lucide-react";
 import copy from "copy-to-clipboard";
 import callPhoneNumber from "@/app/functions/callPhoneNumber";
 import formatDate from "@/app/functions/formatDate";
@@ -18,18 +18,19 @@ import formatDate from "@/app/functions/formatDate";
 /**
  * InfoField - Read-only field display with action buttons
  *
- * Displays a field with label and value. Shows action buttons (copy, email, call, whatsapp)
+ * Displays a field with label and value. Shows action buttons (copy, email, call, whatsapp, navigate)
  * based on fieldConfig.actions array. No inline editing - use form-level edit dialog instead.
  *
  * @param {Object} fieldConfig - Field configuration
  * @param {string} fieldConfig.key - Field key in entity data
  * @param {string} fieldConfig.label - Field label
  * @param {string} fieldConfig.type - Field type (text, number, date, etc.)
- * @param {Array} fieldConfig.actions - Array of action names (copy, email, call, whatsapp)
+ * @param {Array} fieldConfig.actions - Array of action names or objects (copy, email, call, whatsapp, navigate)
  * @param {Function} fieldConfig.formatter - Optional value formatter for display
  * @param {any} value - Current value
  * @param {Object} entityData - Full entity data
  * @param {React.ReactNode} sideContent - Optional content to render on the right side
+ * @param {Function} onNavigate - Optional navigation handler for navigate action
  */
 function InfoField({
   fieldConfig,
@@ -37,6 +38,7 @@ function InfoField({
   entityData,
   sideContent,
   additionalContexts,
+  onNavigate,
 }) {
   // Action handlers
   const handleCopy = () => {
@@ -64,6 +66,26 @@ function InfoField({
       window.open(`https://wa.me/1${cleanNumber}`, '_blank');
     }
   };
+
+  const handleNavigate = () => {
+    if (onNavigate && entityData?.entityType && entityData?.entityId) {
+      onNavigate(entityData.entityType, entityData.entityId);
+    }
+  };
+
+  // Auto-add navigate action for linkedEntity fields
+  const effectiveActions = useMemo(() => {
+    const baseActions = fieldConfig.actions || [];
+
+    // If this is a linkedEntity field and has linked data, auto-add navigate
+    if (fieldConfig.key === 'linkedEntity' &&
+        entityData?.entityType &&
+        entityData?.entityId) {
+      return [...baseActions, 'navigate'];
+    }
+
+    return baseActions;
+  }, [fieldConfig.key, fieldConfig.actions, entityData?.entityType, entityData?.entityId]);
 
   // Format display value
   const getDisplayValue = () => {
@@ -115,17 +137,23 @@ function InfoField({
       tooltip: "Open WhatsApp",
       color: "text-green-600",
     },
+    navigate: {
+      icon: ExternalLink,
+      handler: handleNavigate,
+      tooltip: "View details",
+      color: "text-blue-600",
+    },
   };
 
   // Render action buttons
   const renderActionButtons = () => {
-    if (!fieldConfig.actions || fieldConfig.actions.length === 0) {
+    if (!effectiveActions || effectiveActions.length === 0) {
       return null;
     }
 
     return (
       <ButtonGroup>
-        {fieldConfig.actions.map((actionName) => {
+        {effectiveActions.map((actionName) => {
           const action = actionConfig[actionName];
           if (!action) return null;
 

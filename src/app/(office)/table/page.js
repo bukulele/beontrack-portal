@@ -22,6 +22,7 @@ import { usePermissions } from "@/lib/permissions/hooks";
 import { SettingsProvider } from "@/app/context/SettingsContext";
 import { EmployeeProvider } from "@/app/context/EmployeeContext";
 import { WcbClaimProvider } from "@/app/context/WcbClaimContext";
+import { NavigationProvider, useNavigation } from "@/app/context/NavigationContext";
 
 /**
  * Unified Table Page
@@ -72,6 +73,9 @@ function TablePageContent() {
   const router = useRouter();
   const entityType = searchParams.get("entity") || "drivers";
 
+  // Navigation context for modal content switching
+  const navigation = useNavigation();
+
   // Validate and get entity configuration
   const isValid = isValidEntityType(entityType);
   const entityConfig = getEntityConfig(entityType);
@@ -82,8 +86,6 @@ function TablePageContent() {
   // State
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState(null);
-  const [cardOpen, setCardOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // CRITICAL: Check if user has permission to access this page
@@ -123,13 +125,14 @@ function TablePageContent() {
   };
 
   const handleRowClick = (params) => {
-    setSelectedId(params.row[entityConfig.idField]);
-    setCardOpen(true);
+    const entityId = params.row[entityConfig.idField];
+    // Initialize navigation stack with clicked entity
+    navigation.init(entityType, entityId);
   };
 
   const handleCloseCard = () => {
-    setCardOpen(false);
-    setSelectedId(null);
+    // Clear navigation stack (closes modal)
+    navigation.clear();
     // Removed auto-refresh - user can manually refresh via toolbar
   };
 
@@ -259,16 +262,26 @@ function TablePageContent() {
         </Box>
       </SidebarInset>
 
-      {/* Universal Card Dialog */}
-      {selectedId && (
-        <Dialog open={cardOpen} onOpenChange={handleCloseCard}>
+      {/* Universal Card Dialog - Controlled by NavigationContext */}
+      {navigation.current && (
+        <Dialog open={true} onOpenChange={(open) => { if (!open) handleCloseCard(); }}>
           <DialogContent className="max-w-[1100px] p-0 gap-0 border-0 shadow-none bg-transparent [&>button]:hidden">
             <VisuallyHidden.Root>
-              <DialogTitle>{entityConfig.dialogTitle}</DialogTitle>
+              <DialogTitle>
+                {getEntityConfig(navigation.current.entityType).dialogTitle}
+              </DialogTitle>
             </VisuallyHidden.Root>
+
             <SettingsProvider>
-              <EntityContextWrapper entityType={entityType} entityId={selectedId}>
-                <UniversalCard config={entityConfig.cardConfig} />
+              <EntityContextWrapper
+                key={`${navigation.current.entityType}-${navigation.current.entityId}`}
+                entityType={navigation.current.entityType}
+                entityId={navigation.current.entityId}
+              >
+                <UniversalCard
+                  config={getEntityConfig(navigation.current.entityType).cardConfig}
+                  key={`${navigation.current.entityType}-${navigation.current.entityId}`}
+                />
               </EntityContextWrapper>
             </SettingsProvider>
           </DialogContent>
@@ -292,10 +305,12 @@ function TablePageContent() {
 export default function UnifiedTablePage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-50 p-8">Loading...</div>}>
-      <SidebarProvider>
-        <AppSidebar />
-        <TablePageContent />
-      </SidebarProvider>
+      <NavigationProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <TablePageContent />
+        </SidebarProvider>
+      </NavigationProvider>
     </Suspense>
   );
 }

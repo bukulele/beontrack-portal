@@ -3,6 +3,8 @@
 import React, { useState, useContext, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import ChecklistTab from "@/app/components/tabs/checklist/ChecklistTab";
 import GeneralInfoTab from "@/app/components/tabs/general-info/GeneralInfoTab";
 import LogTab from "@/app/components/tabs/log/LogTab";
@@ -12,6 +14,7 @@ import SubEntitiesTab from "@/app/components/tabs/sub-entities/SubEntitiesTab";
 import ActivityLogTab from "@/app/components/tabs/activity-log/ActivityLogTab";
 import { EmployeeContext } from "@/app/context/EmployeeContext";
 import { WcbClaimContext } from "@/app/context/WcbClaimContext";
+import { useNavigation } from "@/app/context/NavigationContext";
 import { usePermissions, useCurrentUser } from "@/lib/permissions/hooks";
 import { getDocumentCapabilities } from "@/lib/permissions/types";
 
@@ -45,6 +48,9 @@ function UniversalCard({ config, onLightboxChange }) {
   const context = useContext(ContextToUse);
   const entityData = context?.[config.entity.dataKey];
   const loadData = context?.[config.entity.loadDataKey];
+
+  // Navigation context for handling entity clicks
+  const { push, pop, canGoBack } = useNavigation();
 
   // Get current user info for role-based checks
   const { roles: userRoles = [], isSuperuser = false } = useCurrentUser();
@@ -98,11 +104,9 @@ function UniversalCard({ config, onLightboxChange }) {
   const additionalContexts = {};
 
   // Handle entity navigation from list tabs
-  const handleEntityClick = (entityId, entityType) => {
-    // For now, just log the click - this can be enhanced to open nested cards
-    // or navigate to a different page depending on requirements
-    console.log(`Entity clicked: ${entityType} - ${entityId}`);
-    // TODO: Implement navigation logic (e.g., open a nested dialog or navigate to entity page)
+  const handleEntityClick = (entityType, entityId) => {
+    // Push new entity to navigation stack (modal will switch content)
+    push(entityType, entityId);
   };
 
   // Render tab content based on type
@@ -137,6 +141,7 @@ function UniversalCard({ config, onLightboxChange }) {
             entityType={config.entity.type}
             entityId={entityData.id}
             additionalContexts={additionalContexts}
+            onNavigate={handleEntityClick}
           />
         );
 
@@ -214,18 +219,27 @@ function UniversalCard({ config, onLightboxChange }) {
   return (
     <Card className={`${width} ${height} flex flex-col overflow-hidden`}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-        {/* Tab Navigation - Fixed at top */}
-        <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent border-b shrink-0">
-          {visibleTabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+        {/* Tab Navigation with Back Button */}
+        <div className="flex items-center gap-2 px-4 pt-4 shrink-0">
+          {canGoBack && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => pop()}
+              className="shrink-0"
             >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          )}
+          <TabsList>
+            {visibleTabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         {/* Tab Content */}
         {visibleTabs.map((tab) => (

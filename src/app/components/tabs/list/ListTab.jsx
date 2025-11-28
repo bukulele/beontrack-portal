@@ -18,7 +18,7 @@ import ListRow from "./ListRow";
  * @param {Object} config - List tab configuration
  * @param {Object} context - Parent entity context (e.g., DriverContext)
  * @param {Object} additionalContexts - Additional contexts (e.g., IncidentsListContext)
- * @param {Function} onEntityClick - Callback when a list item is clicked (entityId, entityType)
+ * @param {Function} onEntityClick - Callback when a list item is clicked (entityType, entityId)
  */
 function ListTab({ config, context, additionalContexts = {}, onEntityClick }) {
 
@@ -80,7 +80,7 @@ function ListTab({ config, context, additionalContexts = {}, onEntityClick }) {
   // Handle row click - open related card
   const handleRowClick = (entity) => {
     if (onEntityClick) {
-      onEntityClick(entity.id, config.relatedEntityType);
+      onEntityClick(config.relatedEntityType, entity.id);
     }
   };
 

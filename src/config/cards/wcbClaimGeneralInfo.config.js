@@ -51,6 +51,12 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
       title: 'Claim Information',
       fields: [
         {
+          key: 'claimNumber',
+          label: 'Internal Claim #',
+          type: 'text',
+          required: true,
+        },
+        {
           key: 'linkedEntity',
           label: 'Employee',
           type: 'text',
@@ -59,12 +65,6 @@ export const WCB_CLAIM_GENERAL_INFO_CONFIG = {
             if (!value) return 'Not set';
             return `${value.firstName} ${value.lastName} (${value.employeeId})`;
           },
-        },
-        {
-          key: 'claimNumber',
-          label: 'Internal Claim #',
-          type: 'text',
-          required: true,
         },
         {
           key: 'wcbClaimNumber',

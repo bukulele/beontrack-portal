@@ -14,8 +14,7 @@ import Image from "next/image";
 import { EntityEditDialog } from "@/app/components/entity-edit-dialog/EntityEditDialog";
 import RelatedEntityDropdown from "./RelatedEntityDropdown";
 import MapDialog from "../timecard/MapDialog";
-import { usePermissions } from "@/lib/permissions/hooks";
-import { getDocumentPermissions } from "@/config/entities/employees.config";
+import { usePermissions, useCurrentUser } from "@/lib/permissions/hooks";
 import { getDocumentCapabilities } from "@/lib/permissions/types";
 
 /**
@@ -41,6 +40,7 @@ function GeneralInfoTab({
   entityType,
   entityId,
   additionalContexts,
+  onNavigate,
 }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
@@ -49,15 +49,17 @@ function GeneralInfoTab({
 
   // Get permissions for this entity
   const permissions = usePermissions(entityType);
+  const { isSuperuser } = useCurrentUser();
 
-  // Get document permissions
+  // Get document permissions using generic helper
   const documentPermissions = useMemo(() => {
-    if (entityType === 'employees') {
-      return getDocumentPermissions(permissions);
-    } else {
-      return getDocumentCapabilities(permissions.actions, permissions.isSuperuser);
-    }
-  }, [permissions, entityType]);
+    // Get actions array from user permissions for this entity
+    const userPermissions = permissions.user?.permissions || [];
+    const entityPerms = userPermissions.find(p => p.entityType === entityType);
+    const actions = entityPerms?.actions || [];
+
+    return getDocumentCapabilities(actions, isSuperuser);
+  }, [permissions, entityType, isSuperuser]);
 
   // Icon mapping for custom actions
   const iconMap = {
@@ -200,6 +202,7 @@ function GeneralInfoTab({
                         onSave={loadData}
                         sideContent={sideContent}
                         additionalContexts={additionalContexts}
+                        onNavigate={onNavigate}
                       />
                     );
                   })}
